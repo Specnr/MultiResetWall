@@ -12,6 +12,7 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global fullscreen := False
 global disableTTS := False
+global useProjector := True
 global countAttempts := True
 global beforeFreezeDelay := 400 ; increase if doesnt join world
 global fullScreenDelay := 100 ; increse if fullscreening issues
@@ -231,6 +232,8 @@ ExitWorld()
     pid := PIDs[idx]
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
+    if (useProjector)
+      WinActivate, Windowed Projector
     WinActivate, Reset Controller
     ResetInstance(idx)
   }
