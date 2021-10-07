@@ -20,7 +20,7 @@ global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global switchDelay := 75 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
-global scriptBootDelay := 5000
+global scriptBootDelay := 5000 ; increase if instance freezes before world gen
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
