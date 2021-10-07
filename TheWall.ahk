@@ -279,7 +279,8 @@ SetTitles() {
   }
 }
 
-ToWall() {0
+ToWall() {
+  send {Numpad0 down}
   sleep, %obsDelay%
   send {Numpad0 up}
 }
