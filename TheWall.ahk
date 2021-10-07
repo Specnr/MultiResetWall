@@ -12,7 +12,7 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global fullscreen := False
 global disableTTS := False
-global useProjector := True
+global useProjector := True ; If enabled you need to open a Windowed Projector in OBS
 global countAttempts := True
 global beforeFreezeDelay := 400 ; increase if doesnt join world
 global fullScreenDelay := 100 ; increse if fullscreening issues
