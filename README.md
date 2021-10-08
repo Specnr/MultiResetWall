@@ -17,7 +17,7 @@ To use the macro, run TheWall.ahk and wait for it to say ready. It should bring 
 to reset that instance, or you can press the number itself (1-9) at the top of your keyboard to do the same. To play an instance hold shift and press that instance's button/number.
 If you want to manually switch back to the wall scene, press the back button.
 
-Note: F12 isnt needed here, it will automatically set titles on boot
+Note: Setting titles isnt needed here, it will automatically do so on boot
 
 ## Credit
 
