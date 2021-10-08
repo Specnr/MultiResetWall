@@ -12,15 +12,17 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global fullscreen := False
 global disableTTS := False
+global resetSounds := True ; :)
+global useController := True ; Set to False if you use some other controlled like a stream deck
 global useProjector := True ; If enabled you need to open a Windowed Projector in OBS
 global countAttempts := True
 global beforeFreezeDelay := 400 ; increase if doesnt join world
 global fullScreenDelay := 100 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
-global switchDelay := 75 ; increase if not switching windows
+global switchDelay := 85 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
-global scriptBootDelay := 5000 ; increase if instance freezes before world gen
+global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
@@ -44,7 +46,6 @@ for i, saves in SavesDirectories {
 
 IfNotExist, %oldWorldsFolder%
   FileCreateDir %oldWorldsFolder%
-ToWall()
 ResetController()
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
@@ -232,9 +233,6 @@ ExitWorld()
     pid := PIDs[idx]
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
-    if (useProjector)
-      WinActivate, Windowed Projector
-    WinActivate, Reset Controller
     ResetInstance(idx)
   }
 }
@@ -250,6 +248,8 @@ ResetInstance(idx) {
     If (FileExist(idleFile))
       FileDelete, %idleFile%
     Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
+    if (resetSounds)
+      SoundPlay, reset.wav
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
     ; Move Worlds
@@ -283,6 +283,10 @@ SetTitles() {
 }
 
 ToWall() {
+  if (useProjector)
+    WinActivate, Windowed Projector
+  if (useController)
+    WinActivate, Reset Controller
   send {Numpad0 down}
   sleep, %obsDelay%
   send {Numpad0 up}
@@ -335,63 +339,63 @@ return
     *U:: ExitWorld() ; Reset
   }
 
-  #IfWinActive, Reset Controller
-    {
-      ; Reset keys (1-9)
-      *1::
-        ResetInstance(1)
-      return
-      *2::
-        ResetInstance(2)
-      return
-      *3::
-        ResetInstance(3)
-      return
-      *4::
-        ResetInstance(4)
-      return
-      *5::
-        ResetInstance(5)
-      return
-      *6::
-        ResetInstance(6)
-      return
-      *7::
-        ResetInstance(7)
-      return
-      *8::
-        ResetInstance(8)
-      return
-      *9::
-        ResetInstance(9)
-      return
+  #If WinActive("Reset Controller") or WinActive("Windowed Projector")
+  {
+    ; Reset keys (1-9)
+    *1::
+      ResetInstance(1)
+    return
+    *2::
+      ResetInstance(2)
+    return
+    *3::
+      ResetInstance(3)
+    return
+    *4::
+      ResetInstance(4)
+    return
+    *5::
+      ResetInstance(5)
+    return
+    *6::
+      ResetInstance(6)
+    return
+    *7::
+      ResetInstance(7)
+    return
+    *8::
+      ResetInstance(8)
+    return
+    *9::
+      ResetInstance(9)
+    return
 
-      ; Switch to instance keys (Shift + 1-9)
-      *+1::
-        SwitchInstance(1)
-      return
-      *+2::
-        SwitchInstance(2)
-      return
-      *+3::
-        SwitchInstance(3)
-      return
-      *+4::
-        SwitchInstance(4)
-      return
-      *+5::
-        SwitchInstance(5)
-      return
-      *+6::
-        SwitchInstance(6)
-      return
-      *+7::
-        SwitchInstance(7)
-      return
-      *+8::
-        SwitchInstance(8)
-      return
-      *+9::
-        SwitchInstance(9)
-      return
-    }
+    ; Switch to instance keys (Shift + 1-9)
+    *+1::
+      SwitchInstance(1)
+    return
+    *+2::
+      SwitchInstance(2)
+    return
+    *+3::
+      SwitchInstance(3)
+    return
+    *+4::
+      SwitchInstance(4)
+    return
+    *+5::
+      SwitchInstance(5)
+    return
+    *+6::
+      SwitchInstance(6)
+    return
+    *+7::
+      SwitchInstance(7)
+    return
+    *+8::
+      SwitchInstance(8)
+    return
+    *+9::
+      SwitchInstance(9)
+    return
+  }
