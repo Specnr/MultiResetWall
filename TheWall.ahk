@@ -287,9 +287,9 @@ ToWall() {
     WinActivate, Windowed Projector
   if (useController)
     WinActivate, Reset Controller
-  send {Numpad0 down}
+  send {F12 down}
   sleep, %obsDelay%
-  send {Numpad0 up}
+  send {F12 up}
 }
 
 ResetController() {
