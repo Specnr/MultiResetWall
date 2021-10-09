@@ -14,6 +14,7 @@ global instWidth := 640 ; Width of one instance on the wall scene
 global instHeight := 720 ; Heigh of one instance on the wall scene
 global rows := 2 ; Number of row on the wall scene
 global cols := 4 ; Number of columns on the wall scene
+global wideResets := True
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
@@ -44,6 +45,13 @@ for i, saves in SavesDirectories {
   idle := saves . "idle.tmp"
   if (!FileExist(idle))
     FileAppend,,%idle%
+  if (wideResets) {
+    pid := PIDs[i]
+    WinRestore, ahk_pid %pid%
+    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%A_ScreenHeight%
+    newHeight := Floor(A_ScreenHeight / 2.5)
+    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+  }
 }
 
 IfNotExist, %oldWorldsFolder%
@@ -209,6 +217,8 @@ SwitchInstance(idx)
     send {Numpad%idx% down}
     sleep, %obsDelay%
     send {Numpad%idx% up}
+    if (wideResets)
+      WinMaximize, ahk_pid %pid%
     if (fullscreen) {
       send {F11}
       sleep, %fullScreenDelay%
@@ -237,6 +247,11 @@ ExitWorld()
   if (idx := GetActiveInstanceNum()) > 0
   {
     pid := PIDs[idx]
+    if (wideResets) {
+      newHeight := Floor(A_ScreenHeight / 2.5)
+      WinRestore, ahk_pid %pid%
+      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+    }
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
     ResetInstance(idx)
