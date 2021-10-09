@@ -10,11 +10,13 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Variables to configure
+global instWidth := 640 ; Width of one instance on the wall scene
+global instHeight := 720 ; Heigh of one instance on the wall scene
+global rows := 2 ; Number of row on the wall scene
+global cols := 4 ; Number of columns on the wall scene
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
-global useController := True ; Set to False if you use some other controlled like a stream deck
-global useProjector := True ; If enabled you need to open a Windowed Projector in OBS
 global countAttempts := True
 global beforeFreezeDelay := 400 ; increase if doesnt join world
 global fullScreenDelay := 100 ; increse if fullscreening issues
@@ -46,7 +48,6 @@ for i, saves in SavesDirectories {
 
 IfNotExist, %oldWorldsFolder%
   FileCreateDir %oldWorldsFolder%
-ResetController()
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
@@ -73,6 +74,11 @@ CheckScripts:
     }
   }
 return
+
+MousePosToInstNumber() {
+  MouseGetPos, mX, mY
+return (Floor(mY / instHeight) * cols) + Floor(mX / instWidth) + 1
+}
 
 RunHide(Command)
 {
@@ -283,51 +289,10 @@ SetTitles() {
 }
 
 ToWall() {
-  if (useProjector)
-    WinActivate, Windowed Projector
-  if (useController)
-    WinActivate, Reset Controller
+  WinActivate, Fullscreen Projector
   send {F12 down}
   sleep, %obsDelay%
   send {F12 up}
-}
-
-ResetController() {
-  Gui, New
-  Gui, Default
-  Gui, +LastFound +LabelMyGui
-  Gui, Add, Groupbox, w450 h230, Click on a number to reset
-  gui, add, button, xp+390 w50 h25 gPressed, Back
-  ;;;;;;;;;;ROW 1;;;;;;;;;;;;
-  gui, add, button, yp+30 xp-380 w100 h50 gPressed, 1
-  gui, add, button, xp+110 w100 h50 gPressed, 2
-  gui, add, button, xp+110 w100 h50 gPressed, 3
-  gui, add, button, xp+110 w100 h50 gPressed, 4
-  ;;;;;;;;;;ROW 2;;;;;;;;;;;;
-  gui, add, button, yp+60 xp-330 w100 h50 gPressed, 5
-  gui, add, button, xp+110 w100 h50 gPressed, 6
-  gui, add, button, xp+110 w100 h50 gPressed, 7
-  gui, add, button, xp+110 w100 h50 gPressed, 8
-  ;;;;;;;;;;ROW 3;;;;;;;;;;;;
-  gui, add, button, yp+60 xp-330 w100 h50 gPressed, 9
-  gui, add, button, xp+110 w100 h50 gPressed, 10
-  gui, add, button, xp+110 w100 h50 gPressed, 11
-  gui, add, button, xp+110 w100 h50 gPressed, 12
-  Gui, Show,, Reset Controller
-return WinExist()
-
-Pressed:
-  {
-    if (A_GuiControl == "Back")
-      ToWall()
-    else if (A_GuiControl <= instances) {
-      if GetKeyState("Shift")
-        SwitchInstance(A_GuiControl)
-      Else
-        ResetInstance(A_GuiControl)
-    }
-    return WinExist()
-  }
 }
 
 RAlt::Suspend ; Pause all macros
@@ -338,9 +303,12 @@ return
   {
     *U:: ExitWorld() ; Reset
   }
+return
 
-  #If WinActive("Reset Controller") or WinActive("Windowed Projector")
+#IfWinActive, Fullscreen Projector
   {
+    *E::ResetInstance(MousePosToInstNumber())
+    *R::SwitchInstance(MousePosToInstNumber())
     ; Reset keys (1-9)
     *1::
       ResetInstance(1)
@@ -397,5 +365,4 @@ return
     return
     *+9::
       SwitchInstance(9)
-    return
-  }
+    }
