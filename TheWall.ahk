@@ -10,8 +10,6 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Variables to configure
-global instWidth := 640 ; Width of one instance on the wall scene
-global instHeight := 720 ; Heigh of one instance on the wall scene
 global rows := 2 ; Number of row on the wall scene
 global cols := 4 ; Number of columns on the wall scene
 global wideResets := True
@@ -29,6 +27,8 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
+global instWidth := Floor(A_ScreenWidth / cols)
+global instHeight := Floor(A_ScreenHeight / rows)
 global SavesDirectories := []
 global instances := 0
 global rawPIDs := []
