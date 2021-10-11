@@ -74,11 +74,14 @@ CheckScripts:
     }
   }
   for i, x in toRemove {
-    for j, currTime in resetScriptTime {
-      if (x == currTime) {
-        resetScriptTime.RemoveAt(j)
-        resetIdx.RemoveAt(j)
+    idx := resetScriptTime.Length()
+    while (idx) {
+      resetTime := resetScriptTime[idx]
+      if (x == resetTime) {
+        resetScriptTime.RemoveAt(idx)
+        resetIdx.RemoveAt(idx)
       }
+      idx--
     }
   }
 return
