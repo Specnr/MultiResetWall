@@ -271,8 +271,10 @@ ResetInstance(idx) {
     Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
     if (resetSounds)
       SoundPlay, reset.wav
+    Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
+    Critical, Off
     ; Move Worlds
     dir := SavesDirectories[idx] . "saves\"
     Loop, Files, %dir%*, D
