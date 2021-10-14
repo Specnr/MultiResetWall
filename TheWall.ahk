@@ -310,6 +310,23 @@ ToWall() {
   send {F12 up}
 }
 
+; Focus hovered instance and background reset all other instances
+FocusReset(focusInstance) {
+  SwitchInstance(focusInstance)
+  loop, %instances% {
+    if (A_Index != focusInstance) {
+      ResetInstance(A_Index)
+    }
+  }
+}
+
+; Reset all instances
+ResetAll() {
+  loop, %instances% {
+    ResetInstance(A_Index)
+  }
+}
+
 RAlt::Suspend ; Pause all macros
 LAlt:: ; Reload if macro locks up
   Reload
@@ -324,6 +341,9 @@ return
   {
     *E::ResetInstance(MousePosToInstNumber())
     *R::SwitchInstance(MousePosToInstNumber())
+    *F::FocusReset(MousePosToInstNumber())
+    *T::ResetAll()
+
     ; Reset keys (1-9)
     *1::
       ResetInstance(1)
