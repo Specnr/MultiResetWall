@@ -74,11 +74,14 @@ CheckScripts:
     }
   }
   for i, x in toRemove {
-    for j, currTime in resetScriptTime {
-      if (x == currTime) {
-        resetScriptTime.RemoveAt(j)
-        resetIdx.RemoveAt(j)
+    idx := resetScriptTime.Length()
+    while (idx) {
+      resetTime := resetScriptTime[idx]
+      if (x == resetTime) {
+        resetScriptTime.RemoveAt(idx)
+        resetIdx.RemoveAt(idx)
       }
+      idx--
     }
   }
 return
@@ -271,8 +274,10 @@ ResetInstance(idx) {
     Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
     if (resetSounds)
       SoundPlay, reset.wav
+    Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
+    Critical, Off
     ; Move Worlds
     dir := SavesDirectories[idx] . "saves\"
     Loop, Files, %dir%*, D
