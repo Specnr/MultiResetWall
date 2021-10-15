@@ -10,8 +10,8 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Variables to configure
-global rows := 2 ; Number of row on the wall scene
-global cols := 4 ; Number of columns on the wall scene
+global rows := 3 ; Number of row on the wall scene
+global cols := 3 ; Number of columns on the wall scene
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
@@ -24,25 +24,27 @@ global restartDelay := 200 ; increase if saying missing instanceNumber in .minec
 global switchDelay := 85 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
+global moveWorldsDelay := 300000 ; moves your worlds every *this* ms
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
-global SavesDirectories := []
+global McDirectories := []
 global instances := 0
 global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
+global timeSinceMoved := A_TickCount
 
 UnsuspendAll()
 sleep, %restartDelay%
 GetAllPIDs()
 SetTitles()
 
-for i, saves in SavesDirectories {
-  idle := saves . "idle.tmp"
+for i, mcdir in McDirectories {
+  idle := mcdir . "idle.tmp"
   if (!FileExist(idle))
     FileAppend,,%idle%
   if (wideResets) {
@@ -67,7 +69,7 @@ CheckScripts:
   Critical
   toRemove := []
   for i, rIdx in resetIdx {
-    idleCheck := SavesDirectories[rIdx] . "idle.tmp"
+    idleCheck := McDirectories[rIdx] . "idle.tmp"
     if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
       SuspendInstance(PIDs[rIdx])
       toRemove.Push(resetScriptTime[i])
@@ -83,6 +85,20 @@ CheckScripts:
       }
       idx--
     }
+  }
+  if (A_TickCount - timeSinceMoved >= moveWorldsDelay) {
+    for idx, mcdir in McDirectories {
+      dir := mcdir . "saves\"
+      Loop, Files, %dir%*, D
+      {
+        If (InStr(A_LoopFileName, "New World") || InStr(A_LoopFileName, "Speedrun #")) {
+          tmp := A_NowUTC
+          FileMoveDir, %dir%%A_LoopFileName%, %dir%%A_LoopFileName%%tmp%Instance %idx%, R
+          FileMoveDir, %dir%%A_LoopFileName%%tmp%Instance %idx%, %oldWorldsFolder%%A_LoopFileName%%tmp%Instance %idx%
+        }
+      }
+    }
+    timeSinceMoved := A_TickCount
   }
 return
 
@@ -109,7 +125,7 @@ RunHide(Command)
 Return Result
 }
 
-GetSavesDir(pid)
+GetMcDir(pid)
 {
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
@@ -142,13 +158,13 @@ GetInstanceTotal() {
 return rawPIDs.MaxIndex()
 }
 
-GetInstanceNumberFromSaves(saves) {
-  numFile := saves . "instanceNumber.txt"
+GetInstanceNumberFromMcDir(mcdir) {
+  numFile := mcdir . "instanceNumber.txt"
   num := -1
-  if (saves == "" || saves == ".minecraft") ; Misread something
+  if (mcdir == "" || mcdir == ".minecraft") ; Misread something
     Reload
   if (!FileExist(numFile))
-    MsgBox, Missing instanceNumber.txt in %saves%
+    MsgBox, Missing instanceNumber.txt in %mcdir%
   else
     FileRead, num, %numFile%
 return num
@@ -156,16 +172,16 @@ return num
 
 GetAllPIDs()
 {
-  global SavesDirectories
+  global McDirectories
   global PIDs
   global instances := GetInstanceTotal()
-  ; Generate saves and order PIDs
+  ; Generate mcdir and order PIDs
   Loop, %instances% {
-    saves := GetSavesDir(rawPIDs[A_Index])
-    if (num := GetInstanceNumberFromSaves(saves)) == -1
+    mcdir := GetMcDir(rawPIDs[A_Index])
+    if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
     PIDS[num] := rawPIDs[A_Index]
-    SavesDirectories[num] := saves
+    McDirectories[num] := mcdir
   }
 }
 
@@ -262,13 +278,13 @@ ExitWorld()
 }
 
 ResetInstance(idx) {
-  idleFile := SavesDirectories[idx] . "idle.tmp"
+  idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
     pid := PIDs[idx]
     ResumeInstance(pid)
     ControlSend, ahk_parent, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
-    logFile := SavesDirectories[idx] . "logs\latest.log"
+    logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
     Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
@@ -278,16 +294,6 @@ ResetInstance(idx) {
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
     Critical, Off
-    ; Move Worlds
-    dir := SavesDirectories[idx] . "saves\"
-    Loop, Files, %dir%*, D
-    {
-      If (InStr(A_LoopFileName, "New World") || InStr(A_LoopFileName, "Speedrun #")) {
-        tmp := A_NowUTC
-        FileMoveDir, %dir%%A_LoopFileName%, %dir%%A_LoopFileName%%tmp%Instance %idx%, R
-        FileMoveDir, %dir%%A_LoopFileName%%tmp%Instance %idx%, %oldWorldsFolder%%A_LoopFileName%%tmp%Instance %idx%
-      }
-    }
     ; Count Attempts
     if (countAttempts)
     {
