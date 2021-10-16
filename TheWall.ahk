@@ -24,7 +24,7 @@ global restartDelay := 200 ; increase if saying missing instanceNumber in .minec
 global switchDelay := 85 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
-global moveWorldsDelay := 300000 ; moves your worlds every *this* ms
+global moveWorldsDelay := 60000 ; moves your worlds every *this* ms (1m by default)
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
@@ -405,4 +405,5 @@ return
     return
     *+9::
       SwitchInstance(9)
-    }
+    return
+  }
