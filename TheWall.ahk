@@ -22,6 +22,7 @@ global fullScreenDelay := 100 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global switchDelay := 85 ; increase if not switching windows
+global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global moveWorldsDelay := 300000 ; moves your worlds every *this* ms
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
@@ -35,11 +36,11 @@ global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
-global timeSinceMoved := A_TickCount
 
 UnsuspendAll()
 sleep, %restartDelay%
 GetAllPIDs()
+SetTitles()
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
@@ -53,8 +54,6 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
 }
-
-Run, updateTitles.ahk
 
 IfNotExist, %oldWorldsFolder%
   FileCreateDir %oldWorldsFolder%
@@ -71,9 +70,7 @@ CheckScripts:
   for i, rIdx in resetIdx {
     idleCheck := McDirectories[rIdx] . "idle.tmp"
     if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
-      pid := PIDs[rIdx]
-      WinSetTitle, ahk_pid %pid%, , Minecraft* - Instance %rIdx%
-      SuspendInstance(pid)
+      SuspendInstance(PIDs[rIdx])
       toRemove.Push(resetScriptTime[i])
     }
   }
@@ -244,9 +241,12 @@ SwitchInstance(idx)
 
 GetActiveInstanceNum() {
   WinGet, pid, PID, A
-  for i, tmppid in PIDs {
-    if (tmppid == pid)
-      return i
+  WinGetTitle, title, ahk_pid %pid%
+  if (InStr(title, " - ")) {
+    for i, tmppid in PIDs {
+      if (tmppid == pid)
+        return i
+    }
   }
 return -1
 }
@@ -281,7 +281,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %beforeFreezeDelay% %idleFile%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
     if (resetSounds)
       SoundPlay, reset.wav
     Critical, On
@@ -299,6 +299,12 @@ ResetInstance(idx) {
       WorldNumber += 1
       FileAppend, %WorldNumber%, ATTEMPTS.txt
     }
+  }
+}
+
+SetTitles() {
+  for i, pid in PIDs {
+    WinSetTitle, ahk_pid %pid%, , Minecraft* - Instance %i%
   }
 }
 

@@ -2,7 +2,12 @@
 SetKeyDelay, 0
 
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
-sleep, 3000
+sleep, 100
+while (True) {
+  WinGetTitle, title, ahk_pid %1%
+  if (InStr(title, " - "))
+    break
+}
 
 while (True) {
   numLines := 0
@@ -21,11 +26,11 @@ while (True) {
       }
     }
   }
-  if (saved)
+  if (saved || A_Index > %3%)
     break
 }
 sleep, 50
 ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
-sleep, %3%
-FileAppend,, %4%
+sleep, %4%
+FileAppend,, %5%
 ExitApp
