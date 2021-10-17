@@ -1,6 +1,7 @@
 ; A Multi-Instance macro for Minecraft ResetInstance
 ; A publicly avalable version of "The Wall" made by jojoe77777
 ; By Specnr
+; For Daily attempts, you will need to delete the "ATTEMPTS_DAY" txt file when you want to reset the counter
 ;
 #NoEnv
 #SingleInstance Force
@@ -24,7 +25,7 @@ global restartDelay := 200 ; increase if saying missing instanceNumber in .minec
 global switchDelay := 85 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
-global moveWorldsDelay := 60000 ; moves your worlds every *this* ms (1m by default)
+global moveWorldsDelay := 300000 ; moves your worlds every *this* ms
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
@@ -291,13 +292,20 @@ ResetInstance(idx) {
     ; Count Attempts
     if (countAttempts)
     {
-      FileRead, WorldNumber, ATTEMPTS.txt
+     FileRead, WorldNumber, ATTEMPTS.txt
       if (ErrorLevel)
         WorldNumber = 0
       else
         FileDelete, ATTEMPTS.txt
       WorldNumber += 1
       FileAppend, %WorldNumber%, ATTEMPTS.txt
+	FileRead, WorldNumber, ATTEMPTS_DAY.txt
+      if (ErrorLevel)
+        WorldNumber = 0
+      else
+        FileDelete, ATTEMPTS_DAY.txt
+      WorldNumber += 1
+      FileAppend, %WorldNumber%, ATTEMPTS_DAY.txt
     }
   }
 }
@@ -405,5 +413,4 @@ return
     return
     *+9::
       SwitchInstance(9)
-    return
-  }
+    }
