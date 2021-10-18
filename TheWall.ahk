@@ -36,6 +36,7 @@ global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
+global timeSinceMoved := A_TickCount
 
 UnsuspendAll()
 sleep, %restartDelay%
@@ -333,7 +334,7 @@ ResetAll() {
 }
 
 RAlt::Suspend ; Pause all macros
-LAlt:: ; Reload if macro locks up
+^LAlt:: ; Reload if macro locks up
   Reload
 return
 #IfWinActive, Minecraft
