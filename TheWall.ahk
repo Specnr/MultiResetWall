@@ -19,10 +19,9 @@ global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
 global beforeFreezeDelay := 400 ; increase if doesnt join world
-global fullScreenDelay := 100 ; increse if fullscreening issues
+global fullScreenDelay := 270 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
-global switchDelay := 85 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global moveWorldsDelay := 300000 ; moves your worlds every *this* ms
@@ -37,6 +36,7 @@ global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
+global timeSinceMoved := A_TickCount
 
 UnsuspendAll()
 sleep, %restartDelay%
@@ -54,6 +54,7 @@ for i, mcdir in McDirectories {
     newHeight := Floor(A_ScreenHeight / 2.5)
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
+  WinSet, AlwaysOnTop, Off, ahk_pid %pid%
 }
 
 IfNotExist, %oldWorldsFolder%
@@ -225,18 +226,18 @@ SwitchInstance(idx)
   if (idx <= instances) {
     pid := PIDs[idx]
     ResumeInstance(pid)
-    WinActivate, LiveSplit
-    Sleep, %switchDelay%
-    WinActivate, ahk_pid %pid%
+    WinMinimize, Fullscreen Projector
+    WinSet, AlwaysOnTop, On, ahk_pid %pid%
     send {Numpad%idx% down}
     sleep, %obsDelay%
     send {Numpad%idx% up}
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
-      send {F11}
+      ControlSend, ahk_parent, {Blind}{F11}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
+    send {LButton} ; Make sure the window is activated
   }
 }
 
@@ -255,7 +256,7 @@ return -1
 ExitWorld()
 {
   if (fullscreen) {
-    send, {F11}
+    send {F11}
     sleep, %fullScreenDelay%
   }
   if (idx := GetActiveInstanceNum()) > 0
@@ -266,6 +267,7 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
     ResetInstance(idx)
@@ -341,7 +343,7 @@ ResetAll() {
 }
 
 RAlt::Suspend ; Pause all macros
-LAlt:: ; Reload if macro locks up
+^LAlt:: ; Reload if macro locks up
   Reload
 return
 #IfWinActive, Minecraft
