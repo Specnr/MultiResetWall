@@ -23,8 +23,6 @@ global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
-global moveWorldsDelay := 60000 ; moves your worlds every *this* ms (1m by default)
-global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
@@ -35,7 +33,6 @@ global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
-global timeSinceMoved := A_TickCount
 
 UnsuspendAll()
 sleep, %restartDelay%
@@ -85,20 +82,6 @@ CheckScripts:
       }
       idx--
     }
-  }
-  if (A_TickCount - timeSinceMoved >= moveWorldsDelay) {
-    for idx, mcdir in McDirectories {
-      dir := mcdir . "saves\"
-      Loop, Files, %dir%*, D
-      {
-        If (InStr(A_LoopFileName, "New World") || InStr(A_LoopFileName, "Speedrun #")) {
-          tmp := A_NowUTC
-          FileMoveDir, %dir%%A_LoopFileName%, %dir%%A_LoopFileName%%tmp%Instance %idx%, R
-          FileMoveDir, %dir%%A_LoopFileName%%tmp%Instance %idx%, %oldWorldsFolder%%A_LoopFileName%%tmp%Instance %idx%
-        }
-      }
-    }
-    timeSinceMoved := A_TickCount
   }
 return
 
@@ -227,6 +210,7 @@ SwitchInstance(idx)
     ResumeInstance(pid)
     WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     send {Numpad%idx% down}
     sleep, %obsDelay%
     send {Numpad%idx% up}
@@ -266,7 +250,6 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
     ResetInstance(idx)
