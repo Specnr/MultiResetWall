@@ -1,8 +1,19 @@
 #NoEnv
-SetKeyDelay, 0
+SetKeyDelay, 10
 
+Sleep, 100
+ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %1%
+Sleep, 100
+ControlSend, ahk_parent, {Blind}{Shift down}{Tab 3}{Enter}{Tab}{Shift up}{Enter}{Tab}{Enter}{F3 down}n{F3 up}/, ahk_pid %1%
+Sleep, 100
+ControlSend, ahk_parent, {Blind}{Text}summon slime ~ ~ ~ {Size:100`,NoAI:1}, ahk_pid %1% ;size can be adjusted depending on your pc
+ControlSend, ahk_parent, {Enter}/, ahk_pid %1%
+Sleep, 400 ; these later delays can be adjusted depending on your pc
+ControlSend, ahk_parent, {Blind}{Text}spectate @e[type=slime`,sort=nearest`,limit=1], ahk_pid %1%
+ControlSend, ahk_parent, {Blind}{Enter}{Esc}, ahk_pid %1%
+Sleep, 500
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
-sleep, 100
+Sleep, 100
 while (True) {
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
