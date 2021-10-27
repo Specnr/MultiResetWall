@@ -12,12 +12,13 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
+global instanceFreezing := True ; Set to False to reduce crashing, but strongly increase lag
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
-global beforeFreezeDelay := 400 ; increase if doesnt join world
+global beforeFreezeDelay := 500 ; increase if doesnt join world
 global fullScreenDelay := 270 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
@@ -34,8 +35,10 @@ global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 
-UnsuspendAll()
-sleep, %restartDelay%
+if (instanceFreezing) {
+  UnsuspendAll()
+  sleep, %restartDelay%
+}
 GetAllPIDs()
 SetTitles()
 
@@ -64,23 +67,25 @@ return
 
 CheckScripts:
   Critical
-  toRemove := []
-  for i, rIdx in resetIdx {
-    idleCheck := McDirectories[rIdx] . "idle.tmp"
-    if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
-      SuspendInstance(PIDs[rIdx])
-      toRemove.Push(resetScriptTime[i])
-    }
-  }
-  for i, x in toRemove {
-    idx := resetScriptTime.Length()
-    while (idx) {
-      resetTime := resetScriptTime[idx]
-      if (x == resetTime) {
-        resetScriptTime.RemoveAt(idx)
-        resetIdx.RemoveAt(idx)
+  if (instanceFreezing) {
+    toRemove := []
+    for i, rIdx in resetIdx {
+      idleCheck := McDirectories[rIdx] . "idle.tmp"
+      if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
+        SuspendInstance(PIDs[rIdx])
+        toRemove.Push(resetScriptTime[i])
       }
-      idx--
+    }
+    for i, x in toRemove {
+      idx := resetScriptTime.Length()
+      while (idx) {
+        resetTime := resetScriptTime[idx]
+        if (x == resetTime) {
+          resetScriptTime.RemoveAt(idx)
+          resetIdx.RemoveAt(idx)
+        }
+        idx--
+      }
     }
   }
 return
@@ -207,7 +212,8 @@ SwitchInstance(idx)
 {
   if (idx <= instances) {
     pid := PIDs[idx]
-    ResumeInstance(pid)
+    if (instanceFreezing)
+      ResumeInstance(pid)
     WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -260,13 +266,18 @@ ResetInstance(idx) {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
     pid := PIDs[idx]
-    ResumeInstance(pid)
+    if (instanceFreezing) {
+      bfd := beforeFreezeDelay
+      ResumeInstance(pid)
+    } else {
+      bfd := 0
+    }
     ControlSend, ahk_parent, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile%
     if (resetSounds)
       SoundPlay, reset.wav
     Critical, On
