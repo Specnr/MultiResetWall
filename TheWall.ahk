@@ -18,6 +18,7 @@ global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
+global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
 global fullScreenDelay := 270 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
@@ -149,7 +150,7 @@ return rawPIDs.MaxIndex()
 GetInstanceNumberFromMcDir(mcdir) {
   numFile := mcdir . "instanceNumber.txt"
   num := -1
-  if (mcdir == "" || mcdir == ".minecraft") ; Misread something
+  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
     Reload
   if (!FileExist(numFile))
     MsgBox, Missing instanceNumber.txt in %mcdir%
@@ -203,6 +204,7 @@ SuspendInstance(pid) {
 ResumeInstance(pid) {
   hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
   If (hProcess) {
+    sleep, %resumeDelay%
     DllCall("ntdll.dll\NtResumeProcess", "Int", hProcess)
     DllCall("CloseHandle", "Int", hProcess)
   }
