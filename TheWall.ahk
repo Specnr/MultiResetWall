@@ -10,21 +10,21 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Variables to configure
-global rows := 2 ; Number of row on the wall scene
-global cols := 4 ; Number of columns on the wall scene
+global rows := 3 ; Number of row on the wall scene
+global cols := 3 ; Number of columns on the wall scene
+global instanceFreezing := True ; Set to False to reduce crashing, but strongly increase lag
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
-global beforeFreezeDelay := 400 ; increase if doesnt join world
-global fullScreenDelay := 100 ; increse if fullscreening issues
+global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
+global beforeFreezeDelay := 500 ; increase if doesnt join world
+global fullScreenDelay := 270 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
-global switchDelay := 85 ; increase if not switching windows
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
-global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Preset settings variables to configure
 ; Some sensitivity values may not work because of how Minecrafts settings bars work with arrow keys
@@ -36,20 +36,22 @@ global mouseSensitivity := 50
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
-global SavesDirectories := []
+global McDirectories := []
 global instances := 0
 global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 
-UnsuspendAll()
-sleep, %restartDelay%
+if (instanceFreezing) {
+  UnsuspendAll()
+  sleep, %restartDelay%
+}
 GetAllPIDs()
 SetTitles()
 
-for i, saves in SavesDirectories {
-  idle := saves . "idle.tmp"
+for i, mcdir in McDirectories {
+  idle := mcdir . "idle.tmp"
   if (!FileExist(idle))
     FileAppend,,%idle%
   if (wideResets) {
@@ -59,6 +61,7 @@ for i, saves in SavesDirectories {
     newHeight := Floor(A_ScreenHeight / 2.5)
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
+  WinSet, AlwaysOnTop, Off, ahk_pid %pid%
 }
 
 IfNotExist, %oldWorldsFolder%
@@ -72,19 +75,24 @@ return
 
 CheckScripts:
   Critical
-  toRemove := []
-  for i, rIdx in resetIdx {
-    idleCheck := SavesDirectories[rIdx] . "idle.tmp"
-    if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
-      SuspendInstance(PIDs[rIdx])
-      toRemove.Push(resetScriptTime[i])
+  if (instanceFreezing) {
+    toRemove := []
+    for i, rIdx in resetIdx {
+      idleCheck := McDirectories[rIdx] . "idle.tmp"
+      if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
+        SuspendInstance(PIDs[rIdx])
+        toRemove.Push(resetScriptTime[i])
+      }
     }
-  }
-  for i, x in toRemove {
-    for j, currTime in resetScriptTime {
-      if (x == currTime) {
-        resetScriptTime.RemoveAt(j)
-        resetIdx.RemoveAt(j)
+    for i, x in toRemove {
+      idx := resetScriptTime.Length()
+      while (idx) {
+        resetTime := resetScriptTime[idx]
+        if (x == resetTime) {
+          resetScriptTime.RemoveAt(idx)
+          resetIdx.RemoveAt(idx)
+        }
+        idx--
       }
     }
   }
@@ -113,7 +121,7 @@ RunHide(Command)
 Return Result
 }
 
-GetSavesDir(pid)
+GetMcDir(pid)
 {
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
@@ -146,13 +154,13 @@ GetInstanceTotal() {
 return rawPIDs.MaxIndex()
 }
 
-GetInstanceNumberFromSaves(saves) {
-  numFile := saves . "instanceNumber.txt"
+GetInstanceNumberFromMcDir(mcdir) {
+  numFile := mcdir . "instanceNumber.txt"
   num := -1
-  if (saves == "" || saves == ".minecraft") ; Misread something
+  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
     Reload
   if (!FileExist(numFile))
-    MsgBox, Missing instanceNumber.txt in %saves%
+    MsgBox, Missing instanceNumber.txt in %mcdir%
   else
     FileRead, num, %numFile%
 return num
@@ -160,16 +168,16 @@ return num
 
 GetAllPIDs()
 {
-  global SavesDirectories
+  global McDirectories
   global PIDs
   global instances := GetInstanceTotal()
-  ; Generate saves and order PIDs
+  ; Generate mcdir and order PIDs
   Loop, %instances% {
-    saves := GetSavesDir(rawPIDs[A_Index])
-    if (num := GetInstanceNumberFromSaves(saves)) == -1
+    mcdir := GetMcDir(rawPIDs[A_Index])
+    if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
     PIDS[num] := rawPIDs[A_Index]
-    SavesDirectories[num] := saves
+    McDirectories[num] := mcdir
   }
 }
 
@@ -203,33 +211,31 @@ SuspendInstance(pid) {
 ResumeInstance(pid) {
   hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
   If (hProcess) {
+    sleep, %resumeDelay%
     DllCall("ntdll.dll\NtResumeProcess", "Int", hProcess)
     DllCall("CloseHandle", "Int", hProcess)
   }
-}
-
-IsProcessSuspended(pid) {
-  WinGetTitle, title, ahk_pid %pid%
-return InStr(title, "Not Responding")
 }
 
 SwitchInstance(idx)
 {
   if (idx <= instances) {
     pid := PIDs[idx]
-    ResumeInstance(pid)
-    WinActivate, LiveSplit
-    Sleep, %switchDelay%
-    WinActivate, ahk_pid %pid%
+    if (instanceFreezing)
+      ResumeInstance(pid)
+    WinMinimize, Fullscreen Projector
+    WinSet, AlwaysOnTop, On, ahk_pid %pid%
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     send {Numpad%idx% down}
     sleep, %obsDelay%
     send {Numpad%idx% up}
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
-      send {F11}
+      ControlSend, ahk_parent, {Blind}{F11}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
+    send {LButton} ; Make sure the window is activated
   }
 }
 
@@ -248,7 +254,7 @@ return -1
 ExitWorld()
 {
   if (fullscreen) {
-    send, {F11}
+    send {F11}
     sleep, %fullScreenDelay%
   }
   if (idx := GetActiveInstanceNum()) > 0
@@ -268,30 +274,27 @@ ExitWorld()
 }
 
 ResetInstance(idx) {
-  idleFile := SavesDirectories[idx] . "idle.tmp"
+  idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
     pid := PIDs[idx]
-    ResumeInstance(pid)
+    if (instanceFreezing) {
+      bfd := beforeFreezeDelay
+      ResumeInstance(pid)
+    } else {
+      bfd := 0
+    }
     ControlSend, ahk_parent, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
-    logFile := SavesDirectories[idx] . "logs\latest.log"
+    logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile%
     if (resetSounds)
       SoundPlay, reset.wav
+    Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
-    ; Move Worlds
-    dir := SavesDirectories[idx] . "saves\"
-    Loop, Files, %dir%*, D
-    {
-      If (InStr(A_LoopFileName, "New World") || InStr(A_LoopFileName, "Speedrun #")) {
-        tmp := A_NowUTC
-        FileMoveDir, %dir%%A_LoopFileName%, %dir%%A_LoopFileName%%tmp%Instance %idx%, R
-        FileMoveDir, %dir%%A_LoopFileName%%tmp%Instance %idx%, %oldWorldsFolder%%A_LoopFileName%%tmp%Instance %idx%
-      }
-    }
+    Critical, Off
     ; Count Attempts
     if (countAttempts)
     {
@@ -362,7 +365,7 @@ ResetSettings(idx)
 }
 
 RAlt::Suspend ; Pause all macros
-LAlt:: ; Reload if macro locks up
+^LAlt:: ; Reload if macro locks up
   Reload
 return
 #IfWinActive, Minecraft
@@ -434,4 +437,5 @@ return
     return
     *+9::
       SwitchInstance(9)
-    }
+    return
+  }
