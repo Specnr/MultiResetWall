@@ -27,11 +27,11 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global oldWorldsFolder := "C:\MultiInstanceMC\oldWorlds\" ; Old Worlds folder, make it whatever you want
 
 ; Preset settings variables to configure
+; If you want to reset a certain setting you can set it here. (Leaving it blank or as 0 will not affect your settings)
 ; Some sensitivity values may not work because of how Minecrafts settings bars work with arrow keys
-global resetSettings := True
-global renderDistance := 18
-global FOV := 90
-global mouseSensitivity := 50
+global renderDistance :=
+global FOV :=
+global mouseSensitivity :=
 
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
@@ -261,8 +261,7 @@ ExitWorld()
     }
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
-    if (resetSettings)
-      ResetSettings(idx)
+    ResetSettings(idx)
     ResetInstance(idx)
   }
 }
@@ -340,25 +339,33 @@ ResetAll() {
 ResetSettings(idx)
 {
   pid := PIDs[idx]
+  resettingSettings := True
   ; Find required presses to set FOV, sensitivity, and render distance
-  FOVPresses := ceil((FOV-30)*1.7611)
-  SensPresses := ceil(mouseSensitivity/1.4)
-  RDPresses := renderDistance-2
-  ; Reset then preset render distance to custom value with f3 shortcuts
-  ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
-  ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
-  ; Tab to FOV
-  ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
-  ; Reset then preset FOV to custom value with arrow keys
-  ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
-  ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}, ahk_pid %pid%
-  ; Tab to mouse sensitivity
-  ControlSend, ahk_parent, {Blind}{Tab 6}{enter}{tab}{enter}{tab}, ahk_pid %pid%
-  ; Reset then preset mouse sensitivity to custom value with arrow keys
-  ControlSend, ahk_parent, {Blind}{Left 146}, ahk_pid %pid%
-  ControlSend, ahk_parent, {Blind}{Right %SensPresses%}, ahk_pid %pid%
-  ; Escape
-  ControlSend, ahk_parent, {Blind}{Esc 3}, ahk_pid %pid%
+  if (renderDistance)
+  {
+    RDPresses := renderDistance-2
+    ; Reset then preset render distance to custom value with f3 shortcuts
+    ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
+  }
+  if (FOV)
+  {
+    FOVPresses := ceil((FOV-30)*1.7611)
+    ; Tab to FOV
+    ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
+    ; Reset then preset FOV to custom value with arrow keys
+    ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
+  }
+  if (mouseSensitivity)
+  {
+    SensPresses := ceil(mouseSensitivity/1.4)
+    ; Tab to mouse sensitivity
+    ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
+    ; Reset then preset mouse sensitivity to custom value with arrow keys
+    ControlSend, ahk_parent, {Blind}{Left 146}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
+  }
 }
 
 RAlt::Suspend ; Pause all macros
