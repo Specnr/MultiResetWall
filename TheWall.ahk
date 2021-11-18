@@ -342,7 +342,6 @@ ResetAll() {
 ResetSettings(idx)
 {
   pid := PIDs[idx]
-  resettingSettings := True
   ; Find required presses to set FOV, sensitivity, and render distance
   if (renderDistance)
   {
