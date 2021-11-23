@@ -21,7 +21,6 @@ global countAttempts := True
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
 global fullScreenDelay := 270 ; increse if fullscreening issues
-global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
@@ -219,9 +218,7 @@ SwitchInstance(idx)
     WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    send {Numpad%idx% down}
-    sleep, %obsDelay%
-    send {Numpad%idx% up}
+    ControlSend,, {Numpad%idx%}, ahk_exe obs64.exe
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
@@ -308,9 +305,7 @@ SetTitles() {
 
 ToWall() {
   WinActivate, Fullscreen Projector
-  send {F12 down}
-  sleep, %obsDelay%
-  send {F12 up}
+  ControlSend,, {F12}, ahk_exe obs64.exe
 }
 
 ; Focus hovered instance and background reset all other instances
