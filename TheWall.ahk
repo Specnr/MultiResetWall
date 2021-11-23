@@ -12,14 +12,15 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
+global instanceFreezing := True ; Set to False to reduce crashing, but strongly increase lag
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
-global beforeFreezeDelay := 400 ; increase if doesnt join world
+global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
+global beforeFreezeDelay := 500 ; increase if doesnt join world
 global fullScreenDelay := 270 ; increse if fullscreening issues
-global obsDelay := 100 ; increase if not changing scenes in obs
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
@@ -34,8 +35,10 @@ global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 
-UnsuspendAll()
-sleep, %restartDelay%
+if (instanceFreezing) {
+  UnsuspendAll()
+  sleep, %restartDelay%
+}
 GetAllPIDs()
 SetTitles()
 
@@ -64,23 +67,25 @@ return
 
 CheckScripts:
   Critical
-  toRemove := []
-  for i, rIdx in resetIdx {
-    idleCheck := McDirectories[rIdx] . "idle.tmp"
-    if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
-      SuspendInstance(PIDs[rIdx])
-      toRemove.Push(resetScriptTime[i])
-    }
-  }
-  for i, x in toRemove {
-    idx := resetScriptTime.Length()
-    while (idx) {
-      resetTime := resetScriptTime[idx]
-      if (x == resetTime) {
-        resetScriptTime.RemoveAt(idx)
-        resetIdx.RemoveAt(idx)
+  if (instanceFreezing) {
+    toRemove := []
+    for i, rIdx in resetIdx {
+      idleCheck := McDirectories[rIdx] . "idle.tmp"
+      if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
+        SuspendInstance(PIDs[rIdx])
+        toRemove.Push(resetScriptTime[i])
       }
-      idx--
+    }
+    for i, x in toRemove {
+      idx := resetScriptTime.Length()
+      while (idx) {
+        resetTime := resetScriptTime[idx]
+        if (x == resetTime) {
+          resetScriptTime.RemoveAt(idx)
+          resetIdx.RemoveAt(idx)
+        }
+        idx--
+      }
     }
   }
 return
@@ -144,7 +149,7 @@ return rawPIDs.MaxIndex()
 GetInstanceNumberFromMcDir(mcdir) {
   numFile := mcdir . "instanceNumber.txt"
   num := -1
-  if (mcdir == "" || mcdir == ".minecraft") ; Misread something
+  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
     Reload
   if (!FileExist(numFile))
     MsgBox, Missing instanceNumber.txt in %mcdir%
@@ -198,6 +203,7 @@ SuspendInstance(pid) {
 ResumeInstance(pid) {
   hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
   If (hProcess) {
+    sleep, %resumeDelay%
     DllCall("ntdll.dll\NtResumeProcess", "Int", hProcess)
     DllCall("CloseHandle", "Int", hProcess)
   }
@@ -207,13 +213,12 @@ SwitchInstance(idx)
 {
   if (idx <= instances) {
     pid := PIDs[idx]
-    ResumeInstance(pid)
+    if (instanceFreezing)
+      ResumeInstance(pid)
     WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    send {Numpad%idx% down}
-    sleep, %obsDelay%
-    send {Numpad%idx% up}
+    ControlSend,, {Numpad%idx%}, ahk_exe obs64.exe
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
@@ -260,13 +265,18 @@ ResetInstance(idx) {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
     pid := PIDs[idx]
-    ResumeInstance(pid)
+    if (instanceFreezing) {
+      bfd := beforeFreezeDelay
+      ResumeInstance(pid)
+    } else {
+      bfd := 0
+    }
     ControlSend, ahk_parent, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %beforeFreezeDelay% %idleFile%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile%
     if (resetSounds)
       SoundPlay, reset.wav
     Critical, On
@@ -302,9 +312,7 @@ SetTitles() {
 
 ToWall() {
   WinActivate, Fullscreen Projector
-  send {F12 down}
-  sleep, %obsDelay%
-  send {F12 up}
+  ControlSend,, {F12}, ahk_exe obs64.exe
 }
 
 ; Focus hovered instance and background reset all other instances
