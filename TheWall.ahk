@@ -286,7 +286,7 @@ ResetInstance(idx) {
     ; Count Attempts
     if (countAttempts)
     {
-           FileRead, WorldNumber, ATTEMPTS.txt
+       FileRead, WorldNumber, ATTEMPTS.txt
       if (ErrorLevel)
         WorldNumber = 0
       else
