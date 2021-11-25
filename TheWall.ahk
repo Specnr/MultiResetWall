@@ -24,6 +24,9 @@ global fullScreenDelay := 270 ; increse if fullscreening issues
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
+global obsDelay := 100 ; increase if not changing scenes in obs
+; Dont worry about this for now
+global bgInstanceAffinityPercentage := 70 ; leave at 100 for default, lowering will give less lag while in a world during world gen
 
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
@@ -34,7 +37,9 @@ global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
+global threadCount := 0
 
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
 if (instanceFreezing) {
   UnsuspendAll()
   sleep, %restartDelay%
@@ -173,6 +178,13 @@ GetAllPIDs()
   }
 }
 
+SetAffinity(pid, toSet)
+{
+  h:=DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", pid)
+  DllCall( "SetProcessAffinityMask", Int, h, Int, toSet)
+  DllCall("CloseHandle", "Int", h)
+}
+
 FreeMemory(pid)
 {
   h:=DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", pid)
@@ -218,7 +230,10 @@ SwitchInstance(idx)
     WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    ControlSend,, {Numpad%idx%}, ahk_exe obs64.exe
+    send {Numpad%idx% down}
+    sleep, %obsDelay%
+    send {Numpad%idx% up}
+    WinMinimize, Fullscreen Projector
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
@@ -305,7 +320,9 @@ SetTitles() {
 
 ToWall() {
   WinActivate, Fullscreen Projector
-  ControlSend,, {F12}, ahk_exe obs64.exe
+  send {F12 down}
+  sleep, %obsDelay%
+  send {F12 up}
 }
 
 ; Focus hovered instance and background reset all other instances
