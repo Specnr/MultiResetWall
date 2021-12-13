@@ -224,15 +224,16 @@ ResumeInstance(pid) {
 SwitchInstance(idx)
 {
   if (idx <= instances) {
+    locked[idx] := false
     pid := PIDs[idx]
     if (instanceFreezing)
       ResumeInstance(pid)
-    WinMinimize, Fullscreen Projector
-    WinSet, AlwaysOnTop, On, ahk_pid %pid%
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     send {Numpad%idx% down}
     sleep, %obsDelay%
     send {Numpad%idx% up}
+    WinMinimize, Fullscreen Projector
+    WinSet, AlwaysOnTop, On, ahk_pid %pid%
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
     if (wideResets)
       WinMaximize, ahk_pid %pid%
@@ -279,6 +280,7 @@ ExitWorld()
 ResetInstance(idx) {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
+    locked[idx] := false
     pid := PIDs[idx]
     if (instanceFreezing) {
       bfd := beforeFreezeDelay
@@ -329,7 +331,7 @@ ToWall() {
 FocusReset(focusInstance) {
   SwitchInstance(focusInstance)
   loop, %instances% {
-    if (A_Index != focusInstance) {
+    if (A_Index != focusInstance && !locked[idx]) {
       ResetInstance(A_Index)
     }
   }
@@ -338,8 +340,14 @@ FocusReset(focusInstance) {
 ; Reset all instances
 ResetAll() {
   loop, %instances% {
-    ResetInstance(A_Index)
+    if (!locked[A_Index])
+      ResetInstance(A_Index)
   }
+}
+
+LockInstance(idx) {
+  locked[idx] := true
+  SoundPlay, lock.wav
 }
 
 RAlt::Suspend ; Pause all macros
@@ -358,6 +366,7 @@ return
     *R::SwitchInstance(MousePosToInstNumber())
     *F::FocusReset(MousePosToInstNumber())
     *T::ResetAll()
+    +LButton::LockInstance(MousePosToInstNumber()) ; lock an instance so the above "blanket reset" functions don't reset it
 
     ; Reset keys (1-9)
     *1::
