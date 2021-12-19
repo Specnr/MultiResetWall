@@ -25,8 +25,12 @@ global restartDelay := 200 ; increase if saying missing instanceNumber in .minec
 global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
-; Dont worry about this for now
-global bgInstanceAffinityPercentage := 70 ; leave at 100 for default, lowering will give less lag while in a world during world gen
+
+; Leave blank if you dont want to settings reset
+; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
+global renderDistance := 18
+global FOV := 111 ; For quake pro put 111
+global mouseSensitivity := 35
 
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
@@ -270,8 +274,9 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
-    ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ToWall()
+    ResetSettings(idx, renderDistance, FOV, mouseSensitivity)
+    ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
   }
 }
@@ -308,7 +313,7 @@ ResetInstance(idx) {
         FileDelete, ATTEMPTS.txt
       WorldNumber += 1
       FileAppend, %WorldNumber%, ATTEMPTS.txt
-	FileRead, WorldNumber, ATTEMPTS_DAY.txt
+      FileRead, WorldNumber, ATTEMPTS_DAY.txt
       if (ErrorLevel)
         WorldNumber = 0
       else
@@ -346,6 +351,38 @@ FocusReset(focusInstance) {
 ResetAll() {
   loop, %instances% {
     ResetInstance(A_Index)
+  }
+}
+
+; Reset your settings to preset settings preferences
+ResetSettings(idx, rd, fv, sens)
+{
+  pid := PIDs[idx]
+  ; Find required presses to set FOV, sensitivity, and render distance
+  if (rd)
+  {
+    RDPresses := rd-2
+    ; Reset then preset render distance to custom value with f3 shortcuts
+    ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
+  }
+  if (fv)
+  {
+    FOVPresses := ceil((fv-30)*1.7611)
+    ; Tab to FOV
+    ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
+    ; Reset then preset FOV to custom value with arrow keys
+    ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
+  }
+  if (sens)
+  {
+    SensPresses := ceil(sens/1.4)
+    ; Tab to mouse sensitivity
+    ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
+    ; Reset then preset mouse sensitivity to custom value with arrow keys
+    ControlSend, ahk_parent, {Blind}{Left 146}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
   }
 }
 
