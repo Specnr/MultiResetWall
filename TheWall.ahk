@@ -308,6 +308,13 @@ ResetInstance(idx) {
         FileDelete, ATTEMPTS.txt
       WorldNumber += 1
       FileAppend, %WorldNumber%, ATTEMPTS.txt
+	FileRead, WorldNumber, ATTEMPTS_DAY.txt
+      if (ErrorLevel)
+        WorldNumber = 0
+      else
+        FileDelete, ATTEMPTS_DAY.txt
+      WorldNumber += 1
+      FileAppend, %WorldNumber%, ATTEMPTS_DAY.txt
     }
   }
 }
