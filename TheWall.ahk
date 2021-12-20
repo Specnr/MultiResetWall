@@ -1,7 +1,7 @@
 ; A Multi-Instance macro for Minecraft ResetInstance
 ; A publicly avalable version of "The Wall" made by jojoe77777
 ; By Specnr
-; v0.2.0
+; v0.2.1
 ;
 #NoEnv
 #SingleInstance Force
@@ -410,7 +410,7 @@ ResetSettings(pid, rd, justRD:=False)
   {
     RDPresses := rd-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend, ahk_parent, {Blind}{RShift down}{F3 down}{F 32}{F3 up}{RShift up}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
   }
   if (FOV && !justRD)

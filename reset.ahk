@@ -1,9 +1,9 @@
 #NoEnv
 SetKeyDelay, 0
-; v0.2.0
+; v0.2.1
 
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
-sleep, 100
+sleep, 1000
 while (True) {
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
