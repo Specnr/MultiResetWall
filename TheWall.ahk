@@ -13,6 +13,7 @@ SetTitleMatchMode, 2
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
+global affinity := False ; A funky performance addition, enable for minor performance boost
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
@@ -36,6 +37,7 @@ global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
 
 ; Don't configure these
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
 global McDirectories := []
@@ -45,6 +47,8 @@ global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 global threadCount := 0
+global highBitMask := (2 ** threadCount) - 1
+global lowBitMask := (2 ** Ceil(threadCount / 2)) - 1
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 if (performanceMethod == "F") {
@@ -66,6 +70,12 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+}
+
+if (affinity) {
+  for i, tmppid in PIDs {
+    SetAffinity(tmppid, highBitMask)
+  }
 }
 
 IfNotExist, %oldWorldsFolder%
@@ -232,6 +242,13 @@ SwitchInstance(idx)
 {
   if (idx <= instances) {
     pid := PIDs[idx]
+    if (affinity) {
+      for i, tmppid in PIDs {
+        if (tmppid != pid){
+          SetAffinity(tmppid, lowBitMask)
+        }
+      }
+    }
     if (performanceMethod == "F")
       ResumeInstance(pid)
     else if (performanceMethod == "S") {
@@ -289,6 +306,11 @@ ExitWorld()
       ResetSettings(pid, renderDistance)
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
+    if (affinity) {
+      for i, tmppid in PIDs {
+        SetAffinity(tmppid, highBitMask)
+      }
+    }
   }
 }
 
