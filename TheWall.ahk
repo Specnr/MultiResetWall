@@ -14,12 +14,15 @@ SetTitleMatchMode, 2
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
-global affinity := False ; A funky performance addition, enable for minor performance boost
+global affinity := True ; A funky performance addition, enable for minor performance boost
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
+global lockSounds := True
 global countAttempts := True
+
+; Advanced settings
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global maxLoops := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
@@ -29,8 +32,9 @@ global restartDelay := 200 ; increase if saying missing instanceNumber in .minec
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
+global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 
-; Leave as 0 if you dont want to settings reset
+; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
 global FOV := 111 ; For quake pro put 111
@@ -48,8 +52,9 @@ global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 global threadCount := 0
+global locked := []
 global highBitMask := (2 ** threadCount) - 1
-global lowBitMask := (2 ** Ceil(threadCount / 2)) - 1
+global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 if (performanceMethod == "F") {
@@ -377,7 +382,7 @@ ToWall() {
 FocusReset(focusInstance) {
   SwitchInstance(focusInstance)
   loop, %instances% {
-    if (A_Index != focusInstance && !locked[idx]) {
+    if (A_Index != focusInstance && !locked[A_Index]) {
       ResetInstance(A_Index)
     }
   }
@@ -393,7 +398,8 @@ ResetAll() {
 
 LockInstance(idx) {
   locked[idx] := true
-  SoundPlay, lock.wav
+  if (lockSounds)
+    SoundPlay, lock.wav
 }
 
 ; Reset your settings to preset settings preferences
