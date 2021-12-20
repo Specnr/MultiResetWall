@@ -1,6 +1,7 @@
 ; A Multi-Instance macro for Minecraft ResetInstance
 ; A publicly avalable version of "The Wall" made by jojoe77777
 ; By Specnr
+; v0.2.0
 ;
 #NoEnv
 #SingleInstance Force
@@ -20,7 +21,7 @@ global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
-global maxLoops := 20 ; increase if instance isnt resetting (or have to press reset twice)
+global maxLoops := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
 global beforePauseDelay := 500 ; basically the delay before dynamic FPS does its thing
 global fullScreenDelay := 270 ; increse if fullscreening issues
@@ -255,7 +256,7 @@ SwitchInstance(idx)
       ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
       sleep, %settingsDelay%
       ResetSettings(pid, renderDistance, True)
-      ControlSend, ahk_parent, {Blind}{F3 Down}{D}{Esc}{F3 Up}, ahk_pid %pid%
+      ControlSend, ahk_parent, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%

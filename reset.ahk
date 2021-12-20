@@ -1,5 +1,6 @@
 #NoEnv
 SetKeyDelay, 0
+; v0.2.0
 
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
 sleep, 100
