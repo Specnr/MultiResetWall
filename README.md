@@ -24,6 +24,7 @@ On the Fullscreen projector, you have a few hotkeys:
 - R: Will play the instance which your mouse is hovering over
 - F: Will play the instance which your mouse is hovering over, and reset all of the other ones
 - T: Will reset all instances
+- Shift + L Mouse button: Lock instance so other "blanket reset" functions skip over it
 
 No longer moves worlds, it slows down the macro a lot, use [this world moving macro](https://gist.github.com/Specnr/f7a5450d932a1277fdcd6c141ad7bf6a).
 
