@@ -228,13 +228,13 @@ SwitchInstance(idx)
     pid := PIDs[idx]
     if (instanceFreezing)
       ResumeInstance(pid)
-    send {Numpad%idx% down}
-    sleep, %obsDelay%
-    send {Numpad%idx% up}
     WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    WinMinimize, Fullscreen Projector
+    send {Numpad%idx% down}
+    sleep, %obsDelay%
+    send {Numpad%idx% up}
+    WinMinimize, Fullscreen Projecto
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
