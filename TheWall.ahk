@@ -12,25 +12,28 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
-global instanceFreezing := True ; Set to False to reduce crashing, but strongly increase lag
+global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
 global resetSounds := True ; :)
 global countAttempts := True
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
+global maxLoops := 20 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
+global beforePauseDelay := 500 ; basically the delay before dynamic FPS does its thing
 global fullScreenDelay := 270 ; increse if fullscreening issues
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
-global maxLoops := 20 ; increase if macro regularly locks up
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
+global settingsDelay := 10 ; increase if settings arent changing
 
-; Leave blank if you dont want to settings reset
+; Leave as 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
 global FOV := 111 ; For quake pro put 111
 global mouseSensitivity := 35
+global lowRender := 5 ; For settings change performance method
 
 ; Don't configure these
 global instWidth := Floor(A_ScreenWidth / cols)
@@ -44,7 +47,7 @@ global resetIdx := []
 global threadCount := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-if (instanceFreezing) {
+if (performanceMethod == "F") {
   UnsuspendAll()
   sleep, %restartDelay%
 }
@@ -76,7 +79,7 @@ return
 
 CheckScripts:
   Critical
-  if (instanceFreezing) {
+  if (performanceMethod == "F") {
     toRemove := []
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
@@ -229,9 +232,14 @@ SwitchInstance(idx)
 {
   if (idx <= instances) {
     pid := PIDs[idx]
-    if (instanceFreezing)
+    if (performanceMethod == "F")
       ResumeInstance(pid)
-    WinMinimize, Fullscreen Projector
+    else if (performanceMethod == "S") {
+      ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
+      sleep, %settingsDelay%
+      ResetSettings(pid, renderDistance, True)
+      ControlSend, ahk_parent, {Blind}{F3 Down}{D}{Esc}{F3 Up}, ahk_pid %pid%
+    }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     send {Numpad%idx% down}
@@ -275,7 +283,10 @@ ExitWorld()
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
     ToWall()
-    ResetSettings(idx, renderDistance, FOV, mouseSensitivity)
+    if (performanceMethod == "S")
+      ResetSettings(pid, 5, False)
+    else
+      ResetSettings(pid, renderDistance)
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
   }
@@ -285,7 +296,7 @@ ResetInstance(idx) {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
     pid := PIDs[idx]
-    if (instanceFreezing) {
+    if (performanceMethod == "F") {
       bfd := beforeFreezeDelay
       ResumeInstance(pid)
     } else {
@@ -296,7 +307,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay%
     if (resetSounds)
       SoundPlay, reset.wav
     Critical, On
@@ -355,29 +366,28 @@ ResetAll() {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(idx, rd, fv, sens)
+ResetSettings(pid, rd, justRD:=False)
 {
-  pid := PIDs[idx]
   ; Find required presses to set FOV, sensitivity, and render distance
   if (rd)
   {
     RDPresses := rd-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{RShift down}{F3 down}{F 32}{F3 up}{RShift up}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
   }
-  if (fv)
+  if (FOV && !justRD)
   {
-    FOVPresses := ceil((fv-30)*1.7611)
+    FOVPresses := ceil((FOV-30)*1.7611)
     ; Tab to FOV
     ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
     ; Reset then preset FOV to custom value with arrow keys
     ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
   }
-  if (sens)
+  if (mouseSensitivity && !justRD)
   {
-    SensPresses := ceil(sens/1.4)
+    SensPresses := ceil(mouseSensitivity/1.4)
     ; Tab to mouse sensitivity
     ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
     ; Reset then preset mouse sensitivity to custom value with arrow keys

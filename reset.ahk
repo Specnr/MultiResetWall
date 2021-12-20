@@ -29,7 +29,7 @@ while (True) {
   if (saved || A_Index > %3%)
     break
 }
-sleep, 50
+sleep, %6%
 ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
 sleep, %4%
 FileAppend,, %5%
