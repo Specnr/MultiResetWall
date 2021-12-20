@@ -100,7 +100,7 @@ CheckScripts:
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
       if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
-ifWinActive, Minecraft
+ifWinNotActive, Fullscreen Projector
   {
         SuspendInstance(PIDs[rIdx])
   }
