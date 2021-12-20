@@ -1,7 +1,7 @@
 ; A Multi-Instance macro for Minecraft ResetInstance
 ; A publicly avalable version of "The Wall" made by jojoe77777
 ; By Specnr
-; v0.3.0
+; v0.2.1
 ;
 #NoEnv
 #SingleInstance Force
@@ -11,9 +11,9 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Variables to configure
-global rows := 3 ; Number of row on the wall scene
+global rows := 2 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
-global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
+global performanceMethod := "F" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
 global wideResets := True
 global fullscreen := False
@@ -23,13 +23,13 @@ global lockSounds := True
 global countAttempts := True
 
 ; Advanced settings
-global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
-global maxLoops := 50 ; increase if instance isnt resetting (or have to press reset twice)
-global beforeFreezeDelay := 500 ; increase if doesnt join world
+global resumeDelay := 450 ; increase if instance isnt resetting (or have to press reset twice)
+global maxLoops := 100 ; increase if instance isnt resetting (or have to press reset twice)
+global beforeFreezeDelay := 1000 ; increase if doesnt join world
 global beforePauseDelay := 500 ; basically the delay before dynamic FPS does its thing
 global fullScreenDelay := 270 ; increse if fullscreening issues
-global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
-global scriptBootDelay := 6000 ; increase if instance freezes before world gen
+global restartDelay := 600 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
+global scriptBootDelay := 10000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
@@ -37,8 +37,8 @@ global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
-global FOV := 111 ; For quake pro put 111
-global mouseSensitivity := 35
+global FOV := 80 ; For quake pro put 111
+global mouseSensitivity := 67
 global lowRender := 5 ; For settings change performance method
 
 ; Don't configure these
@@ -100,7 +100,10 @@ CheckScripts:
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
       if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
+ifWinActive, Minecraft
+  {
         SuspendInstance(PIDs[rIdx])
+  }
         toRemove.Push(resetScriptTime[i])
       }
     }
@@ -231,8 +234,8 @@ SuspendInstance(pid) {
   If (hProcess) {
     DllCall("ntdll.dll\NtSuspendProcess", "Int", hProcess)
     DllCall("CloseHandle", "Int", hProcess)
-  }
   FreeMemory(pid)
+  }
 }
 
 ResumeInstance(pid) {
@@ -316,6 +319,7 @@ ExitWorld()
     if (affinity) {
       for i, tmppid in PIDs {
         SetAffinity(tmppid, highBitMask)
+UnsuspendAll()
       }
     }
   }
@@ -328,7 +332,6 @@ ResetInstance(idx) {
     pid := PIDs[idx]
     if (performanceMethod == "F") {
       bfd := beforeFreezeDelay
-      ResumeInstance(pid)
     } else {
       bfd := 0
     }
@@ -398,6 +401,7 @@ ResetAll() {
 
 LockInstance(idx) {
   locked[idx] := true
+  SuspendInstance(pid)
   if (lockSounds)
     SoundPlay, lock.wav
 }
