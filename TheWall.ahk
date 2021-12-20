@@ -1,7 +1,7 @@
 ; A Multi-Instance macro for Minecraft ResetInstance
 ; A publicly avalable version of "The Wall" made by jojoe77777
 ; By Specnr
-; v0.2.1
+; v0.3.0
 ;
 #NoEnv
 #SingleInstance Force
