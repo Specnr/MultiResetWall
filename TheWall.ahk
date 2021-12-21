@@ -51,12 +51,10 @@ global rawPIDs := []
 global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
-global threadCount := 0
 global locked := []
 global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 
-EnvGet, threadCount, NUMBER_OF_PROCESSORS
 if (performanceMethod == "F") {
   UnsuspendAll()
   sleep, %restartDelay%
@@ -201,11 +199,10 @@ GetAllPIDs()
   }
 }
 
-SetAffinity(pid, toSet)
-{
-  h:=DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", pid)
-  DllCall( "SetProcessAffinityMask", Int, h, Int, toSet)
-  DllCall("CloseHandle", "Int", h)
+SetAffinity(pid, mask) {
+  hProc := DllCall("OpenProcess", "UInt", 0x0200, "Int", false, "UInt", pid, "Ptr")
+  DllCall("SetProcessAffinityMask", "Ptr", hProc, "Ptr", mask)
+  DllCall("CloseHandle", "Ptr", hProc)
 }
 
 FreeMemory(pid)
