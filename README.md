@@ -33,4 +33,5 @@ No longer moves worlds, it slows down the macro a lot, use [this world moving ma
 - Me
 - The collaborators listed for minor enhancements
 - PodX12 for some minor enchancements
+- Sam Dao (real)
 - jojoe77777 for making the original wall macro
