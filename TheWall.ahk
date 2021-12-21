@@ -37,7 +37,7 @@ global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
-global FOV := 111 ; For quake pro put 111
+global FOV := 110 ; For quake pro put 110
 global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
 
@@ -412,7 +412,7 @@ ResetSettings(pid, rd, justRD:=False)
   }
   if (FOV && !justRD)
   {
-    FOVPresses := ceil((FOV-30)*1.7611)
+    FOVPresses := ceil((FOV-30)*1.763)
     ; Tab to FOV
     ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
     ; Reset then preset FOV to custom value with arrow keys
@@ -421,7 +421,7 @@ ResetSettings(pid, rd, justRD:=False)
   }
   if (mouseSensitivity && !justRD)
   {
-    SensPresses := ceil(mouseSensitivity/1.4)
+    SensPresses := ceil(mouseSensitivity/1.408)
     ; Tab to mouse sensitivity
     ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
     ; Reset then preset mouse sensitivity to custom value with arrow keys
