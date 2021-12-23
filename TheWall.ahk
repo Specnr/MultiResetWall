@@ -1,8 +1,7 @@
-; A Multi-Instance macro for Minecraft ResetInstance
-; A publicly avalable version of "The Wall" made by jojoe77777
+; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.3.0
-;
+; v0.3.2
+
 #NoEnv
 #SingleInstance Force
 
@@ -33,6 +32,7 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
+global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
@@ -263,10 +263,7 @@ SwitchInstance(idx)
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    send {Numpad%idx% down}
-    sleep, %obsDelay%
-    send {Numpad%idx% up}
-    WinMinimize, Fullscreen Projecto
+    WinMinimize, Fullscreen Projector
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
@@ -274,6 +271,13 @@ SwitchInstance(idx)
       sleep, %fullScreenDelay%
     }
     send {LButton} ; Make sure the window is activated
+    if (useObsWebsocket)
+      RunHide(Format("python obs.py 1 {1}", idx))
+    else {
+      send {Numpad%idx% down}
+      sleep, %obsDelay%
+      send {Numpad%idx% up}
+    }
   }
 }
 
@@ -305,7 +309,7 @@ ExitWorld()
     }
     ToWall()
     if (performanceMethod == "S")
-      ResetSettings(pid, 5, False)
+      ResetSettings(pid, lowRender, False)
     else
       ResetSettings(pid, renderDistance)
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
@@ -370,9 +374,13 @@ SetTitles() {
 
 ToWall() {
   WinActivate, Fullscreen Projector
-  send {F12 down}
-  sleep, %obsDelay%
-  send {F12 up}
+  if (useObsWebsocket)
+    RunHide("python obs.py 0")
+  else {
+    send {F12 down}
+    sleep, %obsDelay%
+    send {F12 up}
+  }
 }
 
 ; Focus hovered instance and background reset all other instances
