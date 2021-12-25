@@ -17,7 +17,7 @@ global affinity := True ; A funky performance addition, enable for minor perform
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
-global resetSounds := True ; :)
+; resetSounds option moved to reset.ahk, go there configure resetSounds
 global lockSounds := True
 global countAttempts := True
 
@@ -339,8 +339,6 @@ ResetInstance(idx) {
     If (FileExist(idleFile))
       FileDelete, %idleFile%
     Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay%
-    if (resetSounds)
-      SoundPlay, reset.wav
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
