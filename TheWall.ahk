@@ -17,7 +17,7 @@ global affinity := True ; A funky performance addition, enable for minor perform
 global wideResets := True
 global fullscreen := False
 global disableTTS := False
-; resetSounds option moved to reset.ahk, go there configure resetSounds
+; resetSounds option moved to reset.ahk, go there to configure resetSounds
 global lockSounds := True
 global countAttempts := True
 
