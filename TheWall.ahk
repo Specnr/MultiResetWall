@@ -244,6 +244,10 @@ ResumeInstance(pid) {
 SwitchInstance(idx)
 {
   if (idx <= instances) {
+    if (useObsWebsocket) {
+      cmd := Format("python.exe obs.py 1 {1}", idx)
+      Run, %cmd%,, Hide
+    }
     locked[idx] := false
     pid := PIDs[idx]
     if (affinity) {
@@ -271,9 +275,7 @@ SwitchInstance(idx)
       sleep, %fullScreenDelay%
     }
     send {LButton} ; Make sure the window is activated
-    if (useObsWebsocket)
-      RunHide(Format("python obs.py 1 {1}", idx))
-    else {
+    if (!useObsWebsocket) {
       send {Numpad%idx% down}
       sleep, %obsDelay%
       send {Numpad%idx% up}
@@ -372,8 +374,10 @@ SetTitles() {
 
 ToWall() {
   WinActivate, Fullscreen Projector
-  if (useObsWebsocket)
-    RunHide("python obs.py 0")
+  if (useObsWebsocket) {
+    cmd := Format("python.exe obs.py 0", idx)
+    Run, %cmd%,, Hide
+  }
   else {
     send {F12 down}
     sleep, %obsDelay%
