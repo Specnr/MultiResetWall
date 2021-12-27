@@ -338,9 +338,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay%
-    if (resetSounds)
-      SoundPlay, reset.wav
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)

@@ -2,6 +2,9 @@
 SetKeyDelay, 0
 ; v0.3.2
 
+if (%7%)
+  SoundPlay, reset.wav
+
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
 sleep, 1000
 while (True) {
