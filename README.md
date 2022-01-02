@@ -21,6 +21,26 @@ On the Fullscreen projector, you have a few hotkeys:
 
 No longer moves worlds, it slows down the macro a lot, use [this world moving macro](https://gist.github.com/Specnr/f7a5450d932a1277fdcd6c141ad7bf6a).
 
+## OBS Websocket
+
+1) Download [Python](https://www.python.org/downloads/)
+2) Install [OBS websocket](https://obsproject.com/forum/resources/obs-websocket-remote-control-obs-studio-from-websockets.466/)
+3) Open up command prompt, and run this command in `pip install obs-websocket-py`
+4) Now, open up obs.py in whatever text editor you want. 
+```python
+host = "localhost"
+port = 4444
+password = ""  # Edit this if you use a password (reccomended)
+scene_name_format = "MultiMC-"  # Edit this
+wall_scene_name = "Wall"    # Edit this
+```
+These lines are the ones you want to edit. For the first two however, you probably want to leave them alone unless you know what you're doing.
+5) For scene_name_format you want to put in whatever the prefix of all your scenes are. 
+6) For wall_scene_name, its pretty self explanetory, just put in the scene name of your wall.
+7) Now, for the password, you can put in a password if you want, and if you use it you can go to `Tools -> WebSockets Server Settings -> Enable Authentication` and then put in whatever password you want. Then you can put the same password in the password variable quotes.
+
+After that it should be working. Ping @Tech Support in the [Discord](https://discord.gg/tXxwrYw) if you have any issues.  
+
 ## Credit
 
 - Me
