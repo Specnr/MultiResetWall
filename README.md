@@ -1,6 +1,5 @@
 # MultiResetWall
-
-A wall-style multi-instance macro for Minecraft RSG resetting
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/specnr)
 
 ## Instructions
 
