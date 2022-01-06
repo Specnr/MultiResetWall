@@ -12,7 +12,7 @@ SetTitleMatchMode, 2
 ; Variables to configure
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
-global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
+global instanceFreezing := False ; Set to False if you use Dynamic FPS (reccomended if you have a decent PC)
 global affinity := True ; A funky performance addition, enable for minor performance boost
 global wideResets := True
 global fullscreen := False
@@ -30,16 +30,15 @@ global fullScreenDelay := 270 ; increse if fullscreening issues
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
-global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
+global autoUnpause := False ; Auto unpauses when switching
 
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
 global FOV := 110 ; For quake pro put 110
 global mouseSensitivity := 35
-global lowRender := 5 ; For settings change performance method
 
 ; Don't configure these
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
@@ -55,7 +54,7 @@ global locked := []
 global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 
-if (performanceMethod == "F") {
+if (instanceFreezing) {
   UnsuspendAll()
   sleep, %restartDelay%
 }
@@ -93,7 +92,7 @@ return
 
 CheckScripts:
   Critical
-  if (performanceMethod == "F") {
+  if (instanceFreezing) {
     toRemove := []
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
@@ -257,14 +256,8 @@ SwitchInstance(idx)
         }
       }
     }
-    if (performanceMethod == "F")
+    if (instanceFreezing)
       ResumeInstance(pid)
-    else if (performanceMethod == "S") {
-      ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
-      sleep, %settingsDelay%
-      ResetSettings(pid, renderDistance, True)
-      ControlSend, ahk_parent, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
-    }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
@@ -275,6 +268,8 @@ SwitchInstance(idx)
       sleep, %fullScreenDelay%
     }
     send {LButton} ; Make sure the window is activated
+    if (autoUnpause)
+      ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     if (!useObsWebsocket) {
       send {Numpad%idx% down}
       sleep, %obsDelay%
@@ -310,10 +305,7 @@ ExitWorld()
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
     ToWall()
-    if (performanceMethod == "S")
-      ResetSettings(pid, lowRender, False)
-    else
-      ResetSettings(pid, renderDistance)
+    ResetSettings(pid, renderDistance)
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
@@ -325,11 +317,15 @@ ExitWorld()
 }
 
 ResetInstance(idx) {
-  idleFile := McDirectories[idx] . "idle.tmp"
-  if (idx <= instances && FileExist(idleFile)) {
+  if (idx <= instances) {
+    idleFile := McDirectories[idx] . "idle.tmp"
+    resettingFile := McDirectories[idx] . "resettingFile.tmp"
+    killFile := McDirectories[idx] . "killFile.tmp"
+    if !FileExist(idleFile)
+      FileAppend,, %killFile%
     locked[idx] := false
     pid := PIDs[idx]
-    if (performanceMethod == "F") {
+    if (instanceFreezing) {
       bfd := beforeFreezeDelay
       ResumeInstance(pid)
     } else {
@@ -340,7 +336,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -410,7 +406,7 @@ LockInstance(idx) {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(pid, rd, justRD:=False)
+ResetSettings(pid, rd)
 {
   ; Find required presses to set FOV, sensitivity, and render distance
   if (rd)
@@ -420,7 +416,7 @@ ResetSettings(pid, rd, justRD:=False)
     ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
   }
-  if (FOV && !justRD)
+  if (FOV)
   {
     FOVPresses := ceil((FOV-30)*1.763)
     ; Tab to FOV
@@ -429,7 +425,7 @@ ResetSettings(pid, rd, justRD:=False)
     ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
   }
-  if (mouseSensitivity && !justRD)
+  if (mouseSensitivity)
   {
     SensPresses := ceil(mouseSensitivity/1.408)
     ; Tab to mouse sensitivity

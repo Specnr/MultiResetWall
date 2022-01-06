@@ -8,12 +8,18 @@ if (%7%)
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
 sleep, 1000
 while (True) {
+  FileDelete, %8%
+  if (ErrorLevel == 0)
+    ExitApp
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
     break
 }
 
 while (True) {
+  FileDelete, %8%
+  if (ErrorLevel == 0)
+    ExitApp
   numLines := 0
   Loop, Read, %2%
   {
@@ -34,7 +40,9 @@ while (True) {
     break
 }
 sleep, %6%
-ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
+WinGet, activePID, PID, A
+if activePID != %1%
+  ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
 sleep, %4%
 FileAppend,, %5%
 ExitApp
