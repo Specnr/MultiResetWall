@@ -1,6 +1,6 @@
 #NoEnv
 SetKeyDelay, 0
-; v0.3.3
+; v0.4.0-beta
 
 if (%7%)
   SoundPlay, reset.wav
