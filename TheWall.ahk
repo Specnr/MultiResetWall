@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.4.0-beta
+; v0.4.1-beta
 
 #NoEnv
 #SingleInstance Force
@@ -10,8 +10,8 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Variables to configure
-global rows := 3 ; Number of row on the wall scene
-global cols := 3 ; Number of columns on the wall scene
+global rows := 5 ; Number of row on the wall scene
+global cols := 2 ; Number of columns on the wall scene
 global instanceFreezing := False ; Set to False if you use Dynamic FPS (reccomended if you have a decent PC)
 global affinity := True ; A funky performance addition, enable for minor performance boost
 global wideResets := True
@@ -63,8 +63,14 @@ SetTitles()
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
-  if (!FileExist(idle))
+  hold := mcdir . "hold.tmp"
+  kill := mcdir . "kill.tmp"
+  if !FileExist(idle)
     FileAppend,,%idle%
+  if FileExist(hold)
+    FileDelete, %hold%
+  if FileExist(kill)
+    FileDelete, %kill%
   if (wideResets) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
@@ -317,9 +323,9 @@ ExitWorld()
 }
 
 ResetInstance(idx) {
-  if (idx <= instances) {
+  holdFile := McDirectories[idx] . "hold.tmp"
+  if (idx <= instances && !FileExist(holdFile)) {
     idleFile := McDirectories[idx] . "idle.tmp"
-    resettingFile := McDirectories[idx] . "resettingFile.tmp"
     killFile := McDirectories[idx] . "killFile.tmp"
     if !FileExist(idleFile)
       FileAppend,, %killFile%
@@ -336,7 +342,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile%
+    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile% %holdFile%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)

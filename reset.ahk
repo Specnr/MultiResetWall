@@ -1,6 +1,6 @@
 #NoEnv
 SetKeyDelay, 0
-; v0.4.0-beta
+; v0.4.1-beta
 
 if (%7%)
   SoundPlay, reset.wav
@@ -39,10 +39,12 @@ while (True) {
   if (saved || A_Index > %3%)
     break
 }
+FileAppend,,%9%
 sleep, %6%
 WinGet, activePID, PID, A
 if activePID != %1%
   ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
+FileDelete,%9%
 sleep, %4%
 FileAppend,, %5%
 ExitApp
