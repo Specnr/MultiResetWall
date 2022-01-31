@@ -4,7 +4,7 @@
 ; Variables to configure
 global rows := 5 ; Number of row on the wall scene
 global cols := 2 ; Number of columns on the wall scene
-global instanceFreezing := False ; Set to False if you use Dynamic FPS (reccomended if you have a decent PC)
+global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
 global wideResets := True
 global fullscreen := False
@@ -23,6 +23,7 @@ global fullScreenDelay := 270 ; increse if fullscreening issues
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
+global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 global autoUnpause := False ; Auto unpauses when switching
@@ -32,3 +33,4 @@ global autoUnpause := False ; Auto unpauses when switching
 global renderDistance := 18
 global FOV := 110 ; For quake pro put 110
 global mouseSensitivity := 35
+global lowRender := 10 ; For settings change performance method

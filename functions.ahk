@@ -133,7 +133,7 @@ GetActiveInstanceNum() {
   return -1
 }
 
-ResetSettings(pid, rd)
+ResetSettings(pid, rd, justRD:=False)
 {
   ; Find required presses to set FOV, sensitivity, and render distance
   if (rd)
@@ -143,7 +143,7 @@ ResetSettings(pid, rd)
     ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
   }
-  if (FOV)
+  if (FOV && !justRD)
   {
     FOVPresses := ceil((FOV-30)*1.763)
     ; Tab to FOV
@@ -152,7 +152,7 @@ ResetSettings(pid, rd)
     ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
     ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
   }
-  if (mouseSensitivity)
+  if (mouseSensitivity && !justRD)
   {
     SensPresses := ceil(mouseSensitivity/1.408)
     ; Tab to mouse sensitivity
@@ -170,7 +170,8 @@ MousePosToInstNumber() {
 
 SwitchInstance(idx)
 {
-  if (idx <= instances) {
+  idleFile := McDirectories[idx] . "idle.tmp"
+  if (idx <= instances && FileExist(idleFile)) {
     if (useObsWebsocket) {
       cmd := Format("python.exe obs.py 1 {1}", idx)
       Run, %cmd%,, Hide
@@ -184,8 +185,14 @@ SwitchInstance(idx)
         }
       }
     }
-    if (instanceFreezing)
+    if (performanceMethod == "F")
       ResumeInstance(pid)
+    else if (performanceMethod == "S") {
+      ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
+      sleep, %settingsDelay%
+      ResetSettings(pid, renderDistance, True)
+      ControlSend, ahk_parent, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
+    }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
@@ -226,7 +233,10 @@ ExitWorld()
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
     ToWall()
-    ResetSettings(pid, renderDistance)
+    if (performanceMethod == "S")
+      ResetSettings(pid, lowRender, False)
+    else
+      ResetSettings(pid, renderDistance)
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
@@ -246,7 +256,7 @@ ResetInstance(idx) {
       FileAppend,, %killFile%
     locked[idx] := false
     pid := PIDs[idx]
-    if (instanceFreezing) {
+    if (performanceMethod == "F") {
       bfd := beforeFreezeDelay
       ResumeInstance(pid)
     } else {

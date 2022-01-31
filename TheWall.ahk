@@ -25,7 +25,7 @@ global locked := []
 global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 
-if (instanceFreezing) {
+if (performanceMethod == "F") {
   UnsuspendAll()
   sleep, %restartDelay%
 }
@@ -69,7 +69,7 @@ return
 
 CheckScripts:
   Critical
-  if (instanceFreezing) {
+  if (performanceMethod == "F") {
     toRemove := []
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
