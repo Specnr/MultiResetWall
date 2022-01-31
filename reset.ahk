@@ -6,7 +6,7 @@ if (%7%)
   SoundPlay, reset.wav
 
 FileAppend,,%9%
-FileAppend, Starting `n, log.log
+FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}{G}, ahk_pid %1%
 while (True) {
   numLines := 0
@@ -21,7 +21,7 @@ while (True) {
     {
       if (InStr(A_LoopReadLine, "Starting Preview")) {
         preview := True
-        FileAppend, Found Preview `n, log.log
+        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Preview `n, log.log
         break
       }
     }
@@ -54,10 +54,10 @@ while (True) {
   {
     if ((numLines - A_Index) < 5)
     {
-      FileAppend, %A_LoopReadLine%`n, log.log
+      FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %A_LoopReadLine%`n, log.log
       if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
         saved := True
-        FileAppend, Found Save `n, log.log
+        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save `n, log.log
         break
       }
     }
@@ -68,7 +68,7 @@ while (True) {
 FileAppend,,%9%
 sleep, %6%
 WinGet, activePID, PID, A
-FileAppend, %activePID% %1% `n, log.log
+FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %activePID% %1% `n, log.log
 if activePID != %1%
   ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
 FileDelete,%9%
