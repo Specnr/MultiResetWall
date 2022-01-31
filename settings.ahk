@@ -1,4 +1,4 @@
-; v0.4.3-beta
+; v0.4.4-beta
 ; EDIT THIS FILE
 
 ; Variables to configure
