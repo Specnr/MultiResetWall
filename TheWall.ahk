@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.4.2-beta
+; v0.4.3-beta
 
 #NoEnv
 #SingleInstance Force
@@ -20,6 +20,7 @@ global disableTTS := False
 global resetSounds := True ; :)
 global lockSounds := True
 global countAttempts := True
+global coop := False ; Set to true if you want to automatically open to LAN on playing a world
 
 ; Advanced settings
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
@@ -87,8 +88,8 @@ if (affinity) {
   }
 }
 
-IfNotExist, %oldWorldsFolder%
-  FileCreateDir %oldWorldsFolder%
+FileDelete, log.log
+FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Wall`n, log.log
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
@@ -281,6 +282,11 @@ SwitchInstance(idx)
       sleep, %obsDelay%
       send {Numpad%idx% up}
     }
+    if (coop) {
+      ControlSend, ahk_parent, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
+      if (!fullscreen)
+        send, {LButton}
+    }
   }
 }
 
@@ -326,7 +332,7 @@ ResetInstance(idx) {
   holdFile := McDirectories[idx] . "hold.tmp"
   if (idx <= instances && !FileExist(holdFile)) {
     idleFile := McDirectories[idx] . "idle.tmp"
-    killFile := McDirectories[idx] . "killFile.tmp"
+    killFile := McDirectories[idx] . "kill.tmp"
     if !FileExist(idleFile)
       FileAppend,, %killFile%
     locked[idx] := false
