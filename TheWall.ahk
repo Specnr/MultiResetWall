@@ -4,8 +4,8 @@
 
 #NoEnv
 #SingleInstance Force
+#Include %A_ScriptDir%\scripts\functions.ahk
 #Include settings.ahk
-#Include functions.ahk
 
 SetKeyDelay, 0
 SetWinDelay, 1

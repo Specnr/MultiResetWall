@@ -131,7 +131,7 @@ SwitchInstance(idx)
       pref := ""
       if (useSingleSceneOBS)
         pref := "ss-"
-      cmd := Format("python.exe """ . A_ScriptDir . "\{2}obs.py"" {1}", idx, pref)
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{2}obs.py"" {1}", idx, pref)
       Run, %cmd%,, Hide
     }
     locked[idx] := false
@@ -229,7 +229,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -267,7 +267,7 @@ ToWall() {
     pref := ""
     if (useSingleSceneOBS)
       pref := "ss-"
-    cmd := Format("python.exe """ . A_ScriptDir . "\{1}obs.py"" 0", pref)
+    cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{1}obs.py"" 0", pref)
     Run, %cmd%,, Hide
   }
   else {
@@ -298,7 +298,7 @@ ResetAll() {
 LockInstance(idx) {
   locked[idx] := true
   if (lockSounds)
-    SoundPlay, lock.wav
+    SoundPlay, A_ScriptDir\..\sounds\lock.wav
 }
 
 ; Reset your settings to preset settings preferences

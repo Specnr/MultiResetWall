@@ -3,7 +3,7 @@ SetKeyDelay, 0
 ; v0.3.3
 
 if (%7%)
-  SoundPlay, reset.wav
+  SoundPlay, A_ScriptDir\..\sounds\reset.wav
 
 ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}, ahk_pid %1%
 sleep, 1000
