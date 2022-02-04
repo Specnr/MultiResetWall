@@ -128,7 +128,10 @@ SwitchInstance(idx)
 {
   if (idx <= instances) {
     if (useObsWebsocket) {
-      cmd := Format("python.exe """ . A_ScriptDir . "\ss-obs.py"" {1}", idx)
+      pref := ""
+      if (useSingleSceneOBS)
+        pref := "ss-"
+      cmd := Format("python.exe """ . A_ScriptDir . "\{2}obs.py"" {1}", idx, pref)
       Run, %cmd%,, Hide
     }
     locked[idx] := false
@@ -261,7 +264,10 @@ SetTitles() {
 ToWall() {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
-    cmd := Format("python.exe """ . A_ScriptDir . "\ss-obs.py"" 0", idx)
+    pref := ""
+    if (useSingleSceneOBS)
+      pref := "ss-"
+    cmd := Format("python.exe """ . A_ScriptDir . "\{1}obs.py"" 0", pref)
     Run, %cmd%,, Hide
   }
   else {
