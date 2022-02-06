@@ -1,11 +1,6 @@
 from obswebsocket import obsws, requests
 import sys
-
-host = "localhost"
-port = 4444
-password = ""  # Edit this if you use a password (reccomended)
-scene_name_format = "MultiMC-"  # Edit this
-wall_scene_name = "Wall"    # Edit this
+from obsSettings import host, port, password, wall_scene_name, scene_name_format
 
 ws = obsws(host, port, password)
 ws.connect()
