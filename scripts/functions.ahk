@@ -1,4 +1,38 @@
-; v0.3.4
+; v0.3.5
+TinderMotion(swipeLeft) {
+  ; left = reset, right = keep
+  if (swipeLeft)
+    ResetInstance(currBg)
+  else
+    LockInstance(currBg)
+  newBg := GetFirstBgInstance()
+  FileAppend, new:%newBg% old:%currBg%`n, log.log
+  cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", currBg, newBg)
+  Run, %cmd%,, Hide
+  currBg := newBg
+}
+
+GetFirstBgInstance(toSkip := -1, skip := false) {
+  if !useSingleSceneOBS
+    return 0
+  if skip
+    return -1
+  activeNum := GetActiveInstanceNum()
+  for i, mcdir in McDirectories {
+    idle := mcdir . "idle.tmp"
+    x := !FileExist(idle)
+    y := locked[i]
+    FileAppend, idx:%i% active:%activeNum% skip:%toSkip% idle:%x% lock:%y%`n, log.log
+    if (i != activeNum && i != toSkip && FileExist(idle) && !locked[i]) {
+      FileAppend, found %i%`n, log.log
+      return i
+    }
+  }
+  needBgCheck := True
+  FileAppend, nothing found`n, log.log
+  return -1
+}
+
 MousePosToInstNumber() {
   MouseGetPos, mX, mY
   return (Floor(mY / instHeight) * cols) + Floor(mX / instWidth) + 1
@@ -124,17 +158,18 @@ ResumeInstance(pid) {
   }
 }
 
-SwitchInstance(idx)
+SwitchInstance(idx, skipBg:=false)
 {
   if (idx <= instances) {
+    locked[idx] := true
     if (useObsWebsocket) {
       pref := ""
       if (useSingleSceneOBS)
         pref := "ss-"
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{2}obs.py"" {1}", idx, pref)
+      currBg := GetFirstBgInstance(idx, skipBg)
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{2}obs.py"" 1 {1} {3} {4}", idx, pref, instances, currBg)
       Run, %cmd%,, Hide
     }
-    locked[idx] := false
     pid := PIDs[idx]
     if (affinity) {
       for i, tmppid in PIDs {
@@ -267,7 +302,7 @@ ToWall() {
     pref := ""
     if (useSingleSceneOBS)
       pref := "ss-"
-    cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{1}obs.py"" 0", pref)
+    cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{1}obs.py"" 0 0 {2} 0", pref, instances)
     Run, %cmd%,, Hide
   }
   else {
@@ -279,12 +314,13 @@ ToWall() {
 
 ; Focus hovered instance and background reset all other instances
 FocusReset(focusInstance) {
-  SwitchInstance(focusInstance)
+  SwitchInstance(focusInstance, true)
   loop, %instances% {
     if (A_Index != focusInstance && !locked[A_Index]) {
       ResetInstance(A_Index)
     }
   }
+  needBgCheck := True
 }
 
 ; Reset all instances

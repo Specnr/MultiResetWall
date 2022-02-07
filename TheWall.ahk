@@ -24,6 +24,8 @@ global resetIdx := []
 global locked := []
 global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
+global needBgCheck := False
+global currBg := GetFirstBgInstance()
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -31,6 +33,7 @@ if (performanceMethod == "F") {
 }
 GetAllPIDs()
 SetTitles()
+FileDelete, log.log
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
@@ -61,13 +64,25 @@ return
 
 CheckScripts:
   Critical
-  if (performanceMethod == "F") {
+  if (performanceMethod == "F" || (useSingleSceneOBS && needBgCheck)) {
     toRemove := []
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
-      if (A_TickCount - resetScriptTime[i] > scriptBootDelay && FileExist(idleCheck)) {
-        SuspendInstance(PIDs[rIdx])
-        toRemove.Push(resetScriptTime[i])
+      if (FileExist(idleCheck)) {
+        if (performanceMethod == "F" && A_TickCount - resetScriptTime[i] > scriptBootDelay) {
+          SuspendInstance(PIDs[rIdx])
+          toRemove.Push(resetScriptTime[i])
+        }
+        if (useSingleSceneOBS && needBgCheck) {
+          newBg := GetFirstBgInstance()
+          if (newBg != -1) {
+            FileAppend, idle found %newBg%`n, log.log
+            cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", -1, newBg)
+            Run, %cmd%,, Hide
+            needBgCheck := False
+            currBg := newBg
+          }
+        }
       }
     }
     for i, x in toRemove {

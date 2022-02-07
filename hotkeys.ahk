@@ -6,6 +6,8 @@ return
 #IfWinActive, Minecraft
   {
     *U:: ExitWorld() ; Reset
+    *CapsLock:: TinderMotion(True) ; Bg left swipe (reset)
+    *+CapsLock:: TinderMotion(False) ; Bg right swipe (keep)
   }
 return
 

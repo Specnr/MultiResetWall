@@ -3,3 +3,5 @@ TheWall*.zip
 *-Spec.*
 *MyOptions*
 test.ahk
+*pycache*
+*.log
