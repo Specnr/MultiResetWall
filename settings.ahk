@@ -1,4 +1,4 @@
-; v0.3.4
+; v0.3.5
 ; Variables to configure
 global rows := 5 ; Number of row on the wall scene
 global cols := 2 ; Number of columns on the wall scene

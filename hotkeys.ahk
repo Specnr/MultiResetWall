@@ -1,4 +1,4 @@
-; v0.3.4
+; v0.3.5
 RAlt::Suspend ; Pause all macros
 ^LAlt:: ; Reload if macro locks up
   Reload

@@ -1,7 +1,9 @@
 ; v0.3.5
 TinderMotion(swipeLeft) {
   ; left = reset, right = keep
-  if (swipeLeft)
+  if !useSingleSceneOBS
+    return
+  if swipeLeft
     ResetInstance(currBg)
   else
     LockInstance(currBg)

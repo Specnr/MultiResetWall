@@ -1,3 +1,4 @@
+# v0.3.5
 from obswebsocket import obsws, requests
 import sys
 from obsSettings import host, port, password, bg_mc_source_format
