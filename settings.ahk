@@ -23,8 +23,8 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
-global useObsWebsocket := True ; Allows for > 9 instances (Additional setup required)
-global useSingleSceneOBS := True ; Allows for simple OBS setup. Requires furture setup video
+global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
+global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. Requires furture setup video
 
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
