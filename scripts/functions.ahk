@@ -131,7 +131,7 @@ SwitchInstance(idx)
       pref := ""
       if (useSingleSceneOBS)
         pref := "ss-"
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{2}obs.py"" {1}", idx, pref)
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{2}obs.py"" 1 {1}", idx, pref)
       Run, %cmd%,, Hide
     }
     locked[idx] := false
