@@ -58,6 +58,11 @@ if (affinity) {
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
+if audioGui {
+  Gui, New
+  Gui, Show,, The Wall Audio
+}
+
 #Persistent
 SetTimer, CheckScripts, 20
 return

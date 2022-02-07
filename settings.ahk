@@ -25,6 +25,7 @@ global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. Requires furture setup video
+global audioGui := True
 
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
