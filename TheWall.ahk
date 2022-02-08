@@ -26,6 +26,7 @@ global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
+global lastChecked := A_NowUTC
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -69,7 +70,18 @@ return
 
 CheckScripts:
   Critical
-  if (performanceMethod == "F" || (useSingleSceneOBS && needBgCheck)) {
+  if (useSingleSceneOBS && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
+    newBg := GetFirstBgInstance()
+    if (newBg != -1) {
+      FileAppend, idle found %newBg%`n, log.log
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", -1, newBg)
+      Run, %cmd%,, Hide
+      needBgCheck := False
+      currBg := newBg
+    }
+    lastChecked := A_NowUTC
+  }
+  if (performanceMethod == "F") {
     toRemove := []
     for i, rIdx in resetIdx {
       idleCheck := McDirectories[rIdx] . "idle.tmp"
@@ -77,16 +89,6 @@ CheckScripts:
         if (performanceMethod == "F" && A_TickCount - resetScriptTime[i] > scriptBootDelay) {
           SuspendInstance(PIDs[rIdx])
           toRemove.Push(resetScriptTime[i])
-        }
-        if (useSingleSceneOBS && needBgCheck) {
-          newBg := GetFirstBgInstance()
-          if (newBg != -1) {
-            FileAppend, idle found %newBg%`n, log.log
-            cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", -1, newBg)
-            Run, %cmd%,, Hide
-            needBgCheck := False
-            currBg := newBg
-          }
         }
       }
     }
