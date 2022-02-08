@@ -1,6 +1,6 @@
 #NoEnv
 SetKeyDelay, 0
-; v0.3.5
+; v0.3.6
 
 if (%7%)
   SoundPlay, A_ScriptDir\..\sounds\reset.wav
