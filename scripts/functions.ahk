@@ -223,8 +223,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (coop)
       ControlSend, ahk_parent, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-    if (!fullscreen)
-      send {LButton} ; Make sure the window is activated
+    Send {LButton} ; Make sure the window is activated
     if (!useObsWebsocket) {
       send {Numpad%idx% down}
       sleep, %obsDelay%
