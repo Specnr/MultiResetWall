@@ -40,8 +40,7 @@ MousePosToInstNumber() {
   return (Floor(mY / instHeight) * cols) + Floor(mX / instWidth) + 1
 }
 
-RunHide(Command)
-{
+RunHide(Command) {
   dhw := A_DetectHiddenWindows
   DetectHiddenWindows, On
   Run, %ComSpec%,, Hide, cPid
@@ -58,8 +57,7 @@ RunHide(Command)
   Return Result
 }
 
-GetMcDir(pid)
-{
+GetMcDir(pid) {
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
   if (InStr(rawOut, "--gameDir")) {
@@ -103,8 +101,7 @@ GetInstanceNumberFromMcDir(mcdir) {
   return num
 }
 
-GetAllPIDs()
-{
+GetAllPIDs() {
   global McDirectories
   global PIDs
   global instances := GetInstanceTotal()
@@ -124,8 +121,7 @@ SetAffinity(pid, mask) {
   DllCall("CloseHandle", "Ptr", hProc)
 }
 
-FreeMemory(pid)
-{
+FreeMemory(pid) {
   h:=DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", pid)
   DllCall("SetProcessWorkingSetSize", "UInt", h, "Int", -1, "Int", -1)
   DllCall("CloseHandle", "Int", h)
@@ -160,8 +156,7 @@ ResumeInstance(pid) {
   }
 }
 
-SwitchInstance(idx, skipBg:=false)
-{
+SwitchInstance(idx, skipBg:=false) {
   if (idx <= instances) {
     locked[idx] := true
     if (useObsWebsocket) {
@@ -221,8 +216,7 @@ GetActiveInstanceNum() {
   return -1
 }
 
-ExitWorld()
-{
+ExitWorld() {
   if (fullscreen) {
     send {F11}
     sleep, %fullScreenDelay%
@@ -340,8 +334,7 @@ LockInstance(idx) {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(pid, rd, justRD:=False)
-{
+ResetSettings(pid, rd, justRD:=False) {
   ; Find required presses to set FOV, sensitivity, and render distance
   if (rd)
   {
