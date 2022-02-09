@@ -35,6 +35,7 @@ if (performanceMethod == "F") {
 GetAllPIDs()
 SetTitles()
 FileDelete, log.log
+FileDelete, ATTEMPTS_DAY.txt
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
