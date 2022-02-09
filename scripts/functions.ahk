@@ -1,9 +1,25 @@
 ; v0.3.6
+FindBypassInstance() {
+  activeNum := GetActiveInstanceNum()
+  for i, isLocked in locked {
+    if (isLocked && i != activeNum)
+      return i
+  }
+  if (multiMode) {
+    for i, mcdir in McDirectories {
+      idle := mcdir . "idle.tmp"
+      if (FileExist(idle) && i != activeNum)
+        return i
+    }
+  }
+  return -1
+}
+
 TinderMotion(swipeLeft) {
   ; left = reset, right = keep
-  if !useSingleSceneOBS
+  if (!useSingleSceneOBS)
     return
-  if swipeLeft
+  if (swipeLeft)
     ResetInstance(currBg)
   else
     LockInstance(currBg)
@@ -30,7 +46,7 @@ GetFirstBgInstance(toSkip := -1, skip := false) {
       return i
     }
   }
-  needBgCheck := True
+  needBgCheck := true
   FileAppend, nothing found`n, log.log
   return -1
 }
@@ -160,16 +176,24 @@ ResumeInstance(pid) {
   }
 }
 
-SwitchInstance(idx, skipBg:=false)
+SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   if (idx <= instances) {
     locked[idx] := true
     if (useObsWebsocket) {
-      pref := ""
-      if (useSingleSceneOBS)
-        pref := "ss-"
+      prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{2}obs.py"" 1 {1} {3} {4}", idx, pref, instances, currBg)
+      if (prevBg == currBg) {
+        hideMini := -1
+        showMini := -1
+      } else {
+        hideMini := prevBg
+        showMini := currBg
+      }
+      if (useSingleSceneOBS)
+        cmd := Format("python.exe """ . A_ScriptDir . "\scripts\ss-obs.py"" 0 {2} {3} {4} {5}", pref, from, idx, hideMini, showMini)
+      else
+        cmd := Format("python.exe """ . A_ScriptDir . "\scripts\obs.py"" 0 {1}", idx)
       Run, %cmd%,, Hide
     }
     pid := PIDs[idx]
@@ -185,7 +209,7 @@ SwitchInstance(idx, skipBg:=false)
     else if (performanceMethod == "S") {
       ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
       sleep, %settingsDelay%
-      ResetSettings(pid, renderDistance, True)
+      ResetSettings(pid, renderDistance, true)
       ControlSend, ahk_parent, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
@@ -235,9 +259,15 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
-    ToWall()
+    nextInst := -1
+    if (wallBypass || multiMode)
+      nextInst := FindBypassInstance()
+    if (nextInst > 0)
+      SwitchInstance(nextInst, false, idx)
+    else
+      ToWall(idx)
     if (performanceMethod == "S")
-      ResetSettings(pid, lowRender, False)
+      ResetSettings(pid, lowRender, false)
     else
       ResetSettings(pid, renderDistance)
     ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
@@ -298,13 +328,13 @@ SetTitles() {
   }
 }
 
-ToWall() {
+ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
-    pref := ""
     if (useSingleSceneOBS)
-      pref := "ss-"
-    cmd := Format("python.exe """ . A_ScriptDir . "\scripts\{1}obs.py"" 0 0 {2} 0", pref, instances)
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\ss-obs.py"" 1 {2} -1 {3} -1", pref, comingFrom, currBg)
+    else
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\obs.py"" 1 -1")
     Run, %cmd%,, Hide
   }
   else {
@@ -322,7 +352,7 @@ FocusReset(focusInstance) {
       ResetInstance(A_Index)
     }
   }
-  needBgCheck := True
+  needBgCheck := true
 }
 
 ; Reset all instances
@@ -340,7 +370,7 @@ LockInstance(idx) {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(pid, rd, justRD:=False)
+ResetSettings(pid, rd, justRD:=false)
 {
   ; Find required presses to set FOV, sensitivity, and render distance
   if (rd)

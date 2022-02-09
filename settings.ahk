@@ -1,5 +1,5 @@
 ; v0.3.6
-; Variables to configure
+
 global rows := 5 ; Number of row on the wall scene
 global cols := 2 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
@@ -11,6 +11,11 @@ global resetSounds := True ; :)
 global lockSounds := True
 global countAttempts := True
 global coop := False
+global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
+global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. Requires furture setup video
+global audioGui := True ; A simple GUI so the OBS application audio plugin can capture sounds
+global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
+global multiMode := False ; Never send you back to the wall unless there are no playable instances
 
 ; Advanced settings
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
@@ -23,9 +28,6 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
-global useObsWebsocket := True ; Allows for > 9 instances (Additional setup required)
-global useSingleSceneOBS := True ; Allows for simple OBS setup & Tinder. Requires furture setup video
-global audioGui := True ; A simple GUI so the OBS application audio plugin can capture sounds
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
 ; Set to 0 if you dont want to settings reset

@@ -38,6 +38,7 @@ FileDelete, log.log
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
+  locked[i] := False
   if (!FileExist(idle))
     FileAppend,,%idle%
   if (wideResets) {
