@@ -6,20 +6,25 @@ from obsSettings import host, port, password, wall_scene_name, mc_source_format,
 ws = obsws(host, port, password)
 ws.connect()
 
+isWall, hideInst, showInst, hideMini, showMini = sys.argv[1:]
+
 # Force next inst to show
-if int(sys.argv[2]) != 0:
+if int(showInst) != -1:
     ws.call(requests.SetSceneItemProperties(
-        f"{mc_source_format}{int(sys.argv[2])}", visible=True))  # Show BG
-if int(sys.argv[4]) != 0:
-    for i in range(int(sys.argv[3])):
-        ws.call(requests.SetSceneItemProperties(
-            f"{bg_mc_source_format}{i+1}", visible=i+1 == int(sys.argv[4])))
+        f"{mc_source_format}{int(showInst)}", visible=True))
+if int(showMini) != -1:
+    ws.call(requests.SetSceneItemProperties(
+        f"{bg_mc_source_format}{showMini}", visible=True))
 # The wall
-ws.call(requests.SetSceneItemProperties(
-    wall_scene_name, visible=int(sys.argv[2]) == 0))
-# Actual instances
-for i in range(int(sys.argv[3])):
+if int(showInst) == -1 or int(hideInst) == -1:
     ws.call(requests.SetSceneItemProperties(
-        f"{mc_source_format}{i+1}", visible=int(sys.argv[2]) != 0 and i+1 == int(sys.argv[2])))
+        wall_scene_name, visible=bool(int(isWall))))
+# Hide prev instances
+if int(hideMini) != -1:
+    ws.call(requests.SetSceneItemProperties(
+        f"{bg_mc_source_format}{hideMini}", visible=False))
+if int(hideInst) != -1:
+    ws.call(requests.SetSceneItemProperties(
+        f"{mc_source_format}{hideInst}", visible=False))
 
 ws.disconnect()
