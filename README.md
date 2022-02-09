@@ -22,7 +22,7 @@ No longer moves worlds, it slows down the macro a lot, use [this world moving ma
 
 ## OBS Websocket
 
-1) Download [Python](https://www.python.org/downloads/)
+1) Download [Python 3.7+](https://www.python.org/downloads/)
 2) Install [OBS websocket](https://obsproject.com/forum/resources/obs-websocket-remote-control-obs-studio-from-websockets.466/)
 3) Open up command prompt, and run this command in `pip install obs-websocket-py`
 4) Now, open up obs.py in whatever text editor you want. 
@@ -30,11 +30,12 @@ No longer moves worlds, it slows down the macro a lot, use [this world moving ma
 6) For wall_scene_name, its pretty self explanetory, just put in the scene name of your wall.
 7) Now, for the password, you can put in a password if you want, and if you use it you can go to `Tools -> WebSockets Server Settings -> Enable Authentication` and then put in whatever password you want. Then you can put the same password in the password variable quotes.
 
-After that it should be working. Ping @Tech Support in the [Discord](https://discord.gg/tXxwrYw) if you have any issues.  
+After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues.
 
 ## Credit
 
 - Me
+- Ravalle for a lot of great ideas and code
 - The collaborators listed for minor enhancements
 - PodX12 for some minor enchancements
 - Sam Dao (real)
