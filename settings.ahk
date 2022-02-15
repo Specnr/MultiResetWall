@@ -1,4 +1,4 @@
-; v0.3.6
+; v0.4.6
 ; General settings
 global rows := 5 ; Number of row on the wall scene
 global cols := 2 ; Number of columns on the wall scene
@@ -38,5 +38,5 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
-global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
+global tinderCheckBuffer := 1 ; When all instances cant reset, how often it checks for an instance in seconds
 

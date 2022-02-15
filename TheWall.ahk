@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.3.6
+; v0.4.6
 
 #NoEnv
 #SingleInstance Force
@@ -35,13 +35,20 @@ if (performanceMethod == "F") {
 GetAllPIDs()
 SetTitles()
 FileDelete, log.log
+FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Wall`n, log.log
 FileDelete, ATTEMPTS_DAY.txt
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
+  hold := mcdir . "hold.tmp"
+  kill := mcdir . "kill.tmp"
   locked[i] := False
   if (!FileExist(idle))
     FileAppend,,%idle%
+  if FileExist(hold)
+    FileDelete, %hold%
+  if FileExist(kill)
+    FileDelete, %kill%
   if (wideResets) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
