@@ -1,4 +1,4 @@
-# v0.3.6
+# v0.4.7
 from obswebsocket import obsws, requests
 import sys
 from obsSettings import host, port, password, wall_scene_name, scene_name_format

@@ -1,4 +1,4 @@
-; v0.3.6
+; v0.4.7
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
@@ -23,7 +23,7 @@ TinderMotion(swipeLeft) {
     ResetInstance(currBg)
   else
     LockInstance(currBg)
-  newBg := GetFirstBgInstance()
+  newBg := GetFirstBgInstance(currBg)
   FileAppend, new:%newBg% old:%currBg%`n, log.log
   cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", currBg, newBg)
   Run, %cmd%,, Hide
@@ -37,17 +37,15 @@ GetFirstBgInstance(toSkip := -1, skip := false) {
     return -1
   activeNum := GetActiveInstanceNum()
   for i, mcdir in McDirectories {
-    idle := mcdir . "idle.tmp"
-    x := !FileExist(idle)
+    hold := mcdir . "hold.tmp"
+    x := !FileExist(hold)
     y := locked[i]
-    FileAppend, idx:%i% active:%activeNum% skip:%toSkip% idle:%x% lock:%y%`n, log.log
-    if (i != activeNum && i != toSkip && FileExist(idle) && !locked[i]) {
-      FileAppend, found %i%`n, log.log
+    FileAppend, idx:%i% active:%activeNum% skip:%toSkip% hold:%x% lock:%y%`n, log.log
+    if (i != activeNum && i != toSkip && !FileExist(hold) && !locked[i]) {
       return i
     }
   }
   needBgCheck := true
-  FileAppend, nothing found`n, log.log
   return -1
 }
 
@@ -178,7 +176,8 @@ ResumeInstance(pid) {
 
 SwitchInstance(idx, skipBg:=false, from:=-1)
 {
-  if (idx <= instances) {
+  idleFile := McDirectories[idx] . "idle.tmp"
+  if (idx <= instances && FileExist(idleFile)) {
     locked[idx] := true
     if (useObsWebsocket) {
       prevBg := currBg
@@ -280,8 +279,11 @@ ExitWorld()
 }
 
 ResetInstance(idx) {
-  idleFile := McDirectories[idx] . "idle.tmp"
-  if (idx <= instances && FileExist(idleFile)) {
+  holdFile := McDirectories[idx] . "hold.tmp"
+  if (idx <= instances && !FileExist(holdFile)) {
+    FileAppend,,%holdFile%
+    idleFile := McDirectories[idx] . "idle.tmp"
+    killFile := McDirectories[idx] . "kill.tmp"
     locked[idx] := false
     pid := PIDs[idx]
     if (performanceMethod == "F") {
@@ -295,7 +297,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile% %holdFile% %worldPreviewResetKey%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
