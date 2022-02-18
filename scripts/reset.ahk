@@ -6,7 +6,7 @@ if (%7%)
   SoundPlay, A_ScriptDir\..\sounds\reset.wav
 
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
-ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}{G}, ahk_pid %1%
+ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
 while (True) {
   numLines := 0
   Loop, Read, %2%
@@ -45,7 +45,13 @@ while (True) {
   {
     if ((numLines - A_Index) < 5)
     {
-      if (InStr(A_LoopReadLine, "Preparing spawn area:")) {
+      if (InStr(A_LoopReadLine, "Time elapsed:")) {
+        FileAppend,,%9%
+        joining := True
+        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Joining World `n, log.log
+        break
+      }
+      else if (InStr(A_LoopReadLine, "%")) {
         percDone := SubStr(A_LoopReadLine, -2)
         percDone := SubStr(percDone, 1, 2)
         if (percDone >= 80) {
@@ -100,7 +106,7 @@ WinGet, activePID, PID, A
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %activePID% %1% `n, log.log
 if (activePID != %1%) {
   ControlSend, ahk_parent, {Blind}{F3 Down}{Esc Down}, ahk_pid %1%
-  sleep, 100
+  sleep, 150
   ControlSend, ahk_parent, {Blind}{Esc Up}{F3 Up}, ahk_pid %1%
 }
 FileDelete,%9%

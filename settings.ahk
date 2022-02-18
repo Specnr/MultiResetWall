@@ -1,9 +1,10 @@
 ; v0.4.6
 ; General settings
-global rows := 5 ; Number of row on the wall scene
-global cols := 2 ; Number of columns on the wall scene
+global rows := 3 ; Number of row on the wall scene
+global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
+global worldPreviewResetKey := "G" ; Update this to the key you set to reset in world preview (default: G)
 
 ; Extra features
 global fullscreen := False 
@@ -38,5 +39,5 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
-global tinderCheckBuffer := 1 ; When all instances cant reset, how often it checks for an instance in seconds
+global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
