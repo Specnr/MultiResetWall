@@ -2,7 +2,8 @@
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
-    if (isLocked && i != activeNum)
+    idle := McDirectories[i] . "idle.tmp"
+    if (FileExist(idle) && isLocked && i != activeNum)
       return i
   }
   if (multiMode) {
