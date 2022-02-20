@@ -2,9 +2,11 @@
 SetKeyDelay, 0
 ; v0.4.8
 
+started := A_NowUTC
 if (%7%)
   SoundPlay, A_ScriptDir\..\sounds\reset.wav
-
+saved := False
+FileDelete,%8%
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
 WinGetTitle, title, ahk_pid %1%
 if (InStr(title, "-"))
@@ -28,46 +30,57 @@ while (True) {
         break
       }
     }
-  }
-  if (preview)
-    break
-}
-ControlSend, ahk_parent, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %1%
-FileDelete,%9%
-
-while (True) {
-  FileDelete, %8%
-  if (ErrorLevel == 0)
-    ExitApp
-  WinGetTitle, title, ahk_pid %1%
-  if (InStr(title, " - "))
-    break
-}
-
-while (True) {
-  FileDelete, %8%
-  if (ErrorLevel == 0)
-    ExitApp
-  numLines := 0
-  Loop, Read, %2%
-  {
-    numLines += 1
-  }
-  saved := False
-  Loop, Read, %2%
-  {
-    if ((numLines - A_Index) < 5)
+    if (A_NowUTC - started > 3 && (numLines - A_Index) < 5)
     {
       FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %A_LoopReadLine%`n, log.log
       if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
         saved := True
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save `n, log.log
+        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save overriding preview check `n, log.log
         break
       }
     }
   }
-  if (saved || A_Index > %3%)
+  if (preview || saved)
     break
+}
+if (!saved) {
+  ControlSend, ahk_parent, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %1%
+  FileDelete,%9%
+
+  while (True) {
+    FileDelete, %8%
+    if (ErrorLevel == 0)
+      ExitApp
+    WinGetTitle, title, ahk_pid %1%
+    if (InStr(title, " - "))
+      break
+  }
+
+  while (True) {
+    FileDelete, %8%
+    if (ErrorLevel == 0)
+      ExitApp
+    numLines := 0
+    Loop, Read, %2%
+    {
+      numLines += 1
+    }
+    saved := False
+    Loop, Read, %2%
+    {
+      if ((numLines - A_Index) < 5)
+      {
+        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %A_LoopReadLine%`n, log.log
+        if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
+          saved := True
+          FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save `n, log.log
+          break
+        }
+      }
+    }
+    if (saved || A_Index > %3%)
+      break
+  }
 }
 FileAppend,,%9%
 sleep, %6%

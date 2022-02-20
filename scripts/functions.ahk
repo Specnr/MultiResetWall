@@ -284,6 +284,7 @@ ResetInstance(idx) {
     FileAppend,,%holdFile%
     idleFile := McDirectories[idx] . "idle.tmp"
     killFile := McDirectories[idx] . "kill.tmp"
+    FileAppend,,%killFile%
     locked[idx] := false
     pid := PIDs[idx]
     if (performanceMethod == "F") {
