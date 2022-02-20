@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.4.7
+; v0.4.8
 
 #NoEnv
 #SingleInstance Force
@@ -53,7 +53,7 @@ for i, mcdir in McDirectories {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%A_ScreenHeight%
-    newHeight := Floor(A_ScreenHeight / 2.5)
+    newHeight := Floor(A_ScreenHeight / widthMultiplier)
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%

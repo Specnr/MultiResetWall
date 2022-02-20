@@ -1,4 +1,4 @@
-; v0.4.7
+; v0.4.8
 ; General settings
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
@@ -10,6 +10,7 @@ global worldPreviewResetKey := "G" ; Update this to the key you set to reset in 
 global fullscreen := False 
 global disableTTS := False
 global wideResets := True ; Make windows wide on reset to maximize visibility
+global widthMultiplier := 2.5 ; How wide your instances go :)
 global resetSounds := True ; Make a sound when you reset an instance
 global lockSounds := True ; Make a sound when you lock an instance
 global countAttempts := True ; Makes a text file to count resets
