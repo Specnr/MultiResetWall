@@ -10,7 +10,7 @@ WinGetTitle, title, ahk_pid %1%
 if (InStr(title, "-"))
   ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
 else
-  ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
+  ControlSend, ahk_parent, {Blind}{%10%}, ahk_pid %1%
 while (True) {
   numLines := 0
   Loop, Read, %2%
