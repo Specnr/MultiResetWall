@@ -1,4 +1,4 @@
-# v0.4.7
+# v0.4.8
 host = "localhost"
 port = 4444
 password = ""  # Edit this if you use a password (reccomended)
