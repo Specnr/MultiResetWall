@@ -179,10 +179,13 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
+    FileDelete,instance.txt
+    FileAppend,%idx%,instance.txt
     locked[idx] := true
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
+      FileAppend, prevBg:%prevBg% currBg:%currBg%`n, log.log
       if (prevBg == currBg) {
         hideMini := -1
         showMini := -1
@@ -335,7 +338,7 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\ss-obs.py"" 1 {2} -1 {3} -1", pref, comingFrom, currBg)
+      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\ss-obs.py"" 1 {1} -1 -1 -1", comingFrom)
     else
       cmd := Format("python.exe """ . A_ScriptDir . "\scripts\obs.py"" 1 -1")
     Run, %cmd%,, Hide
