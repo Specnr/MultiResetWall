@@ -1,6 +1,6 @@
 #NoEnv
 SetKeyDelay, 0
-; v0.4.8
+; v0.4.11
 
 started := A_NowUTC
 if (%7%)
@@ -8,11 +8,13 @@ if (%7%)
 saved := False
 FileDelete,%8%
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
+
 WinGetTitle, title, ahk_pid %1%
 if (InStr(title, "-"))
   ControlSend, ahk_parent, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
 else
   ControlSend, ahk_parent, {Blind}{%10%}, ahk_pid %1%
+
 while (True) {
   numLines := 0
   Loop, Read, %2%
@@ -26,6 +28,7 @@ while (True) {
     {
       if (InStr(A_LoopReadLine, "Starting Preview")) {
         preview := True
+        previewStarted := A_NowUTC
         FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Preview `n, log.log
         break
       }
@@ -46,6 +49,7 @@ while (True) {
 ControlSend, ahk_parent, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %1%
 FileDelete,%9%
 
+frozenPreview := False
 while (True) {
   FileDelete, %8%
   if (ErrorLevel == 0)
@@ -53,6 +57,11 @@ while (True) {
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
     break
+  if (!frozenPreview && A_NowUTC - previewStarted > 1) {
+    FileAppend, Freezing preview`n, log.log
+    frozenPreview := True
+    ControlSend, ahk_parent, {Blind}{%11%}, ahk_pid %1%
+  }
 }
 
 while (True) {

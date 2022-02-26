@@ -1,4 +1,4 @@
-; v0.4.8
+; v0.4.11
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
@@ -302,7 +302,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile% %holdFile% %worldPreviewResetKey%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile% %holdFile% %worldPreviewResetKey% %worldPreviewFreezeKey%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
