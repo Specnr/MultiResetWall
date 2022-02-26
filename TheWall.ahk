@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.4.8
+; v0.4.11
 
 #NoEnv
 #SingleInstance Force
