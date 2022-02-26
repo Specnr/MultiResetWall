@@ -6,6 +6,7 @@ global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing R
 global affinity := True ; A funky performance addition, enable for minor performance boost
 global worldPreviewResetKey := "H" ; Update this to the key you set to reset in world preview (default: H)
 global worldPreviewFreezeKey := "J" ; Update this to the key you set to freeze in world preview (default: J)
+global freezePreviewAfter := 1 ; Freezes the preview after this many seconds (for performance)
 
 ; Extra features
 global fullscreen := False 

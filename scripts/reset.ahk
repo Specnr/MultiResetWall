@@ -2,6 +2,14 @@
 SetKeyDelay, 0
 ; v0.4.11
 
+; Pasrse %12% into int (yeah i know this is stupid, avg ahk)
+str = %12%
+Loop, Parse, str
+{
+  If A_LoopField in 0,1,2,3,4,5,6,7,8,9,.,+,-
+    fpa = %fpa%%A_LoopField%
+}
+
 started := A_NowUTC
 if (%7%)
   SoundPlay, A_ScriptDir\..\sounds\reset.wav
@@ -35,7 +43,7 @@ while (True) {
     }
     if (A_NowUTC - started > 2 && (numLines - A_Index) < 5)
     {
-      FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %A_LoopReadLine%`n, log.log
+      FileAppend, %A_LoopReadLine%`n, log.log
       if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
         ControlSend, ahk_parent, {Blind}{Esc}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
         FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save overriding preview check `n, log.log
@@ -57,8 +65,8 @@ while (True) {
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
     break
-  if (!frozenPreview && A_NowUTC - previewStarted > 1) {
-    FileAppend, Freezing preview`n, log.log
+  if (!frozenPreview && A_NowUTC - previewStarted > fpa) {
+    FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Freezing preview`n, log.log
     frozenPreview := True
     ControlSend, ahk_parent, {Blind}{%11%}, ahk_pid %1%
   }
@@ -78,7 +86,7 @@ while (True) {
   {
     if ((numLines - A_Index) < 5)
     {
-      FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] %A_LoopReadLine%`n, log.log
+      FileAppend, %A_LoopReadLine%`n, log.log
       if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
         saved := True
         FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save `n, log.log
@@ -92,8 +100,6 @@ while (True) {
 FileAppend,,%9%
 sleep, %6%
 ControlSend, ahk_parent, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
-; sleep, 150
-; ControlSend, ahk_parent, {Blind}{Esc Up}{F3 Up}, ahk_pid %1%
 FileDelete,%9%
 sleep, %4%
 FileAppend,, %5%
