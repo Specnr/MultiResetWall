@@ -19,7 +19,7 @@ global countAttempts := True ; Makes a text file to count resets
 global coop := False ; Automatically opens to LAN when you load in a world
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. Requires furture setup video
-global audioGui := True ; A simple GUI so the OBS application audio plugin can capture sounds
+global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
 global multiMode := False ; Never send you back to the wall unless there are no playable instances
 

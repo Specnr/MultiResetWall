@@ -210,10 +210,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (performanceMethod == "F")
       ResumeInstance(pid)
     else if (performanceMethod == "S") {
-      ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
       sleep, %settingsDelay%
       ResetSettings(pid, renderDistance, true)
-      ControlSend, ahk_parent, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
+      ControlSend,, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -221,11 +221,11 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (wideResets)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
-      ControlSend, ahk_parent, {Blind}{F11}, ahk_pid %pid%
+      ControlSend,, {Blind}{F11}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
     if (coop)
-      ControlSend, ahk_parent, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
+      ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     Send {LButton} ; Make sure the window is activated
     if (!useObsWebsocket) {
       send {Numpad%idx% down}
@@ -272,7 +272,7 @@ ExitWorld()
       ResetSettings(pid, lowRender, false)
     else
       ResetSettings(pid, renderDistance)
-    ControlSend, ahk_parent, {Blind}{Esc}, ahk_pid %pid%
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
       for i, tmppid in PIDs {
@@ -297,7 +297,7 @@ ResetInstance(idx) {
     } else {
       bfd := 0
     }
-    ControlSend, ahk_parent, {Blind}{Esc 2}, ahk_pid %pid%
+    ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
@@ -348,6 +348,7 @@ ToWall(comingFrom) {
     sleep, %obsDelay%
     send {F12 up}
   }
+  WinActivate, Fullscreen Projector
 }
 
 ; Focus hovered instance and background reset all other instances
@@ -383,25 +384,25 @@ ResetSettings(pid, rd, justRD:=false)
   {
     RDPresses := rd-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend, ahk_parent, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
-    ControlSend, ahk_parent, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
+    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
+    ControlSend,, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
   }
   if (FOV && !justRD)
   {
     FOVPresses := ceil((FOV-30)*1.763)
     ; Tab to FOV
-    ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
     ; Reset then preset FOV to custom value with arrow keys
-    ControlSend, ahk_parent, {Blind}{Left 151}, ahk_pid %pid%
-    ControlSend, ahk_parent, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
+    ControlSend,, {Blind}{Left 151}, ahk_pid %pid%
+    ControlSend,, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
   }
   if (mouseSensitivity && !justRD)
   {
     SensPresses := ceil(mouseSensitivity/1.408)
     ; Tab to mouse sensitivity
-    ControlSend, ahk_parent, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
     ; Reset then preset mouse sensitivity to custom value with arrow keys
-    ControlSend, ahk_parent, {Blind}{Left 146}, ahk_pid %pid%
-    ControlSend, ahk_parent, {Blind}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
+    ControlSend,, {Blind}{Left 146}, ahk_pid %pid%
+    ControlSend,, {Blind}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
   }
 }
