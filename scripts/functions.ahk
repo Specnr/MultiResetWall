@@ -26,8 +26,7 @@ TinderMotion(swipeLeft) {
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   FileAppend, new:%newBg% old:%currBg%`n, log.log
-  cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", currBg, newBg)
-  Run, %cmd%,, Hide
+  FileAppend, tm %currBg% %newBg%`n, obs.ops
   currBg := newBg
 }
 
@@ -194,10 +193,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        cmd := Format("python.exe """ . A_ScriptDir . "\scripts\ss-obs.py"" 0 {2} {3} {4} {5}", pref, from, idx, hideMini, showMini)
-      else
-        cmd := Format("python.exe """ . A_ScriptDir . "\scripts\obs.py"" 0 {1}", idx)
-      Run, %cmd%,, Hide
+        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, obs.ops
+      Else
+        FileAppend, si %idx%`n, obs.ops
     }
     pid := PIDs[idx]
     if (affinity) {
@@ -338,10 +336,9 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\ss-obs.py"" 1 {1} -1 -1 -1", comingFrom)
-    else
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\obs.py"" 1 -1")
-    Run, %cmd%,, Hide
+      FileAppend, ss-tw %comingFrom%`n, obs.ops
+    Else
+      FileAppend, tw`n, obs.ops
   }
   else {
     send {F12 down}

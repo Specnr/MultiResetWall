@@ -35,8 +35,22 @@ if (performanceMethod == "F") {
 GetAllPIDs()
 SetTitles()
 FileDelete, log.log
+FileDelete, obs.ops
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Wall`n, log.log
 FileDelete, ATTEMPTS_DAY.txt
+
+if (useObsWebsocket) {
+  if (useSingleSceneOBS) {
+    lastInst := -1
+    if FileExist("instance.txt")
+      FileRead, lastInst, instance.txt
+    FileAppend, ss-tw %lastInst%`n, obs.ops
+  }
+  else
+    FileAppend, tw`n, obs.ops
+  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"""
+  Run, %cmd%,, Hide
+}
 
 for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
@@ -83,8 +97,7 @@ CheckScripts:
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       FileAppend, idle found %newBg%`n, log.log
-      cmd := Format("python.exe """ . A_ScriptDir . "\scripts\tinder.py"" {1} {2}", -1, newBg)
-      Run, %cmd%,, Hide
+      FileAppend, tm -1 %newBg%`n, obs.ops
       needBgCheck := False
       currBg := newBg
     }
