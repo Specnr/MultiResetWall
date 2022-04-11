@@ -70,8 +70,10 @@ while True:
                         if op == "xx":
                             breaking = True
                             break
+                        # Skip for now, might work just cant test right now
                         elif op == "tm":
-                            tinderMotion(args)
+                            pass
+                            # tinderMotion(args)
                         else:
                             isSS = op[:2] == "ss"
                             if op[-2] + op[-1] == "tw":
