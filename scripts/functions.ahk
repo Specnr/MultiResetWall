@@ -26,7 +26,7 @@ TinderMotion(swipeLeft) {
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   FileAppend, new:%newBg% old:%currBg%`n, log.log
-  FileAppend, tm %currBg% %newBg%`n, obs.ops
+  obsOpsToBePushed .= "tm " . currBg . " " . newBg . "`n"
   currBg := newBg
 }
 
@@ -193,9 +193,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, obs.ops
+        obsOpsToBePushed .= "ss-si " . from . " " . idx . " " . hideMini . " " . showMini . "`n"
       Else
-        FileAppend, si %idx%`n, obs.ops
+        obsOpsToBePushed .= "si " . idx . "`n"
     }
     pid := PIDs[idx]
     if (affinity) {
@@ -287,6 +287,8 @@ ResetInstance(idx) {
     idleFile := McDirectories[idx] . "idle.tmp"
     killFile := McDirectories[idx] . "kill.tmp"
     FileAppend,,%killFile%
+    if (useObsWebsocket && locked[idx])
+      obsOpsToBePushed .= "lf " . idx . "`n"
     locked[idx] := false
     pid := PIDs[idx]
     if (performanceMethod == "F") {
@@ -336,9 +338,9 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      FileAppend, ss-tw %comingFrom%`n, obs.ops
+      obsOpsToBePushed .= "ss-tw " . comingFrom . "`n"
     Else
-      FileAppend, tw`n, obs.ops
+      obsOpsToBePushed .= "tw`n"
   }
   else {
     send {F12 down}
@@ -369,8 +371,10 @@ ResetAll() {
 
 LockInstance(idx) {
   locked[idx] := true
+  if (useObsWebsocket)
+    obsOpsToBePushed .= "lt " . idx . "`n"
   if (lockSounds)
-    SoundPlay, A_ScriptDir\..\sounds\lock.wav
+    SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
 ; Reset your settings to preset settings preferences

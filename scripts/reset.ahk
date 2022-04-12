@@ -12,7 +12,7 @@ Loop, Parse, str
 
 started := A_NowUTC
 if (%7%)
-  SoundPlay, A_ScriptDir\..\sounds\reset.wav
+  SoundPlay, A_ScriptDir\..\media\reset.wav
 saved := False
 FileDelete,%8%
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log

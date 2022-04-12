@@ -27,6 +27,8 @@ global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
+global obsOpsToBePushed := ""
+global lastCheckedObs := A_NowUTC
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -44,10 +46,10 @@ if (useObsWebsocket) {
     lastInst := -1
     if FileExist("instance.txt")
       FileRead, lastInst, instance.txt
-    FileAppend, ss-tw %lastInst%`n, obs.ops
+    obsOpsToBePushed .= "ss-tw " . lastInst . "`n"
   }
   else
-    FileAppend, tw`n, obs.ops
+    obsOpsToBePushed .= "tw`n"
   cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"""
   Run, %cmd%,, Hide
 }
@@ -71,6 +73,9 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+  if (useSingleSceneOBS) {
+    obsOpsToBePushed .= "lf " . i . "`n"
+  }
 }
 
 if (affinity) {
@@ -93,11 +98,15 @@ return
 
 CheckScripts:
   Critical
+  if (useObsWebsocket && StrLen(obsOpsToBePushed) > 0 && A_NowUTC - lastCheckedObs > 0.5) {
+    FileAppend, %obsOpsToBePushed%, obs.ops
+    obsOpsToBePushed := ""
+  }
   if (useSingleSceneOBS && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       FileAppend, idle found %newBg%`n, log.log
-      FileAppend, tm -1 %newBg%`n, obs.ops
+      obsOpsToBePushed .= "tm -1 " . newBg . "`n"
       needBgCheck := False
       currBg := newBg
     }
