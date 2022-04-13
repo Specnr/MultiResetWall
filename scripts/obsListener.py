@@ -11,11 +11,6 @@ last_completed_line = -1
 ops_file = "./obs.ops"
 
 
-def lockInstance(doLock, data):
-    ws.call(requests.SetSceneItemProperties(
-            f"{config.lock_source_format}{int(data[0])}", visible=doLock))
-
-
 def tinderMotion(data):
     hide, show = data
     if int(show) > 0:
@@ -75,8 +70,6 @@ while True:
                         if op == "xx":
                             breaking = True
                             break
-                        elif op == "lt" or op == "lf":
-                            lockInstance(op[-1] == "t", args)
                         elif op == "tm":
                             tinderMotion(args)
                         else:

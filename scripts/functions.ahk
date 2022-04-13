@@ -282,13 +282,11 @@ ExitWorld()
 
 ResetInstance(idx) {
   holdFile := McDirectories[idx] . "hold.tmp"
-  if (idx <= instances && !FileExist(holdFile)) {
+  if (idx > 0 && idx <= instances && !FileExist(holdFile)) {
     FileAppend,,%holdFile%
     idleFile := McDirectories[idx] . "idle.tmp"
     killFile := McDirectories[idx] . "kill.tmp"
     FileAppend,,%killFile%
-    if (useObsWebsocket && locked[idx])
-      obsOpsToBePushed .= "lf " . idx . "`n"
     locked[idx] := false
     pid := PIDs[idx]
     if (performanceMethod == "F") {
@@ -371,8 +369,6 @@ ResetAll() {
 
 LockInstance(idx) {
   locked[idx] := true
-  if (useObsWebsocket)
-    obsOpsToBePushed .= "lt " . idx . "`n"
   if (lockSounds)
     SoundPlay, A_ScriptDir\..\media\lock.wav
 }
