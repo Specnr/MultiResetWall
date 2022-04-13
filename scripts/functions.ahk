@@ -1,4 +1,4 @@
-; v0.4.11
+; v0.5
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {

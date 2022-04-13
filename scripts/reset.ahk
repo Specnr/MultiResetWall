@@ -1,6 +1,6 @@
 #NoEnv
 SetKeyDelay, 0
-; v0.4.11
+; v0.5
 
 ; Pasrse %12% into int (yeah i know this is stupid, avg ahk)
 str = %12%

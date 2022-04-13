@@ -1,3 +1,4 @@
+# v0.5
 import os
 from turtle import towards
 from obswebsocket import obsws, requests
