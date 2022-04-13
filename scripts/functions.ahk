@@ -346,7 +346,6 @@ ToWall(comingFrom) {
     sleep, %obsDelay%
     send {F12 up}
   }
-  WinActivate, Fullscreen Projector
 }
 
 ; Focus hovered instance and background reset all other instances
