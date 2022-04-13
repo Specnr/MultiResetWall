@@ -25,12 +25,26 @@ No longer moves worlds, it slows down the macro a lot, use [this world moving ma
 1) Download [Python 3.7+](https://www.python.org/downloads/)
 2) Install [OBS websocket](https://obsproject.com/forum/resources/obs-websocket-remote-control-obs-studio-from-websockets.466/)
 3) Open up command prompt, and run this command in `pip install obs-websocket-py`
-4) Now, open up obs.py in whatever text editor you want. 
+4) Now, open up obsSettings.py in whatever text editor you want. 
 5) For scene_name_format you want to put in whatever the prefix of all your scenes are. 
 6) For wall_scene_name, its pretty self explanetory, just put in the scene name of your wall.
 7) Now, for the password, you can put in a password if you want, and if you use it you can go to `Tools -> WebSockets Server Settings -> Enable Authentication` and then put in whatever password you want. Then you can put the same password in the password variable quotes.
 
-After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues.
+After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
+
+## Single Scene OBS
+
+This removes scene switching to lighten the load on OBS. It lowers lag also allows for the "Tinder" background resetting method
+
+Note: If you don't want you use Tinder, ignore anything related to it below.
+
+1) Follow the OBS websocket tutorial above
+2) You need 2 scenes: one which is just the wall, and the other which is our main scene. Whatever you call these, make sure it reflects in obsSettings.py
+3) The wall scene will be the same as usual, but if using Tinder, put your Tinder sources behind the wall sources so they match titles on startup.
+4) The main scene will have three levels: The wall level, the instances level, and the Tinder level. Put your sources in order from top to bottom with those priorities in mind. 
+5) Make sure your Tinder sources follow the bg_mc_source_format outlined in obsSettings.py, and are independant from your regular instance sources
+
+After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
 ## Credit
 
