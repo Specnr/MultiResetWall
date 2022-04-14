@@ -333,8 +333,8 @@ SetTitles() {
 }
 
 ToWall(comingFrom) {
+  WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  Send, {LWin 2}
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
       obsOpsToBePushed .= "ss-tw " . comingFrom . "`n"
