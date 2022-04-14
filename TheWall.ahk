@@ -93,8 +93,16 @@ if audioGui {
 }
 
 #Persistent
+OnExit, ExitSub
 SetTimer, CheckScripts, 20
 return
+
+ExitSub:
+  if A_ExitReason not in Logoff,Shutdown
+  {
+    FileAppend, xx, obs.ops
+  }
+ExitApp
 
 CheckScripts:
   Critical
