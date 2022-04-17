@@ -73,9 +73,6 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-  if (useSingleSceneOBS) {
-    obsOpsToBePushed .= "lf " . i . "`n"
-  }
 }
 
 if (affinity) {
