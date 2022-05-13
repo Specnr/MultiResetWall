@@ -211,7 +211,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
       sleep, %settingsDelay%
       ResetSettings(pid, renderDistance, true)
-      ControlSend,, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -374,32 +373,41 @@ LockInstance(idx) {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(pid, rd, justRD:=false)
+ResetSettings(pid, rd, entering:=false)
 {
-  ; Find required presses to set FOV, sensitivity, and render distance
+  if (resetPie && !entering)
+  {
+    ; Reset pie chart to gameRenderer.levels.entities with a cool much more consistent pattern written by Ravalle
+    ControlSend,, {Blind}{Shift down}{F3}, ahk_pid %pid%
+    Sleep, 50
+    ControlSend,, {Blind}00000000011900219003190041900519006190071900819009190019029014605602460560346056044605605460560{Shift up}{F3}, ahk_pid %pid%
+  }
   if (rd)
   {
     RDPresses := rd-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
-    ControlSend,, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
+    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{D}{F3 up}, ahk_pid %pid%
   }
-  if (FOV && !justRD)
+  if (FOV && !entering)
   {
     FOVPresses := ceil((FOV-30)*1.763)
-    ; Tab to FOV
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
-    ; Reset then preset FOV to custom value with arrow keys
-    ControlSend,, {Blind}{Left 151}, ahk_pid %pid%
-    ControlSend,, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
+    ; Tab to FOV reset then preset FOV to custom value with arrow keys
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Left 151}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
   }
-  if (mouseSensitivity && !justRD)
+  if (mouseSensitivity && !entering)
   {
     SensPresses := ceil(mouseSensitivity/1.408)
-    ; Tab to mouse sensitivity
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
-    ; Reset then preset mouse sensitivity to custom value with arrow keys
-    ControlSend,, {Blind}{Left 146}, ahk_pid %pid%
-    ControlSend,, {Blind}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
+    ; Tab to mouse sensitivity reset then preset mouse sensitivity to custom value with arrow keys
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}{Left 146}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
   }
+  if (entityDistance && !entering)
+  {
+    entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
+    ; Tab to vanilla video settings to reset entity distance
+    SetKeyDelay, 1
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Shift down}{P}{Shift up}, ahk_pid %pid%
+    SetKeyDelay, 0
+    ControlSend,, {Blind}{Tab 17}{Right 146}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
+  }
+  ControlSend,, {Blind}{Shift up}, ahk_pid %pid%
 }
