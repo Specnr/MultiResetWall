@@ -10,7 +10,7 @@ if you need to, you can make a shortcut for TheWall.ahk and move that outside.
 
 Update the configurable variables in the macro to match your setup. :)
 
-Additionally, you need to make a new OBS scene with all your (bruh) instances visible, and make an OBS hotkey to be F12 to switch to that scene.
+Additionally, you need to make a new OBS scene with all your instances visible, and make an OBS hotkey to be F12 to switch to that scene.
 
 ## Usage
 
