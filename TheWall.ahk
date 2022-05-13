@@ -11,6 +11,30 @@ SetKeyDelay, 0
 SetWinDelay, 1
 SetTitleMatchMode, 2
 
+; Variables to configure
+global rows := 3 ; Number of row on the wall scene
+global cols := 3 ; Number of columns on the wall scene
+global instanceFreezing := True ; Set to False to reduce crashing, but strongly increase lag
+global wideResets := True
+global fullscreen := False
+global disableTTS := False
+global resetSounds := True ; :)
+global countAttempts := True
+global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
+global beforeFreezeDelay := 500 ; increase if doesnt join world
+global fullScreenDelay := 270 ; increse if fullscreening issues
+global obsDelay := 100 ; increase if not changing scenes in obs
+global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
+global maxLoops := 20 ; increase if macro regularly locks up
+global scriptBootDelay := 6000 ; increase if instance freezes before world gen
+
+; Preset settings variables to configure
+; If you want to reset a certain setting you can set it here. (Leaving it blank or as 0 will not affect your settings)
+; Some sensitivity values may not work because of how Minecrafts settings bars work with arrow keys
+global renderDistance :=
+global FOV :=
+global mouseSensitivity :=
+
 ; Don't configure these
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global instWidth := Floor(A_ScreenWidth / cols)
