@@ -207,10 +207,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S") {
+    else if (performanceMethod == "S" || quakeProResets) {
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-      sleep, %settingsDelay%
-      ResetSettings(pid, renderDistance, true)
+      ResetSettings(pid, true)
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -265,10 +264,7 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    if (performanceMethod == "S")
-      ResetSettings(pid, lowRender, false)
-    else
-      ResetSettings(pid, renderDistance)
+    ResetSettings(pid)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
@@ -288,18 +284,14 @@ ResetInstance(idx) {
     FileAppend,,%killFile%
     locked[idx] := false
     pid := PIDs[idx]
-    if (performanceMethod == "F") {
-      bfd := beforeFreezeDelay
+    if (performanceMethod == "F")
       ResumeInstance(pid)
-    } else {
-      bfd := 0
-    }
     ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile% %holdFile% %worldPreviewResetKey% %worldPreviewFreezeKey% %freezePreviewAfter%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile%, %A_ScriptDir%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -373,41 +365,47 @@ LockInstance(idx) {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(pid, rd, entering:=false)
+ResetSettings(pid, entering:=false)
 {
-  if (resetPie && !entering)
+  if (entering)
+    sleep, %settingsDelay%
+  if (renderDistance)
   {
-    ; Reset pie chart to gameRenderer.levels.entities with a cool much more consistent pattern written by Ravalle
-    ControlSend,, {Blind}{Shift down}{F3}, ahk_pid %pid%
-    Sleep, 50
-    ControlSend,, {Blind}00000000011900219003190041900519006190071900819009190019029014605602460560346056044605605460560{Shift up}{F3}, ahk_pid %pid%
-  }
-  if (rd)
-  {
-    RDPresses := rd-2
+    if (!entering && performanceMethod == "S")
+      RDPresses := lowRender-2
+    else if ((!entering && performanceMethod != "S") || entering)
+      RDPresses := renderDistance-2
     ; Reset then preset render distance to custom value with f3 shortcuts
     ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{D}{F3 up}, ahk_pid %pid%
   }
-  if (FOV && !entering)
+  if (FOV)
   {
-    FOVPresses := ceil((FOV-30)*1.763)
     ; Tab to FOV reset then preset FOV to custom value with arrow keys
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Left 151}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
+    if (!(entering && !quakeProResets))
+    {
+      FOVPresses := ceil((110-FOV)*1.7875)
+      ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Right 150}, ahk_pid %pid%
+      if (entering && quakeProResets)
+      {
+        ControlSend,, {Blind}{Left %FOVPresses%}, ahk_pid %pid%
+        Sleep, %settingsDelay%
+        Sleep, %settingsDelay%
+      } else if (!entering && !quakeProResets)
+        ControlSend,, {Blind}{Left %FOVPresses%}, ahk_pid %pid%
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    }
   }
   if (mouseSensitivity && !entering)
   {
     SensPresses := ceil(mouseSensitivity/1.408)
     ; Tab to mouse sensitivity reset then preset mouse sensitivity to custom value with arrow keys
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}{Left 146}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}{Left 150}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
   }
   if (entityDistance && !entering)
   {
     entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
-    ; Tab to vanilla video settings to reset entity distance
-    SetKeyDelay, 1
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Shift down}{P}{Shift up}, ahk_pid %pid%
-    SetKeyDelay, 0
-    ControlSend,, {Blind}{Tab 17}{Right 146}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
+    ; Tab to video settings to reset entity distance
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
   }
-  ControlSend,, {Blind}{Shift up}, ahk_pid %pid%
+  ControlSend,, {Blind}{Shift}, ahk_pid %pid%
 }

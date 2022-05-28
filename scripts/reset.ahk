@@ -1,27 +1,20 @@
 #NoEnv
+#Include settings.ahk
 SetKeyDelay, 0
 ; v0.5
 
-; Pasrse %12% into int (yeah i know this is stupid, avg ahk)
-str = %12%
-Loop, Parse, str
-{
-  If A_LoopField in 0,1,2,3,4,5,6,7,8,9,.,+,-
-    fpa = %fpa%%A_LoopField%
-}
-
 started := A_NowUTC
-if (%7%)
+if (%resetSounds%)
   SoundPlay, A_ScriptDir\..\media\reset.wav
 saved := False
-FileDelete,%8%
+FileDelete,%4%
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
 
 WinGetTitle, title, ahk_pid %1%
 if (InStr(title, "-"))
-  ControlSend,, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
+  ControlSend,, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%worldPreviewResetKey%}, ahk_pid %1%
 else
-  ControlSend,, {Blind}{%10%}, ahk_pid %1%
+  ControlSend,, {Blind}{%worldPreviewResetKey%}, ahk_pid %1%
 
 while (True) {
   numLines := 0
@@ -45,7 +38,7 @@ while (True) {
     {
       FileAppend, %A_LoopReadLine%`n, log.log
       if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-        ControlSend,, {Blind}{Esc}{Shift down}{Tab}{Shift up}{Enter}{%10%}, ahk_pid %1%
+        ControlSend,, {Blind}{Esc}{Shift down}{Tab}{Shift up}{Enter}{%worldPreviewResetKey%}, ahk_pid %1%
         FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save overriding preview check `n, log.log
         break
       }
@@ -55,25 +48,25 @@ while (True) {
     break
 }
 ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %1%
-FileDelete,%9%
+FileDelete,%5%
 
 frozenPreview := False
 while (True) {
-  FileDelete, %8%
+  FileDelete, %4%
   if (ErrorLevel == 0)
     ExitApp
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
     break
-  if (!frozenPreview && A_NowUTC - previewStarted > fpa) {
+  if (!frozenPreview && A_NowUTC - previewStarted > freezePreviewAfter) {
     FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Freezing preview`n, log.log
     frozenPreview := True
-    ControlSend,, {Blind}{%11%}, ahk_pid %1%
+    ControlSend,, {Blind}{%worldPreviewFreezeKey%}, ahk_pid %1%
   }
 }
 
 while (True) {
-  FileDelete, %8%
+  FileDelete, %4%
   if (ErrorLevel == 0)
     ExitApp
   numLines := 0
@@ -94,13 +87,14 @@ while (True) {
       }
     }
   }
-  if (saved || A_Index > %3%)
+  if (saved || A_Index > %maxLoops%)
     break
 }
-FileAppend,,%9%
-sleep, %6%
-ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
-FileDelete,%9%
-sleep, %4%
-FileAppend,, %5%
+FileAppend,,%5%
+sleep, %beforePauseDelay%
+ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}{Shift}, ahk_pid %1%
+FileDelete,%5%
+if (performanceMethod == "F")
+  sleep, %beforeFreezeDelay%
+FileAppend,, %3%
 ExitApp
