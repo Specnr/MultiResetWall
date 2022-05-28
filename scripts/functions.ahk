@@ -378,22 +378,11 @@ ResetSettings(pid, entering:=false)
     ; Reset then preset render distance to custom value with f3 shortcuts
     ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{D}{F3 up}, ahk_pid %pid%
   }
-  if (FOV)
+  if (FOV && !entering)
   {
     ; Tab to FOV reset then preset FOV to custom value with arrow keys
-    if (!(entering && !quakeProResets))
-    {
-      FOVPresses := ceil((110-FOV)*1.7875)
-      ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Right 150}, ahk_pid %pid%
-      if (entering && quakeProResets)
-      {
-        ControlSend,, {Blind}{Left %FOVPresses%}, ahk_pid %pid%
-        Sleep, %settingsDelay%
-        Sleep, %settingsDelay%
-      } else if (!entering && !quakeProResets)
-        ControlSend,, {Blind}{Left %FOVPresses%}, ahk_pid %pid%
-      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    }
+    FOVPresses := ceil((110-FOV)*1.7875)
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Right 150}{Left %FOVPresses%}{Esc}, ahk_pid %pid%
   }
   if (mouseSensitivity && !entering)
   {

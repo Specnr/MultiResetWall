@@ -29,7 +29,6 @@ global multiMode := False ; Never send you back to the wall unless there are no 
 global renderDistance := 18
 global entityDistance := 500
 global FOV := 90 ; For quake pro put 110
-global quakeProResets := True ; Quake pro for previews
 global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
 
