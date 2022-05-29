@@ -4,9 +4,9 @@ global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
-global worldPreviewResetKey := "H" ; Update this to the key you set to reset in world preview (default: H)
-global worldPreviewFreezeKey := "J" ; Update this to the key you set to freeze in world preview (default: J)
-global freezePreviewAfter := 1 ; Freezes the preview after this many seconds (for performance)
+global worldPreviewResetKey := "h" ; [KEEP THIS LOWER CASE] world preview reset key (default: h)
+global worldPreviewFreezeKey := "j" ; [KEEP THIS LOWER CASE] world preview freeze key (default: j)
+global freezePreviewAfter := 3 ; Freezes the preview after this many seconds (imo this option sucks but if you need it its here)
 
 ; Extra features
 global fullscreen := False 
@@ -28,7 +28,7 @@ global multiMode := False ; Never send you back to the wall unless there are no 
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
 global entityDistance := 500
-global FOV := 90 ; For quake pro put 110
+global FOV := 110 ; For quake pro put 110
 global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
 
