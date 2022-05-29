@@ -207,11 +207,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S") {
+    else if (performanceMethod == "S" || quakeProResets) {
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-      sleep, %settingsDelay%
-      ResetSettings(pid, renderDistance, true)
-      ControlSend,, {Blind}{F3 Down}{D}{F3 Up}, ahk_pid %pid%
+      ResetSettings(pid, true)
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -266,10 +264,7 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    if (performanceMethod == "S")
-      ResetSettings(pid, lowRender, false)
-    else
-      ResetSettings(pid, renderDistance)
+    ResetSettings(pid)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
@@ -289,18 +284,14 @@ ResetInstance(idx) {
     FileAppend,,%killFile%
     locked[idx] := false
     pid := PIDs[idx]
-    if (performanceMethod == "F") {
-      bfd := beforeFreezeDelay
+    if (performanceMethod == "F")
       ResumeInstance(pid)
-    } else {
-      bfd := 0
-    }
     ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %maxLoops% %bfd% %idleFile% %beforePauseDelay% %resetSounds% %killFile% %holdFile% %worldPreviewResetKey% %worldPreviewFreezeKey% %freezePreviewAfter%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile%, %A_ScriptDir%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -374,32 +365,36 @@ LockInstance(idx) {
 }
 
 ; Reset your settings to preset settings preferences
-ResetSettings(pid, rd, justRD:=false)
+ResetSettings(pid, entering:=false)
 {
-  ; Find required presses to set FOV, sensitivity, and render distance
-  if (rd)
+  if (entering)
+    sleep, %settingsDelay%
+  if (renderDistance)
   {
-    RDPresses := rd-2
+    if (!entering && performanceMethod == "S")
+      RDPresses := lowRender-2
+    else if ((!entering && performanceMethod != "S") || entering)
+      RDPresses := renderDistance-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{F3 up}{Shift up}, ahk_pid %pid%
-    ControlSend,, {Blind}{F3 down}{F %RDPresses%}{F3 up}, ahk_pid %pid%
+    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{D}{F3 up}, ahk_pid %pid%
   }
-  if (FOV && !justRD)
+  if (FOV && !entering)
   {
-    FOVPresses := ceil((FOV-30)*1.763)
-    ; Tab to FOV
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}, ahk_pid %pid%
-    ; Reset then preset FOV to custom value with arrow keys
-    ControlSend,, {Blind}{Left 151}, ahk_pid %pid%
-    ControlSend,, {Blind}{Right %FOVPresses%}{Esc}, ahk_pid %pid%
+    ; Tab to FOV reset then preset FOV to custom value with arrow keys
+    FOVPresses := ceil((110-FOV)*1.7875)
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Right 150}{Left %FOVPresses%}{Esc}, ahk_pid %pid%
   }
-  if (mouseSensitivity && !justRD)
+  if (mouseSensitivity && !entering)
   {
     SensPresses := ceil(mouseSensitivity/1.408)
-    ; Tab to mouse sensitivity
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}, ahk_pid %pid%
-    ; Reset then preset mouse sensitivity to custom value with arrow keys
-    ControlSend,, {Blind}{Left 146}, ahk_pid %pid%
-    ControlSend,, {Blind}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
+    ; Tab to mouse sensitivity reset then preset mouse sensitivity to custom value with arrow keys
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}{Left 150}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
   }
+  if (entityDistance && !entering)
+  {
+    entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
+    ; Tab to video settings to reset entity distance
+    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
+  }
+  ControlSend,, {Blind}{Shift}, ahk_pid %pid%
 }

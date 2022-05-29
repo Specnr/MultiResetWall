@@ -27,7 +27,8 @@ global multiMode := False ; Never send you back to the wall unless there are no 
 ; Set to 0 if you dont want to settings reset
 ; Sense and FOV may be off by 1, mess around with +-1 if you care about specifics
 global renderDistance := 18
-global FOV := 110 ; For quake pro put 110
+global entityDistance := 500
+global FOV := 90 ; For quake pro put 110
 global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
 
@@ -43,4 +44,3 @@ global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
-
