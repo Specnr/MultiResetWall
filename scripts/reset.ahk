@@ -4,7 +4,7 @@ SetKeyDelay, 0
 ; v0.5
 
 started := A_NowUTC
-if (%resetSounds%)
+if (resetSounds)
   SoundPlay, A_ScriptDir\..\media\reset.wav
 saved := False
 FileDelete,%4%
