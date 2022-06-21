@@ -22,6 +22,7 @@ global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. Requir
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
 global multiMode := False ; Never send you back to the wall unless there are no playable instances
+global lockIndicators := False ; OBS locked instance indicators (DEPENDS ON OBS WEBSOCKET)
 
 ; Settings reset settings
 ; Set to 0 if you dont want to settings reset
