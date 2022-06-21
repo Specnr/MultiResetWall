@@ -48,11 +48,11 @@ if (useObsWebsocket) {
     lastInst := -1
     if FileExist("instance.txt")
       FileRead, lastInst, instance.txt
-    FileAppend, ss-tw %lastInst%`n
+    FileAppend, ss-tw %lastInst%`n, %obsFile%
   }
   else
     FileAppend, tw`n, %obsFile%
-  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"""
+  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances
   Run, %cmd%,, Hide
 }
 
@@ -113,7 +113,7 @@ CheckScripts:
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       FileAppend, idle found %newBg%`n, log.log
-      FileAppend, tm -1 %newBg%`n
+      FileAppend, tm -1 %newBg%`n, %obsFile%
       needBgCheck := False
       currBg := newBg
     }

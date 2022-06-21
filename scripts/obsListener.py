@@ -1,5 +1,6 @@
 # v0.5
 import os
+import sys
 from obswebsocket import obsws, requests
 import time
 import obsSettings as config
@@ -7,11 +8,14 @@ import obsSettings as config
 ws = obsws(config.host, config.port, config.password)
 try:
     ws.connect()
-    print("connected")
+    with open("obs.log", "w") as log:
+        log.write("Connected\n")
 except:
-    print("failed (reason unknown) to connect, exiting")
-    quit()
+    with open("obs.log", "w") as log:
+        log.write("Could not connect to obsws\n")
+        quit()
 
+instances = sys.argv[1]
 last_completed_obs_line = -1
 last_completed_li_line = -1
 ops_file = "./scripts/obs.ops"
@@ -49,9 +53,10 @@ def switchInstance(isSS, data):
         try:
             ws.call(requests.SetCurrentScene(
                 f"{config.scene_name_format}{data[0]}"))
-            print("si "+data[0]+": "+str(ws.call(requests.SetCurrentScene(f"{config.scene_name_format}{data[0]}"))).split("called: ", 1)[1])
         except:
-            print("si "+data[0]+": failed (reason unknown) (reason unknown)")
+            with open("obs.log", "a") as log:
+                log.write(
+                    f"si {data[0]}: failed (reason unknown) (reason unknown\n")
 
 
 def toWall(isSS, data):
@@ -62,35 +67,38 @@ def toWall(isSS, data):
         # Hide the instance
         ws.call(requests.SetSceneItemProperties(
             f"{config.mc_source_format}{data[0]}", visible=False))
+        # Hide all minis
+        for i in range(instances):
+            ws.call(requests.SetSceneItemProperties(
+                f"{config.bg_mc_source_format}{int(i+1)}", visible=False))
     else:
         try:
             ws.call(requests.SetCurrentScene(f"{config.wall_scene_name}"))
-            print("tw: "+str(ws.call(requests.SetCurrentScene(f"{config.wall_scene_name}"))).split("called: ", 1)[1])
         except:
-            print("tw: failed (reason unknown)")
+            with open("obs.log", "a") as log:
+                log.write("tw: failed (reason unknown)\n")
 
 
 def lockIndicator(data):
     lock, which = data
-    if lock == "l":
-        lock = True
-    else:
-        lock = False
+    lock = lock == "l"
     if which == "a":
-        for i in range(config.instances):
+        for i in range(instances):
             try:
                 ws.call(requests.SetSceneItemProperties(
                     f"{config.lock_indicator_format}{i+1}", visible=lock))
-                print("li "+str((i+1))+" "+str(lock)+": "+str(ws.call(requests.SetSceneItemProperties(f"{config.lock_indicator_format}{i+1}", visible=lock))).split("called: ",1)[1])
             except:
-                print("li "+str((i+1))+" "+str(lock)+": failed (reason unknown)")
+                with open("obs.log", "a") as log:
+                    log.write(
+                        f"li {str((i+1))} {str(lock)}: failed (reason unknown)\n")
     else:
         try:
             ws.call(requests.SetSceneItemProperties(
                 f"{config.lock_indicator_format}{which}", visible=lock))
-            print("li "+str(which)+" "+str(lock)+": "+str(ws.call(requests.SetSceneItemProperties(f"{config.lock_indicator_format}{which}", visible=lock))).split("called: ",1)[1])
         except:
-            print("li "+str(which)+" "+str(lock)+": failed (reason unknown)")
+            with open("obs.log", "a") as log:
+                log.write(
+                    f"li {str(which)} {str(lock)}: failed (reason unknown)\n")
 
 
 breaking = False
@@ -107,8 +115,6 @@ while True:
                         op, args = splt[0], splt[1:]
                         if op == "li":
                             lockIndicator(args)
-                        else:
-                            print("Unexpected item in bagging area!")
     if (os.path.exists(ops_file)):
         max_idx = sum(1 for _ in open(ops_file)) - 1
         if max_idx > last_completed_obs_line:
@@ -121,7 +127,8 @@ while True:
                         op, args = splt[0], splt[1:]
                         if op == "xx":
                             breaking = True
-                            print("stopping from \"xx\"")
+                            with open("obs.log", "a") as log:
+                                log.write("Breaking with xx\n")
                             break
                         elif op == "tm":
                             tinderMotion(args)
@@ -138,4 +145,5 @@ while True:
     time.sleep(1/config.checks_per_second)
 
 ws.disconnect()
-print("disconnected and exiting")
+with open("obs.log", "a") as log:
+    log.write("Exiting\n")

@@ -57,7 +57,7 @@ Note: Depends on OBS Websocket
 2) Edit the 2 extra settings in obsSettings.py accordingly. For lock_indicator_format put the prefix you used for your lock image sources in OBS.
 3) Set lockIndicators in settings.ahk to "True"
 
-After that it should be working. Remember you need to have done the entire OBS Websocket setup for this to work as well. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
+After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
 ## Credit
 

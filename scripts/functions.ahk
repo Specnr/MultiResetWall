@@ -26,7 +26,7 @@ TinderMotion(swipeLeft) {
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   FileAppend, new:%newBg% old:%currBg%`n, log.log
-  FileAppend, tm %currBg% %newBg%`n
+  FileAppend, tm %currBg% %newBg%`n, %obsFile%
   currBg := newBg
 }
 
@@ -194,7 +194,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n
+        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, %obsFile%
       Else
         FileAppend, si %idx%`n, %obsFile%
       if (lockIndicators)
@@ -335,7 +335,7 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      FileAppend, ss-tw %comingFrom%`n
+      FileAppend, ss-tw %comingFrom%`n, %obsFile%
     Else
       FileAppend, tw`n, %obsFile%
   }
