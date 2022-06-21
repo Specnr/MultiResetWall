@@ -7,6 +7,8 @@ checks_per_second = 2  # Increase if missing operations, decrease if lagging
 scene_name_format = "MultiMC-"  # Edit this
 mc_source_format = "mc "  # Edit this
 wall_scene_name = "Wall"    # Edit this
+instances = 4     # Edit this if you use lock indicators
+lock_indicator_format = "lock"  # Edit this if you use lock indicators
 
 # Single Scene Settings
 main_scene = "MainMulti"
