@@ -15,7 +15,7 @@ except:
         log.write("Could not connect to obsws\n")
         quit()
 
-instances = sys.argv[1]
+instances = int(sys.argv[1])
 last_completed_obs_line = -1
 last_completed_li_line = -1
 ops_file = "./scripts/obs.ops"
