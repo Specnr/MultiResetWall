@@ -6,8 +6,10 @@ CheckOptionsForHotkey(mcdir, optionsCheck) {
     if (InStr(A_LoopReadLine, optionsCheck)) {
       split := StrSplit(A_LoopReadLine, ".")
       mi := split.MaxIndex()
-      if (mi > 3)
+      if (split[mi] == "period")
         return "."
+      if (split[mi] == "comma")
+        return ","
       return split[mi]
     }
   }
