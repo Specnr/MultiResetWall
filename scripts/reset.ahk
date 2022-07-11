@@ -31,21 +31,6 @@ while (True) {
         break
       }
     }
-    if (A_NowUTC - started > 2 && (numLines - A_Index) < 5)
-    {
-      FileAppend, %A_LoopReadLine%`n, log.log
-      if (InStr(A_LoopReadLine, "Starting Preview")) {
-        preview := True
-        previewStarted := A_NowUTC
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Preview `n, log.log
-        break
-      }
-      else if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-        ControlSend,, {Blind}{%6%}, ahk_pid %1% 
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save overriding preview check `n, log.log
-        break
-      }
-    }
   }
   if (preview)
     break
@@ -53,7 +38,6 @@ while (True) {
 ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %1%
 FileDelete,%5%
 
-frozenPreview := False
 while (True) {
   FileDelete, %4%
   if (ErrorLevel == 0) {
@@ -63,11 +47,6 @@ while (True) {
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
     break
-  if (!frozenPreview && A_NowUTC - previewStarted > freezePreviewAfter) {
-    FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Freezing preview`n, log.log
-    frozenPreview := True
-    ControlSend,, {Blind}{%worldPreviewFreezeKey%}, ahk_pid %1%
-  }
 }
 
 while (True) {

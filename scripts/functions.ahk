@@ -279,7 +279,6 @@ ExitWorld()
     else
       ToWall(idx)
     ResetSettings(pid)
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
       for i, tmppid in PIDs {
@@ -300,7 +299,6 @@ ResetInstance(idx) {
     pid := PIDs[idx]
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
