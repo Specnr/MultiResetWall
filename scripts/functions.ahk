@@ -1,4 +1,18 @@
 ; v0.5
+GetCreateNewWorldKey(mcdir) {
+  optionsFile := mcdir . "options.txt"
+  Loop, Read, %optionsFile%
+  {
+    if (InStr(A_LoopReadLine, "key_Create New World:key.keyboard.")) {
+      split := StrSplit(A_LoopReadLine, ".")
+      mi := split.MaxIndex()
+      if (mi > 3)
+        return "."
+      return split[mi]
+    }
+  }
+}
+
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
@@ -291,7 +305,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile%, %A_ScriptDir%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile% %resetKey%, %A_ScriptDir%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)

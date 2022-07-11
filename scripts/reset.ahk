@@ -10,11 +10,8 @@ saved := False
 FileDelete,%4%
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
 
-WinGetTitle, title, ahk_pid %1%
-if (InStr(title, "-"))
-  ControlSend,, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%worldPreviewResetKey%}, ahk_pid %1%
-else
-  ControlSend,, {Blind}{%worldPreviewResetKey%}, ahk_pid %1%
+FileAppend, Reset key found to be %6%`n, log.log
+ControlSend,, {Blind}{%6%}, ahk_pid %1%
 
 while (True) {
   numLines := 0
@@ -44,7 +41,7 @@ while (True) {
         break
       }
       else if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-        ControlSend,, {Blind}{Esc}{Shift down}{Tab}{Shift up}{Enter}{%worldPreviewResetKey%}, ahk_pid %1%
+        ControlSend,, {Blind}{%6%}, ahk_pid %1% 
         FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save overriding preview check `n, log.log
         break
       }
