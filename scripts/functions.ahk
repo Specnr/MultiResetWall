@@ -1,9 +1,9 @@
 ; v0.5
-GetCreateNewWorldKey(mcdir) {
+CheckOptionsForHotkey(mcdir, optionsCheck) {
   optionsFile := mcdir . "options.txt"
   Loop, Read, %optionsFile%
   {
-    if (InStr(A_LoopReadLine, "key_Create New World:key.keyboard.")) {
+    if (InStr(A_LoopReadLine, optionsCheck)) {
       split := StrSplit(A_LoopReadLine, ".")
       mi := split.MaxIndex()
       if (mi > 3)
@@ -297,6 +297,7 @@ ResetInstance(idx) {
     FileAppend,,%killFile%
     locked[idx] := false
     pid := PIDs[idx]
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid% ; TEMP (while mod is broken)
     if (performanceMethod == "F")
       ResumeInstance(pid)
     ; Reset

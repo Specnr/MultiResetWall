@@ -57,7 +57,7 @@ if (useObsWebsocket) {
 
 for i, mcdir in McDirectories {
   if (i == 1) 
-    resetKey := GetCreateNewWorldKey(mcdir)
+    resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World:key.keyboard.")
   idle := mcdir . "idle.tmp"
   hold := mcdir . "hold.tmp"
   kill := mcdir . "kill.tmp"
