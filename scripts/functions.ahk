@@ -223,7 +223,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S" || quakeProResets) {
+    else if (performanceMethod == "S") {
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
       ResetSettings(pid, true)
     }
@@ -299,7 +299,6 @@ ResetInstance(idx) {
     FileAppend,,%killFile%
     locked[idx] := false
     pid := PIDs[idx]
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid% ; TEMP (while mod is broken)
     if (performanceMethod == "F")
       ResumeInstance(pid)
     ; Reset
