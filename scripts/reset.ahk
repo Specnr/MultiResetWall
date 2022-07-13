@@ -13,6 +13,7 @@ FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n,
 FileAppend, Reset key found to be %6%`n, log.log
 ControlSend,, {Blind}{%6%}, ahk_pid %1%
 
+FileDelete,%5%
 while (True) {
   numLines := 0
   Loop, Read, %2%
@@ -35,6 +36,7 @@ while (True) {
   if (preview)
     break
 }
+FileAppend,,%5%
 ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %1%
 FileDelete,%5%
 
