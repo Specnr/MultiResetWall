@@ -4,9 +4,6 @@ global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
-global worldPreviewResetKey := "h" ; [KEEP THIS LOWER CASE] world preview reset key (default: h)
-global worldPreviewFreezeKey := "j" ; [KEEP THIS LOWER CASE] world preview freeze key (default: j)
-global freezePreviewAfter := 3 ; Freezes the preview after this many seconds (imo this option sucks but if you need it its here)
 
 ; Extra features
 global fullscreen := False 

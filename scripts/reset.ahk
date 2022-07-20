@@ -1,5 +1,6 @@
 #NoEnv
 #Include settings.ahk
+#Include %A_ScriptDir%\functions.ahk
 SetKeyDelay, 0
 ; v0.5
 
@@ -8,7 +9,7 @@ if (%resetSounds%)
   SoundPlay, A_ScriptDir\..\media\reset.wav
 saved := False
 FileDelete,%4%
-FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
+SendLog(LOG_LEVEL_INFO, "Starting reset")
 
 while (True) {
   numLines := 0
@@ -24,22 +25,22 @@ while (True) {
       if (InStr(A_LoopReadLine, "Starting Preview")) {
         preview := True
         previewStarted := A_NowUTC
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Preview `n, log.log
+        SendLog(LOG_LEVEL_INFO, "Found preview")
         break
       }
     }
     if (A_NowUTC - started > 2 && (numLines - A_Index) < 5)
     {
-      FileAppend, %A_LoopReadLine%`n, log.log
+      SendLog(LOG_LEVEL_INFO, Format("Current line dump: {1}", A_LoopReadLine))
       if (InStr(A_LoopReadLine, "Starting Preview")) {
         preview := True
         previewStarted := A_NowUTC
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Preview `n, log.log
+        SendLog(LOG_LEVEL_INFO, "Found preview")
         break
       }
       else if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-        ControlSend,, {Blind}{Esc}{Shift down}{Tab}{Shift up}{Enter}{%worldPreviewResetKey%}, ahk_pid %1%
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save overriding preview check `n, log.log
+        ControlSend,, {Blind}{%6%}, ahk_pid %1%
+        SendLog(LOG_LEVEL_WARNING, "Found save while looking for preview. Overriding preview check")
         break
       }
     }
@@ -60,11 +61,6 @@ while (True) {
   WinGetTitle, title, ahk_pid %1%
   if (InStr(title, " - "))
     break
-  if (!frozenPreview && A_NowUTC - previewStarted > freezePreviewAfter) {
-    FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Freezing preview`n, log.log
-    frozenPreview := True
-    ControlSend,, {Blind}{%worldPreviewFreezeKey%}, ahk_pid %1%
-  }
 }
 
 while (True) {
@@ -83,10 +79,10 @@ while (True) {
   {
     if ((numLines - A_Index) < 5)
     {
-      FileAppend, %A_LoopReadLine%`n, log.log
+      SendLog(LOG_LEVEL_INFO, Format("Current line dump: {1}", A_LoopReadLine))
       if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
         saved := True
-        FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Found Save `n, log.log
+        SendLog(LOG_LEVEL_INFO, "Found save")
         break
       }
     }

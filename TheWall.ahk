@@ -13,8 +13,6 @@ SetTitleMatchMode, 2
 
 ; Don't configure these
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global instWidth := Floor(A_ScreenWidth / cols)
-global instHeight := Floor(A_ScreenHeight / rows)
 global McDirectories := []
 global instances := 0
 global rawPIDs := []
@@ -22,14 +20,20 @@ global PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 global locked := []
-global highBitMask := (2 ** threadCount) - 1
-global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
 global obsOpsToBePushed := ""
 global lastCheckedObs := A_NowUTC
 global resetKey = ""
+global highBitMask := (2 ** threadCount) - 1
+global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
+global instWidth := Floor(A_ScreenWidth / cols)
+global instHeight := Floor(A_ScreenHeight / rows)
+
+global LOG_LEVEL_INFO = "INFO"
+global LOG_LEVEL_WARNING = "WARN"
+global LOG_LEVEL_ERROR = "ERR"
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -39,7 +43,7 @@ GetAllPIDs()
 SetTitles()
 FileDelete, log.log
 FileDelete, obs.ops
-FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Wall`n, log.log
+SendLog(LOG_LEVEL_INFO, "Starting Wall")
 FileDelete, ATTEMPTS_DAY.txt
 
 if (useObsWebsocket) {
@@ -113,7 +117,7 @@ CheckScripts:
   if (useSingleSceneOBS && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
-      FileAppend, idle found %newBg%`n, log.log
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
       obsOpsToBePushed .= "tm -1 " . newBg . "`n"
       needBgCheck := False
       currBg := newBg

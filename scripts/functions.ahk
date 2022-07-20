@@ -1,4 +1,9 @@
 ; v0.5
+
+SendLog(lvlText, msg) {
+  FileAppend, %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec% [SYS-%lvlText%] %msg%`n, log.log
+}
+
 CheckOptionsForHotkey(mcdir, optionsCheck) {
   optionsFile := mcdir . "options.txt"
   Loop, Read, %optionsFile%
@@ -41,7 +46,7 @@ TinderMotion(swipeLeft) {
   else
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
-  FileAppend, new:%newBg% old:%currBg%`n, log.log
+  SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}"))
   obsOpsToBePushed .= "tm " . currBg . " " . newBg . "`n"
   currBg := newBg
 }
@@ -56,7 +61,6 @@ GetFirstBgInstance(toSkip := -1, skip := false) {
     hold := mcdir . "hold.tmp"
     x := !FileExist(hold)
     y := locked[i]
-    FileAppend, idx:%i% active:%activeNum% skip:%toSkip% hold:%x% lock:%y%`n, log.log
     if (i != activeNum && i != toSkip && !FileExist(hold) && !locked[i]) {
       return i
     }
@@ -154,13 +158,6 @@ SetAffinity(pid, mask) {
   DllCall("CloseHandle", "Ptr", hProc)
 }
 
-FreeMemory(pid)
-{
-  h:=DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", pid)
-  DllCall("SetProcessWorkingSetSize", "UInt", h, "Int", -1, "Int", -1)
-  DllCall("CloseHandle", "Int", h)
-}
-
 UnsuspendAll() {
   WinGet, all, list
   Loop, %all%
@@ -178,7 +175,6 @@ SuspendInstance(pid) {
     DllCall("ntdll.dll\NtSuspendProcess", "Int", hProcess)
     DllCall("CloseHandle", "Int", hProcess)
   }
-  FreeMemory(pid)
 }
 
 ResumeInstance(pid) {
@@ -200,7 +196,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
-      FileAppend, prevBg:%prevBg% currBg:%currBg%`n, log.log
       if (prevBg == currBg) {
         hideMini := -1
         showMini := -1
@@ -224,6 +219,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (performanceMethod == "F")
       ResumeInstance(pid)
     else if (performanceMethod == "S") {
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
       ResetSettings(pid, true)
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
@@ -305,7 +301,7 @@ ResetInstance(idx) {
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile%, %A_ScriptDir%
+    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile% %resetKey%, %A_ScriptDir%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
