@@ -10,12 +10,6 @@ saved := False
 FileDelete,%4%
 FileAppend, [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] Starting Reset `n, log.log
 
-WinGetTitle, title, ahk_pid %1%
-if (InStr(title, "-"))
-  ControlSend,, {Blind}{Shift down}{Tab}{Shift up}{Enter}{%worldPreviewResetKey%}, ahk_pid %1%
-else
-  ControlSend,, {Blind}{%worldPreviewResetKey%}, ahk_pid %1%
-
 while (True) {
   numLines := 0
   Loop, Read, %2%

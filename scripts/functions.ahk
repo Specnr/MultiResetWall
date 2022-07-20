@@ -1,4 +1,20 @@
 ; v0.5
+CheckOptionsForHotkey(mcdir, optionsCheck) {
+  optionsFile := mcdir . "options.txt"
+  Loop, Read, %optionsFile%
+  {
+    if (InStr(A_LoopReadLine, optionsCheck)) {
+      split := StrSplit(A_LoopReadLine, ".")
+      mi := split.MaxIndex()
+      if (split[mi] == "period")
+        return "."
+      if (split[mi] == "comma")
+        return ","
+      return split[mi]
+    }
+  }
+}
+
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
@@ -207,8 +223,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S" || quakeProResets) {
-      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    else if (performanceMethod == "S") {
       ResetSettings(pid, true)
     }
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
@@ -265,7 +280,6 @@ ExitWorld()
     else
       ToWall(idx)
     ResetSettings(pid)
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
       for i, tmppid in PIDs {
@@ -286,8 +300,8 @@ ResetInstance(idx) {
     pid := PIDs[idx]
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
     ; Reset
+    ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
     logFile := McDirectories[idx] . "logs\latest.log"
     If (FileExist(idleFile))
       FileDelete, %idleFile%
