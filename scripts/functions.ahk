@@ -1,4 +1,4 @@
-; v0.5
+; v0.8
 
 SendLog(lvlText, msg) {
   FileAppend, %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec% [SYS-%lvlText%] %msg%`n, log.log

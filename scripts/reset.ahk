@@ -1,4 +1,4 @@
-; v0.5
+; v0.8
 
 #NoEnv
 #NoTrayIcon
