@@ -11,6 +11,10 @@ CheckOptionsForHotkey(mcdir, optionsCheck) {
     if (InStr(A_LoopReadLine, optionsCheck)) {
       split := StrSplit(A_LoopReadLine, ".")
       mi := split.MaxIndex()
+      if (split[mi] == "unknown") {
+        MsgBox, Missing hotkey for %optionsCheck%. Set hotkey in all instances and reopen macro.
+        ExitApp
+      }
       if (split[mi] == "period")
         return "."
       if (split[mi] == "comma")
