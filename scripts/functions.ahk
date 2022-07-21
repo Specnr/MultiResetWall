@@ -139,15 +139,13 @@ GetInstanceNumberFromMcDir(mcdir) {
 
 GetAllPIDs()
 {
-  global McDirectories
-  global PIDs
-  global instances := GetInstanceTotal()
+  instances := GetInstanceTotal()
   ; Generate mcdir and order PIDs
   Loop, %instances% {
     mcdir := GetMcDir(rawPIDs[A_Index])
     if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
-    PIDS[num] := rawPIDs[A_Index]
+    PIDs[num] := rawPIDs[A_Index]
     McDirectories[num] := mcdir
   }
 }
@@ -190,10 +188,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
-    FileDelete,instance.txt
-    FileAppend,%idx%,instance.txt
-    if !locked[idx]
-      locked[idx] := true
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
@@ -211,6 +205,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       if (lockIndicators)
         FileAppend, li l %idx%`n, %liFile%
     }
+    FileDelete,instance.txt
+    FileAppend,%idx%,instance.txt
+    if !locked[idx]
+      locked[idx] := true
     pid := PIDs[idx]
     if (affinity) {
       for i, tmppid in PIDs {
@@ -221,7 +219,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S") {
+    else if (performanceMethod == "S" || doF1) {
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
       ResetSettings(pid, true)
     }
@@ -290,25 +288,27 @@ ExitWorld()
 
 ResetInstance(idx) {
   holdFile := McDirectories[idx] . "hold.tmp"
-  if (idx > 0 && idx <= instances && !FileExist(holdFile)) {
+  previewFile := McDirectories[idx] . "preview.tmp"
+  if FileExist(previewFile)
+    FileRead, previewTime, %previewFile%
+  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
     FileAppend,,%holdFile%
-    idleFile := McDirectories[idx] . "idle.tmp"
-    killFile := McDirectories[idx] . "kill.tmp"
-    FileAppend,,%killFile%
+    FileDelete, %previewFile%
+    pid := PIDs[idx]
+    rmpid := RM_PIDs[idx]
+    resetKey := resetkeys[idx]
+    if (performanceMethod == "F")
+      ResumeInstance(pid)
+    ; Reset
+    ControlSend, ahk_parent, {Blind}{%resetKey%}, ahk_pid %pid%
+    DetectHiddenWindows, On
+    PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
+    DetectHiddenWindows, Off
     if locked[idx] {
       locked[idx] := false
       if (lockIndicators && useObsWebsocket)
         FileAppend, li u %idx%`n, %liFile%
     }
-    pid := PIDs[idx]
-    if (performanceMethod == "F")
-      ResumeInstance(pid)
-    ; Reset
-    ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
-    logFile := McDirectories[idx] . "logs\latest.log"
-    If (FileExist(idleFile))
-      FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile% %resetKey%, %A_ScriptDir%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -367,6 +367,7 @@ FocusReset(focusInstance, bypassLock:=false) {
     }
     ResetInstance(A_Index)
   }
+  LockInstance(focusInstance, false)
   needBgCheck := true
 }
 
@@ -420,6 +421,8 @@ ResetSettings(pid, entering:=false)
 {
   if (entering)
     sleep, %settingsDelay%
+  if (doF1)
+    ControlSend,, {Blind}{F1}, ahk_pid %pid%
   if (renderDistance)
   {
     if (!entering && performanceMethod == "S")
@@ -427,7 +430,7 @@ ResetSettings(pid, entering:=false)
     else if ((!entering && performanceMethod != "S") || entering)
       RDPresses := renderDistance-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{D}{F3 up}, ahk_pid %pid%
+    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{d}{F3 up}, ahk_pid %pid%
   }
   if (FOV && !entering)
   {
@@ -447,5 +450,6 @@ ResetSettings(pid, entering:=false)
     ; Tab to video settings to reset entity distance
     ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
   }
-  ControlSend,, {Blind}{Shift}, ahk_pid %pid%
+  if (!entering)
+    sleep, %settingsDelay%
 }
