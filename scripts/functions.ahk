@@ -382,19 +382,19 @@ ResetAll(bypassLock:=false) {
   }
 }
 
-LockInstance(idx) {
+LockInstance(idx, sound:=true) {
   locked[idx] := true
   if (lockIndicators && useObsWebsocket)
     FileAppend, li l %idx%`n, %liFile%
-  if (lockSounds)
+  if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
-UnlockInstance(idx) {
+UnlockInstance(idx, sound:=true) {
   locked[idx] := false
   if (lockIndicators && useObsWebsocket)
     FileAppend, li u %idx%`n, %liFile%
-  if (lockSounds)
+  if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
