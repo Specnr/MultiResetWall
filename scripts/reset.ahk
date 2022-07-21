@@ -107,7 +107,7 @@ ManageReset() {
   }
 
   sleep, %beforePauseDelay%
-  ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %1%
+  ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
   if (performanceMethod == "F")
     sleep, %beforeFreezeDelay%
   FileAppend, %A_TickCount%, %idleFile%
