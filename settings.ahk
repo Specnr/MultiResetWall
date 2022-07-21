@@ -28,10 +28,10 @@ global entityDistance := 500
 global FOV := 110 ; For quake pro put 110
 global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
+global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
 
 ; Delays
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
-global maxLoops := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
 global beforePauseDelay := 0 ; basically the delay before dynamic FPS does its thing
 global fullScreenDelay := 270 ; increse if fullscreening issues
@@ -41,3 +41,4 @@ global obsDelay := 100 ; increase if not changing scenes in obs
 global settingsDelay := 10 ; increase if settings arent changing
 global lowBitmaskMultiplier := 0.75 ; for affinity, find a happy medium, max=1.0
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
+global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
