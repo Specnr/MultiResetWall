@@ -24,6 +24,17 @@ CheckOptionsForHotkey(mcdir, optionsCheck) {
   }
 }
 
+CountAttempts(attemptType) {
+  file := attemptType . ".txt"
+  FileRead, WorldNumber, %file%
+  if (ErrorLevel)
+    WorldNumber = 0
+  else
+    FileDelete, %file%
+  WorldNumber += 1
+  FileAppend, %WorldNumber%, %file%
+}
+
 FindBypassInstance() {
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
@@ -320,20 +331,8 @@ ResetInstance(idx) {
     ; Count Attempts
     if (countAttempts)
     {
-      FileRead, WorldNumber, ATTEMPTS.txt
-      if (ErrorLevel)
-        WorldNumber = 0
-      else
-        FileDelete, ATTEMPTS.txt
-      WorldNumber += 1
-      FileAppend, %WorldNumber%, ATTEMPTS.txt
-      FileRead, WorldNumber, ATTEMPTS_DAY.txt
-      if (ErrorLevel)
-        WorldNumber = 0
-      else
-        FileDelete, ATTEMPTS_DAY.txt
-      WorldNumber += 1
-      FileAppend, %WorldNumber%, ATTEMPTS_DAY.txt
+      CountAttempts("ATTEMPTS")
+      CountAttempts("ATTEMPTS_DAY")
     }
   }
 }
