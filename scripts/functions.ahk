@@ -12,7 +12,8 @@ CheckOptionsForHotkey(mcdir, optionsCheck) {
       split := StrSplit(A_LoopReadLine, ":")
       if (split.MaxIndex() == 2)
         return keyArray[split[2]]
-      SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly. Line: {1}", A_LoopReadLine))
+      SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly, defaulting to F6. Line: {1}", A_LoopReadLine))
+      return "F6"
     }
   }
 }
