@@ -17,6 +17,7 @@ global McDirectories := []
 global instances := 0
 global rawPIDs := []
 global PIDs := []
+global RM_PIDs := []
 global resetScriptTime := []
 global resetIdx := []
 global locked := []
@@ -24,12 +25,13 @@ global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
 global lastCheckedObs := A_NowUTC
-global resetKey = ""
+global resetKeys := []
 global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
 
+global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
@@ -64,18 +66,25 @@ if (useObsWebsocket) {
 }
 
 for i, mcdir in McDirectories {
-  if (i == 1) 
-    resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World:key.keyboard.")
+  pid := PIDs[i]
+  logs := mcdir . "logs\latest.log"
   idle := mcdir . "idle.tmp"
   hold := mcdir . "hold.tmp"
-  kill := mcdir . "kill.tmp"
+  preview := mcdir . "preview.tmp"
+  resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World:key.keyboard.")
+  resetkeys[i] := resetKey
+  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey%, %A_ScriptDir%,, rmpid
+  DetectHiddenWindows, On
+  WinWait, ahk_pid %rmpid%
+  DetectHiddenWindows, Off
+  RM_PIDs[i] := rmpid
   locked[i] := False
   if (!FileExist(idle))
     FileAppend,,%idle%
   if FileExist(hold)
     FileDelete, %hold%
-  if FileExist(kill)
-    FileDelete, %kill%
+  if FileExist(preview)
+    FileDelete, %preview%
   if (wideResets) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
@@ -113,6 +122,14 @@ ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
     FileAppend, xx, %obsFile%
+    FileAppend, xx, %liFile%
+    DetectHiddenWindows, On
+    rms := RM_PIDs.MaxIndex()
+    loop, %rms% {
+      pid := RM_PIDs[A_Index]
+      WinClose, ahk_pid %pid%
+    }
+    DetectHiddenWindows, Off
   }
 ExitApp
 
