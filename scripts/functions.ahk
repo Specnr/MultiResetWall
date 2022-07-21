@@ -46,8 +46,8 @@ TinderMotion(swipeLeft) {
   else
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
-  SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}"))
-  obsOpsToBePushed .= "tm " . currBg . " " . newBg . "`n"
+  SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg))
+  FileAppend, tm %currBg% %newBg%`n, %obsFile%
   currBg := newBg
 }
 
@@ -192,7 +192,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
   if (idx <= instances && FileExist(idleFile)) {
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
-    locked[idx] := true
+    if !locked[idx]
+      locked[idx] := true
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
@@ -204,9 +205,11 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        obsOpsToBePushed .= "ss-si " . from . " " . idx . " " . hideMini . " " . showMini . "`n"
+        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, %obsFile%
       Else
-        obsOpsToBePushed .= "si " . idx . "`n"
+        FileAppend, si %idx%`n, %obsFile%
+      if (lockIndicators)
+        FileAppend, li l %idx%`n, %liFile%
     }
     pid := PIDs[idx]
     if (affinity) {
@@ -292,7 +295,11 @@ ResetInstance(idx) {
     idleFile := McDirectories[idx] . "idle.tmp"
     killFile := McDirectories[idx] . "kill.tmp"
     FileAppend,,%killFile%
-    locked[idx] := false
+    if locked[idx] {
+      locked[idx] := false
+      if (lockIndicators && useObsWebsocket)
+        FileAppend, li u %idx%`n, %liFile%
+    }
     pid := PIDs[idx]
     if (performanceMethod == "F")
       ResumeInstance(pid)
@@ -338,9 +345,9 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      obsOpsToBePushed .= "ss-tw " . comingFrom . "`n"
+      FileAppend, ss-tw %comingFrom%`n, %obsFile%
     Else
-      obsOpsToBePushed .= "tw`n"
+      FileAppend, tw`n, %obsFile%
   }
   else {
     send {F12 down}
@@ -350,28 +357,62 @@ ToWall(comingFrom) {
 }
 
 ; Focus hovered instance and background reset all other instances
-FocusReset(focusInstance) {
+FocusReset(focusInstance, bypassLock:=false) {
+  if (bypassLock && useObsWebsocket)
+    FileAppend, li u a`n, %liFile%
   SwitchInstance(focusInstance, true)
   loop, %instances% {
-    if (A_Index != focusInstance && !locked[A_Index]) {
-      ResetInstance(A_Index)
+    if (A_Index = focusInstance || (locked[A_Index] && !bypassLock)) {
+      Continue
     }
+    ResetInstance(A_Index)
   }
   needBgCheck := true
 }
 
 ; Reset all instances
-ResetAll() {
+ResetAll(bypassLock:=false) {
+  if (bypassLock && useObsWebsocket)
+    FileAppend, li u a`n, %liFile%
   loop, %instances% {
-    if (!locked[A_Index])
-      ResetInstance(A_Index)
+    if (locked[A_Index] && !bypassLock)
+      Continue
+    ResetInstance(A_Index)
   }
 }
 
 LockInstance(idx) {
   locked[idx] := true
+  if (lockIndicators && useObsWebsocket)
+    FileAppend, li l %idx%`n, %liFile%
   if (lockSounds)
     SoundPlay, A_ScriptDir\..\media\lock.wav
+}
+
+UnlockInstance(idx) {
+  locked[idx] := false
+  if (lockIndicators && useObsWebsocket)
+    FileAppend, li u %idx%`n, %liFile%
+  if (lockSounds)
+    SoundPlay, A_ScriptDir\..\media\unlock.wav
+}
+
+LockAll() {
+  loop, %instances%
+    locked[A_Index] := true
+  if (lockIndicators && useObsWebsocket)
+    FileAppend, li l a`n, %liFile%
+  if (lockSounds)
+    SoundPlay, A_ScriptDir\..\media\lock.wav
+}
+
+UnlockAll() {
+  loop, %instances%
+    locked[A_Index] := false
+  if (lockIndicators && useObsWebsocket)
+    FileAppend, li u a`n, %liFile%
+  if (lockSounds)
+    SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
 ; Reset your settings to preset settings preferences

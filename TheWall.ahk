@@ -23,7 +23,6 @@ global locked := []
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
-global obsOpsToBePushed := ""
 global lastCheckedObs := A_NowUTC
 global resetKey = ""
 global highBitMask := (2 ** threadCount) - 1
@@ -34,6 +33,8 @@ global instHeight := Floor(A_ScreenHeight / rows)
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
+global obsFile := A_ScriptDir . "/scripts/obs.ops"
+global liFile := A_ScriptDir . "/scripts/li.ops"
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -43,19 +44,22 @@ GetAllPIDs()
 SetTitles()
 FileDelete, log.log
 FileDelete, obs.ops
-SendLog(LOG_LEVEL_INFO, "Starting Wall")
+FileDelete, %obsFile%
+if lockIndicators
+  FileDelete, %liFile%
 FileDelete, ATTEMPTS_DAY.txt
+SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
 if (useObsWebsocket) {
   if (useSingleSceneOBS) {
     lastInst := -1
     if FileExist("instance.txt")
       FileRead, lastInst, instance.txt
-    obsOpsToBePushed .= "ss-tw " . lastInst . "`n"
+    FileAppend, ss-tw %lastInst%`n, %obsFile%
   }
   else
-    obsOpsToBePushed .= "tw`n"
-  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"""
+    FileAppend, tw`n, %obsFile%
+  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances
   Run, %cmd%,, Hide
 }
 
@@ -96,6 +100,10 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
+if (lockIndicators && useObsWebsocket) {
+  FileAppend, li u a`n, %liFile%
+}
+
 #Persistent
 OnExit, ExitSub
 SetTimer, CheckScripts, 20
@@ -104,21 +112,17 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
-    FileAppend, xx, obs.ops
+    FileAppend, xx, %obsFile%
   }
 ExitApp
 
 CheckScripts:
   Critical
-  if (useObsWebsocket && StrLen(obsOpsToBePushed) > 0 && A_NowUTC - lastCheckedObs > 0.5) {
-    FileAppend, %obsOpsToBePushed%, obs.ops
-    obsOpsToBePushed := ""
-  }
   if (useSingleSceneOBS && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
-      obsOpsToBePushed .= "tm -1 " . newBg . "`n"
+      FileAppend, tm -1 %newBg%`n, %obsFile%
       needBgCheck := False
       currBg := newBg
     }

@@ -46,6 +46,19 @@ Note: If you don't want you use Tinder, ignore anything related to it below.
 
 After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
+## OBS Locked Instance Indicators
+
+Add little locks or any image you want to signal when an instance is locked or not
+
+Note: Depends on OBS Websocket
+
+1) Add an image source to your wall scene in OBS for each instance and name them accordingly (lock1, lock2, lock3...) and position them where you want them to be. For example: ![walllocks](https://user-images.githubusercontent.com/60681673/174759119-e4822c08-6ce1-4b8e-b345-68b15cd23aa9.png)
+![locksources](https://user-images.githubusercontent.com/60681673/174758616-d960a51e-c355-4cb9-b748-7b63420731a0.png)
+2) Edit the 2 extra settings in obsSettings.py accordingly. For lock_indicator_format put the prefix you used for your lock image sources in OBS.
+3) Set lockIndicators in settings.ahk to "True"
+
+After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
+
 ## Credit
 
 - Me
