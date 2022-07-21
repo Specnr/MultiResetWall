@@ -24,7 +24,6 @@ global locked := []
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
-global lastCheckedObs := A_NowUTC
 global resetKeys := []
 global highBitMask := (2 ** threadCount) - 1
 global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
