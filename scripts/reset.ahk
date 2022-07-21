@@ -9,6 +9,9 @@
 SetKeyDelay, 0
 
 global MSG_RESET := 0x04E20
+global LOG_LEVEL_INFO = "INFO"
+global LOG_LEVEL_WARNING = "WARN"
+global LOG_LEVEL_ERROR = "ERR"
 
 global pid := A_Args[1]
 global logFile := A_Args[2]

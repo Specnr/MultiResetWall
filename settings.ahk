@@ -30,7 +30,7 @@ global mouseSensitivity := 35
 global lowRender := 5 ; For settings change performance method
 global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
 
-; Delays
+; Delays (Defaults are probably fine)
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
 global beforePauseDelay := 0 ; basically the delay before dynamic FPS does its thing
