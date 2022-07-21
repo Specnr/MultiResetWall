@@ -44,7 +44,6 @@ if (performanceMethod == "F") {
 GetAllPIDs()
 SetTitles()
 FileDelete, log.log
-FileDelete, obs.ops
 FileDelete, %obsFile%
 if lockIndicators
   FileDelete, %liFile%
