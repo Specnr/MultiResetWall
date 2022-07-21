@@ -3,7 +3,6 @@
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
-global atumResetKey := "F6" ; Create New World hotkey in minecraft settings (latest atum version required)
 global affinity := True ; A funky performance addition, enable for minor performance boost
 
 ; Extra features

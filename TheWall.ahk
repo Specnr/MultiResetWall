@@ -69,8 +69,7 @@ for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
   hold := mcdir . "hold.tmp"
   preview := mcdir . "preview.tmp"
-  ;resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World:key.keyboard.")
-  resetKey := atumResetKey
+  resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World:key.keyboard.")
   resetkeys[i] := resetKey
   Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
