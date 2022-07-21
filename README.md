@@ -9,7 +9,7 @@ Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw)
 
 To use the macro, run TheWall.ahk and wait for it to say ready. Start up OBS, then start up a [Fullscreen projector](https://youtu.be/9YqZ6Ogv3rk).
 
-On the Fullscreen projector, you have a few hotkeys: 
+On the Fullscreen projector, you have a few hotkeys (You may customize these hotkeys in the hotkeys.ahk file): 
 - (1-9): Will reset the instance with the corresponding number
 - Shift + (1-9): Will play the instance with the corresponding number
 - E: Will reset the instance which your mouse is hovering over

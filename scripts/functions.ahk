@@ -1,4 +1,4 @@
-; v0.5
+; v0.8
 
 SendLog(lvlText, msg) {
   FileAppend, %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec% [SYS-%lvlText%] %msg%`n, log.log
@@ -9,15 +9,23 @@ CheckOptionsForHotkey(mcdir, optionsCheck) {
   Loop, Read, %optionsFile%
   {
     if (InStr(A_LoopReadLine, optionsCheck)) {
-      split := StrSplit(A_LoopReadLine, ".")
-      mi := split.MaxIndex()
-      if (split[mi] == "period")
-        return "."
-      if (split[mi] == "comma")
-        return ","
-      return split[mi]
+      split := StrSplit(A_LoopReadLine, ":")
+      if (split.MaxIndex() == 2)
+        return keyArray[split[2]]
+      SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly. Line: {1}", A_LoopReadLine))
     }
   }
+}
+
+CountAttempts(attemptType) {
+  file := attemptType . ".txt"
+  FileRead, WorldNumber, %file%
+  if (ErrorLevel)
+    WorldNumber = 0
+  else
+    FileDelete, %file%
+  WorldNumber += 1
+  FileAppend, %WorldNumber%, %file%
 }
 
 FindBypassInstance() {
@@ -139,15 +147,13 @@ GetInstanceNumberFromMcDir(mcdir) {
 
 GetAllPIDs()
 {
-  global McDirectories
-  global PIDs
-  global instances := GetInstanceTotal()
+  instances := GetInstanceTotal()
   ; Generate mcdir and order PIDs
   Loop, %instances% {
     mcdir := GetMcDir(rawPIDs[A_Index])
     if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
-    PIDS[num] := rawPIDs[A_Index]
+    PIDs[num] := rawPIDs[A_Index]
     McDirectories[num] := mcdir
   }
 }
@@ -190,10 +196,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
-    FileDelete,instance.txt
-    FileAppend,%idx%,instance.txt
-    if !locked[idx]
-      locked[idx] := true
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
@@ -211,6 +213,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       if (lockIndicators)
         FileAppend, li l %idx%`n, %liFile%
     }
+    FileDelete,instance.txt
+    FileAppend,%idx%,instance.txt
+    if !locked[idx]
+      locked[idx] := true
     pid := PIDs[idx]
     if (affinity) {
       for i, tmppid in PIDs {
@@ -221,7 +227,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S") {
+    else if (performanceMethod == "S" || doF1) {
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
       ResetSettings(pid, true)
     }
@@ -290,25 +296,27 @@ ExitWorld()
 
 ResetInstance(idx) {
   holdFile := McDirectories[idx] . "hold.tmp"
-  if (idx > 0 && idx <= instances && !FileExist(holdFile)) {
+  previewFile := McDirectories[idx] . "preview.tmp"
+  if FileExist(previewFile)
+    FileRead, previewTime, %previewFile%
+  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
     FileAppend,,%holdFile%
-    idleFile := McDirectories[idx] . "idle.tmp"
-    killFile := McDirectories[idx] . "kill.tmp"
-    FileAppend,,%killFile%
+    FileDelete, %previewFile%
+    pid := PIDs[idx]
+    rmpid := RM_PIDs[idx]
+    resetKey := resetkeys[idx]
+    if (performanceMethod == "F")
+      ResumeInstance(pid)
+    ; Reset
+    ControlSend, ahk_parent, {Blind}{%resetKey%}, ahk_pid %pid%
+    DetectHiddenWindows, On
+    PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
+    DetectHiddenWindows, Off
     if locked[idx] {
       locked[idx] := false
       if (lockIndicators && useObsWebsocket)
         FileAppend, li u %idx%`n, %liFile%
     }
-    pid := PIDs[idx]
-    if (performanceMethod == "F")
-      ResumeInstance(pid)
-    ; Reset
-    ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
-    logFile := McDirectories[idx] . "logs\latest.log"
-    If (FileExist(idleFile))
-      FileDelete, %idleFile%
-    Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logFile% %idleFile% %killFile% %holdFile% %resetKey%, %A_ScriptDir%
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -316,20 +324,8 @@ ResetInstance(idx) {
     ; Count Attempts
     if (countAttempts)
     {
-      FileRead, WorldNumber, ATTEMPTS.txt
-      if (ErrorLevel)
-        WorldNumber = 0
-      else
-        FileDelete, ATTEMPTS.txt
-      WorldNumber += 1
-      FileAppend, %WorldNumber%, ATTEMPTS.txt
-      FileRead, WorldNumber, ATTEMPTS_DAY.txt
-      if (ErrorLevel)
-        WorldNumber = 0
-      else
-        FileDelete, ATTEMPTS_DAY.txt
-      WorldNumber += 1
-      FileAppend, %WorldNumber%, ATTEMPTS_DAY.txt
+      CountAttempts("ATTEMPTS")
+      CountAttempts("ATTEMPTS_DAY")
     }
   }
 }
@@ -367,6 +363,7 @@ FocusReset(focusInstance, bypassLock:=false) {
     }
     ResetInstance(A_Index)
   }
+  LockInstance(focusInstance, false)
   needBgCheck := true
 }
 
@@ -381,19 +378,19 @@ ResetAll(bypassLock:=false) {
   }
 }
 
-LockInstance(idx) {
+LockInstance(idx, sound:=true) {
   locked[idx] := true
   if (lockIndicators && useObsWebsocket)
     FileAppend, li l %idx%`n, %liFile%
-  if (lockSounds)
+  if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
-UnlockInstance(idx) {
+UnlockInstance(idx, sound:=true) {
   locked[idx] := false
   if (lockIndicators && useObsWebsocket)
     FileAppend, li u %idx%`n, %liFile%
-  if (lockSounds)
+  if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
@@ -420,6 +417,8 @@ ResetSettings(pid, entering:=false)
 {
   if (entering)
     sleep, %settingsDelay%
+  if (doF1)
+    ControlSend,, {Blind}{F1}, ahk_pid %pid%
   if (renderDistance)
   {
     if (!entering && performanceMethod == "S")
@@ -427,7 +426,7 @@ ResetSettings(pid, entering:=false)
     else if ((!entering && performanceMethod != "S") || entering)
       RDPresses := renderDistance-2
     ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend,, {Blind}{Shift down}{F3 down}{F 32}{Shift up}{F %RDPresses%}{D}{F3 up}, ahk_pid %pid%
+    ControlSend,, {Blind}{Shift down}{F3 down}{f 32}{Shift up}{f %RDPresses%}{d}{F3 up}, ahk_pid %pid%
   }
   if (FOV && !entering)
   {
@@ -447,5 +446,127 @@ ResetSettings(pid, entering:=false)
     ; Tab to video settings to reset entity distance
     ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
   }
-  ControlSend,, {Blind}{Shift}, ahk_pid %pid%
+  if (!entering)
+    sleep, %settingsDelay%
 }
+
+; Shoutout peej
+global keyArray := Object("key.keyboard.f1", "F1"
+,"key.keyboard.f2", "F2"
+,"key.keyboard.f3", "F3"
+,"key.keyboard.f4", "F4"
+,"key.keyboard.f5", "F5"
+,"key.keyboard.f6", "F6"
+,"key.keyboard.f7", "F7"
+,"key.keyboard.f8", "F8"
+,"key.keyboard.f9", "F9"
+,"key.keyboard.f10", "F10"
+,"key.keyboard.f11", "F11"
+,"key.keyboard.f12", "F12"
+,"key.keyboard.f13", "F13"
+,"key.keyboard.f14", "F14"
+,"key.keyboard.f15", "F15"
+,"key.keyboard.f16", "F16"
+,"key.keyboard.f17", "F17"
+,"key.keyboard.f18", "F18"
+,"key.keyboard.f19", "F19"
+,"key.keyboard.f20", "F20"
+,"key.keyboard.f21", "F21"
+,"key.keyboard.f22", "F22"
+,"key.keyboard.f23", "F23"
+,"key.keyboard.f24", "F24"
+,"key.keyboard.q", "q"
+,"key.keyboard.w", "w"
+,"key.keyboard.e", "e"
+,"key.keyboard.r", "r"
+,"key.keyboard.t", "t"
+,"key.keyboard.y", "y"
+,"key.keyboard.u", "u"
+,"key.keyboard.i", "i"
+,"key.keyboard.o", "o"
+,"key.keyboard.p", "p"
+,"key.keyboard.a", "a"
+,"key.keyboard.s", "s"
+,"key.keyboard.d", "d"
+,"key.keyboard.f", "f"
+,"key.keyboard.g", "g"
+,"key.keyboard.h", "h"
+,"key.keyboard.j", "j"
+,"key.keyboard.k", "k"
+,"key.keyboard.l", "l"
+,"key.keyboard.z", "z"
+,"key.keyboard.x", "x"
+,"key.keyboard.c", "c"
+,"key.keyboard.v", "v"
+,"key.keyboard.b", "b"
+,"key.keyboard.n", "n"
+,"key.keyboard.m", "m"
+,"key.keyboard.1", "1"
+,"key.keyboard.2", "2"
+,"key.keyboard.3", "3"
+,"key.keyboard.4", "4"
+,"key.keyboard.5", "5"
+,"key.keyboard.6", "6"
+,"key.keyboard.7", "7"
+,"key.keyboard.8", "8"
+,"key.keyboard.9", "9"
+,"key.keyboard.0", "0"
+,"key.keyboard.tab", "Tab"
+,"key.keyboard.left.bracket", "["
+,"key.keyboard.right.bracket", "]"
+,"key.keyboard.backspace", "Backspace"
+,"key.keyboard.equal", "="
+,"key.keyboard.minus", "-"
+,"key.keyboard.grave.accent", "`"
+,"key.keyboard.slash", "/"
+,"key.keyboard.space", "Space"
+,"key.keyboard.left.alt", "LAlt"
+,"key.keyboard.right.alt", "RAlt"
+,"key.keyboard.print.screen", "PrintScreen"
+,"key.keyboard.insert", "Insert"
+,"key.keyboard.scroll.lock", "ScrollLock"
+,"key.keyboard.pause", "Pause"
+,"key.keyboard.right.control", "RControl"
+,"key.keyboard.left.control", "LControl"
+,"key.keyboard.right.shift", "RShift"
+,"key.keyboard.left.shift", "LShift"
+,"key.keyboard.comma", ","
+,"key.keyboard.period", "."
+,"key.keyboard.home", "Home"
+,"key.keyboard.end", "End"
+,"key.keyboard.page.up", "PgUp"
+,"key.keyboard.page.down", "PgDn"
+,"key.keyboard.delete", "Delete"
+,"key.keyboard.left.win", "LWin"
+,"key.keyboard.right.win", "RWin"
+,"key.keyboard.menu", "AppsKey"
+,"key.keyboard.backslash", "\"
+,"key.keyboard.caps.lock", "CapsLock"
+,"key.keyboard.semicolon", ";"
+,"key.keyboard.apostrophe", "'"
+,"key.keyboard.enter", "Enter"
+,"key.keyboard.up", "Up"
+,"key.keyboard.down", "Down"
+,"key.keyboard.left", "Left"
+,"key.keyboard.right", "Right"
+,"key.keyboard.keypad.0", "Numpad0"
+,"key.keyboard.keypad.1", "Numpad1"
+,"key.keyboard.keypad.2", "Numpad2"
+,"key.keyboard.keypad.3", "Numpad3"
+,"key.keyboard.keypad.4", "Numpad4"
+,"key.keyboard.keypad.5", "Numpad5"
+,"key.keyboard.keypad.6", "Numpad6"
+,"key.keyboard.keypad.7", "Numpad7"
+,"key.keyboard.keypad.8", "Numpad8"
+,"key.keyboard.keypad.9", "Numpad9"
+,"key.keyboard.keypad.decimal", "NumpadDot"
+,"key.keyboard.keypad.enter", "NumpadEnter"
+,"key.keyboard.keypad.add", "NumpadAdd"
+,"key.keyboard.keypad.subtract", "NumpadSub"
+,"key.keyboard.keypad.multiply", "NumpadMult"
+,"key.keyboard.keypad.divide", "NumpadDiv"
+,"key.mouse.left", "LButton"
+,"key.mouse.right", "RButton"
+,"key.mouse.middle", "MButton"
+,"key.mouse.4", "XButton1"
+,"key.mouse.5", "XButton2")
