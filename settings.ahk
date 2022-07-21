@@ -4,9 +4,6 @@ global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
 global performanceMethod := "S" ; F = Instance Freezing, S = Settings Changing RD, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
-global worldPreviewResetKey := "h" ; [KEEP THIS LOWER CASE] world preview reset key (default: h)
-global worldPreviewFreezeKey := "j" ; [KEEP THIS LOWER CASE] world preview freeze key (default: j)
-global freezePreviewAfter := 3 ; Freezes the preview after this many seconds (imo this option sucks but if you need it its here)
 
 ; Extra features
 global fullscreen := False 
@@ -19,7 +16,6 @@ global countAttempts := True ; Makes a text file to count resets
 global coop := False ; Automatically opens to LAN when you load in a world
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. (Additional setup required)
-global lockIndicators := False ; OBS locked instance indicators (Additional setup required)
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
 global multiMode := False ; Never send you back to the wall unless there are no playable instances
@@ -37,7 +33,7 @@ global lowRender := 5 ; For settings change performance method
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global maxLoops := 50 ; increase if instance isnt resetting (or have to press reset twice)
 global beforeFreezeDelay := 500 ; increase if doesnt join world
-global beforePauseDelay := 500 ; basically the delay before dynamic FPS does its thing
+global beforePauseDelay := 0 ; basically the delay before dynamic FPS does its thing
 global fullScreenDelay := 270 ; increse if fullscreening issues
 global restartDelay := 200 ; increase if saying missing instanceNumber in .minecraft (and you ran setup)
 global scriptBootDelay := 6000 ; increase if instance freezes before world gen
