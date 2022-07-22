@@ -4,7 +4,7 @@ SendLog(lvlText, msg) {
   FileAppend, %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec% [SYS-%lvlText%] %msg%`n, log.log
 }
 
-CheckOptionsForHotkey(mcdir, optionsCheck) {
+CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
   optionsFile := mcdir . "options.txt"
   Loop, Read, %optionsFile%
   {
@@ -13,7 +13,7 @@ CheckOptionsForHotkey(mcdir, optionsCheck) {
       if (split.MaxIndex() == 2)
         return keyArray[split[2]]
       SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly, defaulting to F6. Line: {1}", A_LoopReadLine))
-      return "F6"
+      return defaultKey
     }
   }
 }
