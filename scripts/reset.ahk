@@ -114,5 +114,7 @@ ManageReset() {
   if (performanceMethod == "F")
     sleep, %beforeFreezeDelay%
   FileAppend, %A_TickCount%, %idleFile%
+  if FileExist(holdFile)
+    FileDelete, %holdFile%
   return
 }
