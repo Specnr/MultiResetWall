@@ -234,10 +234,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S" || doF1) {
-      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-      ResetSettings(pid, true)
-    }
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    if doF1
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
@@ -291,7 +290,8 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    ResetSettings(pid)
+    if doF1
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
       for i, tmppid in PIDs {
