@@ -228,10 +228,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     }
     if (performanceMethod == "F")
       ResumeInstance(pid)
-    else if (performanceMethod == "S" || doF1) {
-      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-      ResetSettings(pid, true)
-    }
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    if doF1
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
@@ -285,7 +284,8 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    ResetSettings(pid)
+    if doF1
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
       for i, tmppid in PIDs {
@@ -411,44 +411,6 @@ UnlockAll() {
     FileAppend, li u a`n, %liFile%
   if (lockSounds)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
-}
-
-; Reset your settings to preset settings preferences
-ResetSettings(pid, entering:=false)
-{
-  if (entering)
-    sleep, %settingsDelay%
-  if (doF1)
-    ControlSend,, {Blind}{F1}, ahk_pid %pid%
-  if (renderDistance)
-  {
-    if (!entering && performanceMethod == "S")
-      RDPresses := lowRender-2
-    else if ((!entering && performanceMethod != "S") || entering)
-      RDPresses := renderDistance-2
-    ; Reset then preset render distance to custom value with f3 shortcuts
-    ControlSend,, {Blind}{Shift down}{F3 down}{f 32}{Shift up}{f %RDPresses%}{d}{F3 up}, ahk_pid %pid%
-  }
-  if (FOV && !entering)
-  {
-    ; Tab to FOV reset then preset FOV to custom value with arrow keys
-    FOVPresses := ceil((110-FOV)*1.7875)
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab}{Right 150}{Left %FOVPresses%}{Esc}, ahk_pid %pid%
-  }
-  if (mouseSensitivity && !entering)
-  {
-    SensPresses := ceil(mouseSensitivity/1.408)
-    ; Tab to mouse sensitivity reset then preset mouse sensitivity to custom value with arrow keys
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 7}{enter}{tab}{enter}{tab}{Left 150}{Right %SensPresses%}{Esc 3}, ahk_pid %pid%
-  }
-  if (entityDistance && !entering)
-  {
-    entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
-    ; Tab to video settings to reset entity distance
-    ControlSend,, {Blind}{Esc}{Tab 6}{enter}{Tab 6}{enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
-  }
-  if (!entering)
-    sleep, %settingsDelay%
 }
 
 ; Shoutout peej
