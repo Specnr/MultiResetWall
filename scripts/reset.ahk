@@ -20,7 +20,12 @@ global holdFile := A_Args[4]
 global previewFile := A_Args[5]
 global resetKey := A_Args[6]
 
+global idx := GetInstanceNumberFromMcDir(GetMcDir(pid))
 global state := "unknown"
+global lastLineCount := 0
+global lastPreview := 0
+
+SendLog(LOG_LEVEL_INFO, Format("Inst {1} reset manager started", idx))
 
 OnMessage(MSG_RESET, "Reset")
 
@@ -37,42 +42,43 @@ Reset() {
 
 ManageReset() {
   start := A_TickCount
-  SendLog(LOG_LEVEL_INFO, "Starting reset")
+  SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset", idx))
   while (True) {
-    preview := False
+    sleep, 60
     numLines := 0
     Loop, Read, %logFile%
-      numLines += 1
+      numLines := A_Index
+    if (lastLineCount >= numLines)
+      Continue
+    lastLineCount := numLines
     Loop, Read, %logFile%
     {
-      if ((numLines - A_Index) < 1)
+      if ((A_Index > lastPreview) && (numLines - A_Index) < 5)
       {
         if (InStr(A_LoopReadLine, "Starting Preview")) {
           state := "preview"
-          SendLog(LOG_LEVEL_INFO, "Found preview")
-          break
+          lastPreview := A_Index
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
+          break 2
         }
-      }
-      if (A_TickCount - start > 2000 && (numLines - A_Index) < 5)
-      {
-        SendLog(LOG_LEVEL_INFO, Format("Current line dump: {1}", A_LoopReadLine))
-        if (InStr(A_LoopReadLine, "Starting Preview")) {
-          state := "preview"
-          SendLog(LOG_LEVEL_INFO, "Found preview")
-          break
-        } else if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-          ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
-          SendLog(LOG_LEVEL_WARNING, "Found save while looking for preview. Overriding preview check")
-          break
+        sleep, 20
+        if (A_TickCount - start > 4000)
+        {
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
+          if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
+            ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
+            SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview. Forcing another reset", idx))
+            break
+          }
+          sleep, 20
         }
       }
     }
-    if (state == "preview")
-      break
-    sleep, 50
   }
 
   FileDelete, %holdFile%
+  if FileExist(previewFile)
+    FileDelete, %previewFile%
   FileAppend, %A_TickCount%, %previewFile%
   ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %pid%
 
@@ -82,31 +88,32 @@ ManageReset() {
     WinGetTitle, title, ahk_pid %pid%
     if (InStr(title, " - "))
       break
-    sleep, 50
+    sleep, 60
   }
 
   while (True) {
     if (state == "resetting")
       return
+    sleep, 80
     numLines := 0
     Loop, Read, %logFile%
-      numLines += 1
-    saved := False
+      numLines := A_Index
+    if (lastLineCount >= numLines)
+      Continue
+    lastLineCount := numLines
     Loop, Read, %logFile%
     {
       if ((numLines - A_Index) < 5)
       {
-        SendLog(LOG_LEVEL_INFO, Format("Current line dump: {1}", A_LoopReadLine))
+        SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
         if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
           state := "idle"
-          SendLog(LOG_LEVEL_INFO, "Found save")
-          break
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
+          break 2
         }
+        sleep, 20
       }
     }
-    if (state == "idle")
-      break
-    sleep, 50
   }
 
   sleep, %beforePauseDelay%
