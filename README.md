@@ -9,14 +9,21 @@ Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw)
 
 To use the macro, run TheWall.ahk and wait for it to say ready. Start up OBS, then start up a [Fullscreen projector](https://youtu.be/9YqZ6Ogv3rk).
 
-On the Fullscreen projector, you have a few hotkeys (You may customize these hotkeys in the hotkeys.ahk file): 
+On the Fullscreen projector, you have a few default hotkeys (You may customize these hotkeys in the hotkeys.ahk file): 
 - (1-9): Will reset the instance with the corresponding number
 - Shift + (1-9): Will play the instance with the corresponding number
 - E: Will reset the instance which your mouse is hovering over
 - R: Will play the instance which your mouse is hovering over
 - F: Will play the instance which your mouse is hovering over, and reset all of the other ones
 - T: Will reset all instances
-- Shift + L Mouse button: Lock instance so other "blanket reset" functions skip over it
+- Shift + Left Mouse button: Lock instance so "blanket reset" functions skip over it
+
+Other optional hotkey functions include (to use, put the quoted text after a hotkey and double colon in the hotkeys.ahk file):
+- "ResetAll(true)": Reset all instances regardless of locked status
+- "FocusReset(MousePosToInstNumber(), true)": Play the instance which your mouse is hovering over and reset all the rest regardless of locked status
+- "UnlockInstance(MousePosToInstNumber())": Unlock the instance which your mouse is hovering over
+- "LockAll()": Lock all instances
+- "UnlockAll()": Unlock all instances
 
 No longer moves worlds, it slows down the macro a lot, use [this world moving macro](https://gist.github.com/Specnr/f7a5450d932a1277fdcd6c141ad7bf6a).
 
