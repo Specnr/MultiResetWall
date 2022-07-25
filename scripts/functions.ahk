@@ -378,7 +378,7 @@ LockInstance(idx, sound:=true) {
   locked[idx] := true
   if (lockIndicators) {
     lockDest := McDirectories[idx] . "lock.png"
-    FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%
+    FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
@@ -388,7 +388,7 @@ UnlockInstance(idx, sound:=true) {
   locked[idx] := false
   if (lockIndicators) {
     lockDest := McDirectories[idx] . "lock.png"
-    FileDelete, %lockDest%
+    FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
