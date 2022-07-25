@@ -20,6 +20,7 @@ global audioGui := False ; A simple GUI so the OBS application audio plugin can 
 global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
 global multiMode := False ; Never send you back to the wall unless there are no playable instances
 global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
+global lockIndicators := False ; Visual indicator for locked instances (no websocket needed)
 
 ; Delays (Defaults are probably fine)
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)

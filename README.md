@@ -25,7 +25,17 @@ Other optional hotkey functions include (to use, put the quoted text after a hot
 - "LockAll()": Lock all instances
 - "UnlockAll()": Unlock all instances
 
-No longer moves worlds, it slows down the macro a lot, use [this world moving macro](https://gist.github.com/Specnr/f7a5450d932a1277fdcd6c141ad7bf6a).
+Use [this world deletion program](https://gist.github.com/Specnr/8a572ac5c5cfdb54eb0dc7d1eb2906a3) to delete worlds.
+
+## OBS Locked Instance Indicators
+
+Adds the media/lock.png on screen whenever you lock an instance (does NOT require OBS Websocket)
+
+1) Set lockIndicators in settings.ahk to "True"
+2) Start the macro, then lock all instances
+3) This should create an image in each .minecraft folder, add an Image source to OBS and put it above the correct instance for each instance
+
+After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
 ## OBS Websocket
 
@@ -53,23 +63,12 @@ Note: If you don't want you use Tinder, ignore anything related to it below.
 
 After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
-## OBS Locked Instance Indicators
-
-Add little locks or any image you want to signal when an instance is locked or not
-
-Note: Depends on OBS Websocket
-
-1) Add an image source to your wall scene in OBS for each instance and name them accordingly (lock1, lock2, lock3...) and position them where you want them to be. For example: ![walllocks](https://user-images.githubusercontent.com/60681673/174759119-e4822c08-6ce1-4b8e-b345-68b15cd23aa9.png)
-![locksources](https://user-images.githubusercontent.com/60681673/174758616-d960a51e-c355-4cb9-b748-7b63420731a0.png)
-2) Edit the 2 extra settings in obsSettings.py accordingly. For lock_indicator_format put the prefix you used for your lock image sources in OBS.
-3) Set lockIndicators in settings.ahk to "True"
-
-After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
-
 ## Credit
 
 - Me
+- Mach for efficient reset manager & code optimizations
 - Ravalle for a lot of great ideas and code
+- Boyenn for the better lock indication idea
 - The collaborators listed for minor enhancements
 - PodX12 for some minor enchancements
 - Sam Dao (real)

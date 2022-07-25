@@ -68,8 +68,6 @@ GetFirstBgInstance(toSkip := -1, skip := false) {
   activeNum := GetActiveInstanceNum()
   for i, mcdir in McDirectories {
     hold := mcdir . "hold.tmp"
-    x := !FileExist(hold)
-    y := locked[i]
     if (i != activeNum && i != toSkip && !FileExist(hold) && !locked[i]) {
       return i
     }
@@ -217,7 +215,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
     if !locked[idx]
-      locked[idx] := true
+      LockInstance(idx, False)
     pid := PIDs[idx]
     if (affinity) {
       for i, tmppid in PIDs {
@@ -313,11 +311,8 @@ ResetInstance(idx) {
     DetectHiddenWindows, On
     PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
     DetectHiddenWindows, Off
-    if locked[idx] {
-      locked[idx] := false
-      if (lockIndicators && useObsWebsocket)
-        FileAppend, li u %idx%`n, %liFile%
-    }
+    if locked[idx]
+      UnlockInstance(idx, False)
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -381,36 +376,34 @@ ResetAll(bypassLock:=false) {
 
 LockInstance(idx, sound:=true) {
   locked[idx] := true
-  if (lockIndicators && useObsWebsocket)
-    FileAppend, li l %idx%`n, %liFile%
+  if (lockIndicators) {
+    lockDest := McDirectories[idx] . "lock.png"
+    FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%
+  }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
 UnlockInstance(idx, sound:=true) {
   locked[idx] := false
-  if (lockIndicators && useObsWebsocket)
-    FileAppend, li u %idx%`n, %liFile%
+  if (lockIndicators) {
+    lockDest := McDirectories[idx] . "lock.png"
+    FileDelete, %lockDest%
+  }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
 LockAll() {
-  loop, %instances%
-    locked[A_Index] := true
-  if (lockIndicators && useObsWebsocket)
-    FileAppend, li l a`n, %liFile%
-  if (lockSounds)
-    SoundPlay, A_ScriptDir\..\media\lock.wav
+  loop, %instances% {
+    LockInstance(A_Index)
+  }
 }
 
 UnlockAll() {
-  loop, %instances%
-    locked[A_Index] := false
-  if (lockIndicators && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
-  if (lockSounds)
-    SoundPlay, A_ScriptDir\..\media\unlock.wav
+  loop, %instances% {
+    UnlockInstance(A_Index)
+  }
 }
 
 ; Shoutout peej
