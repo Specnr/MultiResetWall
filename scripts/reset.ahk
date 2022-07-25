@@ -44,39 +44,53 @@ ManageReset() {
   start := A_TickCount
   SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset", idx))
   while (True) {
-    sleep, 60
+    sleep, 70
     numLines := 0
     Loop, Read, %logFile%
       numLines := A_Index
     if (lastLineCount >= numLines)
       Continue
-    lastLineCount := numLines
     Loop, Read, %logFile%
     {
-      if ((A_Index > lastPreview) && (numLines - A_Index) < 5)
+      if ((A_Index > lastPreview) && (A_Index > lastLineCount) && (numLines - A_Index) < 7)
       {
         if (InStr(A_LoopReadLine, "Starting Preview")) {
           state := "preview"
           lastPreview := A_Index
+          lastLineCount := numLines
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
           break 2
         }
-        sleep, 20
-        if (A_TickCount - start > 4000)
-        {
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
-          if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-            ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
-            SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview. Forcing another reset", idx))
-            break
-          }
-          sleep, 20
+        sleep, 30
+      }
+      if (A_TickCount - start > 4000 && (numLines - A_Index) < 3)
+      {
+        SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
+        if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
+          state := "idle"
+          lastPreview := A_Index
+          lastLineCount := numLines
+          if FileExist(holdFile)
+            FileDelete, %holdFile%
+          if FileExist(previewFile)
+            FileDelete, %previewFile%
+          FileAppend, %A_TickCount%, %previewFile%
+          sleep, %beforePauseDelay%
+          ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %pid%
+          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview. (No World Preview mod or lag?)", idx))
+          if (performanceMethod == "F")
+            sleep, %beforeFreezeDelay%
+          FileAppend, %A_TickCount%, %idleFile%
+          return
         }
+        sleep, 40
       }
     }
+    lastLineCount := numLines
   }
 
-  FileDelete, %holdFile%
+  if FileExist(holdFile)
+    FileDelete, %holdFile%
   if FileExist(previewFile)
     FileDelete, %previewFile%
   FileAppend, %A_TickCount%, %previewFile%
@@ -88,8 +102,11 @@ ManageReset() {
     WinGetTitle, title, ahk_pid %pid%
     if (InStr(title, " - "))
       break
-    sleep, 60
+    sleep, 70
   }
+
+  if FileExist(holdFile)
+    FileDelete, %holdFile%
 
   while (True) {
     if (state == "resetting")
