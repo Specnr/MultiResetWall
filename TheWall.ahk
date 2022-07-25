@@ -77,7 +77,7 @@ for i, mcdir in McDirectories {
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
   RM_PIDs[i] := rmpid
-  locked[i] := False
+  UnlockInstance(i, False)
   if (!FileExist(idle))
     FileAppend,,%idle%
   if FileExist(hold)
