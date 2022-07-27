@@ -209,8 +209,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, %obsFile%
       Else
         FileAppend, si %idx%`n, %obsFile%
-      if (lockIndicators)
-        FileAppend, li l %idx%`n, %liFile%
     }
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
@@ -350,13 +348,12 @@ ToWall(comingFrom) {
 
 ; Focus hovered instance and background reset all other instances
 FocusReset(focusInstance, bypassLock:=false) {
-  if (bypassLock && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
+  if bypassLock
+    UnlockAll(false)
   SwitchInstance(focusInstance, true)
   loop, %instances% {
-    if (A_Index = focusInstance || (locked[A_Index] && !bypassLock)) {
+    if (A_Index = focusInstance || locked[A_Index])
       Continue
-    }
     ResetInstance(A_Index)
   }
   LockInstance(focusInstance, false)
@@ -365,10 +362,10 @@ FocusReset(focusInstance, bypassLock:=false) {
 
 ; Reset all instances
 ResetAll(bypassLock:=false) {
-  if (bypassLock && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
+  if bypassLock
+    UnlockAll(false)
   loop, %instances% {
-    if (locked[A_Index] && !bypassLock)
+    if locked[A_Index]
       Continue
     ResetInstance(A_Index)
   }
@@ -396,16 +393,29 @@ UnlockInstance(idx, sound:=true) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
-LockAll() {
-  loop, %instances% {
-    LockInstance(A_Index)
-  }
+LockAll(sound:=true) {
+  loop, %instances%
+    LockInstance(A_Index, false)
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
-UnlockAll() {
-  loop, %instances% {
-    UnlockInstance(A_Index)
-  }
+UnlockAll(sound:=true) {
+  loop, %instances%
+    UnlockInstance(A_Index, false)
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\unlock.wav
+}
+
+PlayNextLock(focusReset:=false, bypassLock:=false) {
+  loop, %instances%
+    if locked[A_Index] {
+      if focusReset
+        FocusReset(A_Index, bypassLock)
+      else
+        SwitchInstance(A_Index)
+      return
+    }
 }
 
 ; Shoutout peej
