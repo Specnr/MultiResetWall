@@ -33,7 +33,7 @@ Adds the media/lock.png on screen whenever you lock an instance (does NOT requir
 
 1) Set lockIndicators in settings.ahk to True
 2) Start the macro, then lock all instances
-3) This should create an image in each .minecraft folder, add an Image source to OBS and put it above the correct instance for each instance
+3) This will create an image in each of your instance's .minecraft folder named lock.png, add an Image source to OBS for each corresponding instance and use the specific lock image created in the .minecraft folder.
 
 After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
@@ -70,6 +70,6 @@ After that it should be working. Open a ticket in the [Discord](https://discord.
 - Ravalle for a lot of great ideas and code
 - Boyenn for the better lock indication idea
 - The collaborators listed for minor enhancements
-- PodX12 for some minor enchancements
+- PodX12 for some minor enhancements
 - Sam Dao (real)
 - jojoe77777 for making the original wall macro
