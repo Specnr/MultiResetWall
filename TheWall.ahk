@@ -35,7 +35,6 @@ global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
-global liFile := A_ScriptDir . "/scripts/li.ops"
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -45,8 +44,6 @@ GetAllPIDs()
 SetTitles()
 FileDelete, log.log
 FileDelete, %obsFile%
-if lockIndicators
-  FileDelete, %liFile%
 FileDelete, ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
@@ -108,10 +105,6 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
-if (lockIndicators && useObsWebsocket) {
-  FileAppend, li u a`n, %liFile%
-}
-
 #Persistent
 OnExit, ExitSub
 SetTimer, CheckScripts, 20
@@ -121,7 +114,6 @@ ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
     FileAppend, xx, %obsFile%
-    FileAppend, xx, %liFile%
     DetectHiddenWindows, On
     rms := RM_PIDs.MaxIndex()
     loop, %rms% {
