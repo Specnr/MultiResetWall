@@ -99,11 +99,11 @@ if (useObsWebsocket) {
     if FileExist("instance.txt")
       FileRead, lastInst, instance.txt
     SendOBSCommand("ss-tw" . " " .lastInst)
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "startup"
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "True"
   }
   else {
     SendOBSCommand(tw)
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "False"
   }
   Run, %cmd%,, Hide
 }
