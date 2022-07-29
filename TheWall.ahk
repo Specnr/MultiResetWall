@@ -47,19 +47,6 @@ FileDelete, %obsFile%
 FileDelete, ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
-if (useObsWebsocket) {
-  if (useSingleSceneOBS) {
-    lastInst := -1
-    if FileExist("instance.txt")
-      FileRead, lastInst, instance.txt
-    SendOBSCommand("ss-tw" . " " .lastInst)
-  }
-  else
-    SendOBSCommand(tw)
-  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances
-  Run, %cmd%,, Hide
-}
-
 for i, mcdir in McDirectories {
   pid := PIDs[i]
   logs := mcdir . "logs\latest.log"
@@ -103,6 +90,22 @@ if (!disableTTS)
 if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
+}
+
+if (useObsWebsocket) {
+  WinWait, OBS
+  if (useSingleSceneOBS) {
+    lastInst := -1
+    if FileExist("instance.txt")
+      FileRead, lastInst, instance.txt
+    SendOBSCommand("ss-tw" . " " .lastInst)
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "startup"
+  }
+  else {
+    SendOBSCommand(tw)
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances
+  }
+  Run, %cmd%,, Hide
 }
 
 #Persistent
