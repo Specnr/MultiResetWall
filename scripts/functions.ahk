@@ -418,6 +418,13 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
     }
 }
 
+GetLineCount(file) {
+  lineNum := 0
+  Loop, Read, %file%
+    lineNum := A_Index
+  return lineNum
+}
+
 ; Shoutout peej
 global keyArray := Object("key.keyboard.f1", "F1"
 ,"key.keyboard.f2", "F2"
