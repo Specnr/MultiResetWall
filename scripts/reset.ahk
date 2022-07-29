@@ -29,12 +29,11 @@ SendLog(LOG_LEVEL_INFO, Format("Inst {1} reset manager started", idx))
 OnMessage(MSG_RESET, "Reset")
 
 Reset() {
-  if (state == "resetting")
+  if (state == "resetting" || state == "kill")
     return
+  state := "kill"
   lastImportantLine := GetLineCount(logFile)
-  if (state != "preview")
-    SetTimer, ManageReset, -200
-  state := "resetting"
+  SetTimer, ManageReset, -200
   if FileExist(idleFile)
     FileDelete, %idleFile%
   if (!FileExist(holdFile))
@@ -45,8 +44,11 @@ Reset() {
 
 ManageReset() {
   start := A_TickCount
+  state := "resetting"
   SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset management", idx))
   while (True) {
+    if (state == "kill")
+      return
     sleep, 70
     Loop, Read, %logFile%
     {
@@ -66,7 +68,6 @@ ManageReset() {
       } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
         sleep, %beforePauseDelay%
         ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
-        state := "idle"
         lastImportantLine := GetLineCount(logFile)
         if (performanceMethod == "F")
           sleep, %beforeFreezeDelay%
@@ -80,12 +81,14 @@ ManageReset() {
         FileAppend, %A_TickCount%, %idleFile%
         if (state == "resetting") {
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
-          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview, continuing log check. (No World Preview/resetting too fast/lag)", idx))
-          Continue 2
+          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
+          state := "unknown"
+          Reset()
         } else {
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
-          return
+          state := "idle"
         }
+        return
       }
     }
     if (A_TickCount - start > 15000) {
