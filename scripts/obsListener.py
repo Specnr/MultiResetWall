@@ -1,8 +1,6 @@
 # v0.8
-import os
-import sys
+import os, sys, time
 from obswebsocket import obsws, requests
-import time
 import obsSettings as config
 
 ws = obsws(config.host, config.port, config.password)
