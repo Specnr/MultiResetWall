@@ -109,6 +109,8 @@ if (useObsWebsocket) {
     cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "False"
   }
   Run, %cmd%,, Hide
+  if (lockIndicators)
+    FileAppend, li u a`n, %liFile%
 }
 
 #Persistent
