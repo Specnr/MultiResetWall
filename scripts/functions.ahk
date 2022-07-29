@@ -1,5 +1,9 @@
 ; v0.8
 
+SendObsCmd(cmd) {
+  FileAppend, %cmd%`n, %obsFile%
+}
+
 SendLog(lvlText, msg) {
   FileAppend, %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec% [SYS-%lvlText%] %msg%`n, log.log
 }
@@ -56,7 +60,7 @@ TinderMotion(swipeLeft) {
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg))
-  FileAppend, tm %currBg% %newBg%`n, %obsFile%
+  SendOBSCommand("tm" . " " . currBg . " " . newBg)
   currBg := newBg
 }
 
@@ -206,11 +210,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, %obsFile%
+        SendOBSCommand("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
       Else
-        FileAppend, si %idx%`n, %obsFile%
-      if (lockIndicators)
-        FileAppend, li l %idx%`n, %liFile%
+        SendOBSCommand(si . " " . idx)
     }
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
@@ -337,9 +339,9 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      FileAppend, ss-tw %comingFrom%`n, %obsFile%
+      SendOBSCommand("ss-tw" . " " . comingFrom)
     Else
-      FileAppend, tw`n, %obsFile%
+      SendOBSCommand(tw)
   }
   else {
     send {F12 down}
@@ -350,13 +352,12 @@ ToWall(comingFrom) {
 
 ; Focus hovered instance and background reset all other instances
 FocusReset(focusInstance, bypassLock:=false) {
-  if (bypassLock && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
+  if bypassLock
+    UnlockAll(false)
   SwitchInstance(focusInstance, true)
   loop, %instances% {
-    if (A_Index = focusInstance || (locked[A_Index] && !bypassLock)) {
+    if (A_Index = focusInstance || locked[A_Index])
       Continue
-    }
     ResetInstance(A_Index)
   }
   LockInstance(focusInstance, false)
@@ -365,10 +366,10 @@ FocusReset(focusInstance, bypassLock:=false) {
 
 ; Reset all instances
 ResetAll(bypassLock:=false) {
-  if (bypassLock && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
+  if bypassLock
+    UnlockAll(false)
   loop, %instances% {
-    if (locked[A_Index] && !bypassLock)
+    if locked[A_Index]
       Continue
     ResetInstance(A_Index)
   }
@@ -396,16 +397,36 @@ UnlockInstance(idx, sound:=true) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
-LockAll() {
-  loop, %instances% {
-    LockInstance(A_Index)
-  }
+LockAll(sound:=true) {
+  loop, %instances%
+    LockInstance(A_Index, false)
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
-UnlockAll() {
-  loop, %instances% {
-    UnlockInstance(A_Index)
-  }
+UnlockAll(sound:=true) {
+  loop, %instances%
+    UnlockInstance(A_Index, false)
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\unlock.wav
+}
+
+PlayNextLock(focusReset:=false, bypassLock:=false) {
+  loop, %instances%
+    if locked[A_Index] {
+      if focusReset
+        FocusReset(A_Index, bypassLock)
+      else
+        SwitchInstance(A_Index)
+      return
+    }
+}
+
+GetLineCount(file) {
+  lineNum := 0
+  Loop, Read, %file%
+    lineNum := A_Index
+  return lineNum
 }
 
 ; Shoutout peej
