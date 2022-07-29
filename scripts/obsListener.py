@@ -19,6 +19,25 @@ last_completed_li_line = -1
 ops_file = "./scripts/obs.ops"
 li_file = "./scripts/li.ops"
 
+if sys.argv[2] == "True":
+    ssstartup()
+
+def ssstartup():
+    ws.call(requests.SetSceneItemProperties(
+            f"{config.wall_scene_name}", visible=False))
+    for num in range(1, instances + 1):
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.mc_source_format}{num}", visible=True))
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.bg_mc_source_format}{num}", visible=True))
+    for num in range(1, instances + 1):
+        time.sleep(1)
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.mc_source_format}{num}", visible=False))
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.bg_mc_source_format}{num}", visible=False))
+    ws.call(requests.SetSceneItemProperties(
+            f"{config.wall_scene_name}", visible=True))
 
 def tinderMotion(data):
     hide, show = data
