@@ -22,8 +22,7 @@ global resetKey := A_Args[6]
 
 global idx := GetInstanceNumberFromMcDir(GetMcDir(pid))
 global state := "unknown"
-global lastLineCount := 0
-global lastPreview := 0
+global lastImportantLine := GetLineCount(logFile)
 
 SendLog(LOG_LEVEL_INFO, Format("Inst {1} reset manager started", idx))
 
@@ -32,113 +31,69 @@ OnMessage(MSG_RESET, "Reset")
 Reset() {
   if (state == "resetting")
     return
+  lastImportantLine := GetLineCount(logFile)
+  if (state != "preview")
+    SetTimer, ManageReset, -200
   state := "resetting"
   if FileExist(idleFile)
     FileDelete, %idleFile%
+  if (!FileExist(holdFile))
+    FileAppend,, %holdFile%
   if (resetSounds)
     SoundPlay, A_ScriptDir\..\media\reset.wav
-  SetTimer, ManageReset, -200
 }
 
 ManageReset() {
   start := A_TickCount
-  SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset", idx))
+  SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset management", idx))
   while (True) {
     sleep, 70
-    numLines := 0
-    Loop, Read, %logFile%
-      numLines := A_Index
-    if (lastLineCount >= numLines)
-      Continue
     Loop, Read, %logFile%
     {
-      if ((A_Index > lastPreview) && (A_Index > lastLineCount) && (numLines - A_Index) < 7)
-      {
-        if (InStr(A_LoopReadLine, "Starting Preview")) {
-          state := "preview"
-          lastPreview := A_Index
-          lastLineCount := numLines
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
-          break 2
-        }
-        sleep, 30
-      }
-      if (A_TickCount - start > 4000 && (numLines - A_Index) < 3)
-      {
-        SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
-        if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-          state := "idle"
-          lastPreview := A_Index
-          lastLineCount := numLines
-          if FileExist(holdFile)
-            FileDelete, %holdFile%
-          if FileExist(previewFile)
-            FileDelete, %previewFile%
-          FileAppend, %A_TickCount%, %previewFile%
-          sleep, %beforePauseDelay%
-          ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %pid%
-          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview. (No World Preview mod or lag?)", idx))
-          if (performanceMethod == "F")
-            sleep, %beforeFreezeDelay%
-          FileAppend, %A_TickCount%, %idleFile%
+      if (A_Index <= lastImportantLine)
+        Continue
+      if (state == "resetting" && InStr(A_LoopReadLine, "Starting Preview")) {
+        ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
+        state := "preview"
+        lastImportantLine := GetLineCount(logFile)
+        if FileExist(holdFile)
+          FileDelete, %holdFile%
+        if FileExist(previewFile)
+          FileDelete, %previewFile%
+        FileAppend, %A_TickCount%, %previewFile%
+        SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
+        Continue 2
+      } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
+        sleep, %beforePauseDelay%
+        ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
+        state := "idle"
+        lastImportantLine := GetLineCount(logFile)
+        if (performanceMethod == "F")
+          sleep, %beforeFreezeDelay%
+        if FileExist(holdFile)
+          FileDelete, %holdFile%
+        if FileExist(previewFile)
+          FileDelete, %previewFile%
+        FileAppend, %A_TickCount%, %previewFile%
+        if FileExist(idleFile)
+          FileDelete, %idleFile%
+        FileAppend, %A_TickCount%, %idleFile%
+        if (state == "resetting") {
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
+          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview, continuing log check. (No World Preview/resetting too fast/lag)", idx))
+          Continue 2
+        } else {
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
           return
         }
-        sleep, 40
       }
     }
-    lastLineCount := numLines
-  }
-
-  if FileExist(holdFile)
-    FileDelete, %holdFile%
-  if FileExist(previewFile)
-    FileDelete, %previewFile%
-  FileAppend, %A_TickCount%, %previewFile%
-  ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %pid%
-
-  while (True) {
-    if (state == "resetting")
+    if (A_TickCount - start > 15000) {
+      SendLog(LOG_LEVEL_INFO, Format("Inst {1} 15 second timeout reached, forcing reset", idx))
+      ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
+      state := "unknown"
+      Reset()
       return
-    WinGetTitle, title, ahk_pid %pid%
-    if (InStr(title, " - "))
-      break
-    sleep, 70
-  }
-
-  if FileExist(holdFile)
-    FileDelete, %holdFile%
-
-  while (True) {
-    if (state == "resetting")
-      return
-    sleep, 80
-    numLines := 0
-    Loop, Read, %logFile%
-      numLines := A_Index
-    if (lastLineCount >= numLines)
-      Continue
-    lastLineCount := numLines
-    Loop, Read, %logFile%
-    {
-      if ((numLines - A_Index) < 5)
-      {
-        SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
-        if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-          state := "idle"
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
-          break 2
-        }
-        sleep, 20
-      }
     }
   }
-
-  sleep, %beforePauseDelay%
-  ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
-  if (performanceMethod == "F")
-    sleep, %beforeFreezeDelay%
-  FileAppend, %A_TickCount%, %idleFile%
-  if FileExist(holdFile)
-    FileDelete, %holdFile%
-  return
 }
