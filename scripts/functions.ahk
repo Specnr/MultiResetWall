@@ -213,6 +213,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         SendOBSCommand("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
       Else
         SendOBSCommand(si . " " . idx)
+      if (lockIndicators)
+        FileAppend, li l %idx%`n, %liFile%
     }
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
@@ -350,14 +352,14 @@ ToWall(comingFrom) {
   }
 }
 
-; Focus hovered instance and background reset all other instances
 FocusReset(focusInstance, bypassLock:=false) {
-  if bypassLock
-    UnlockAll(false)
+  if (bypassLock && useObsWebsocket)
+    FileAppend, li u a`n, %liFile%
   SwitchInstance(focusInstance, true)
   loop, %instances% {
-    if (A_Index = focusInstance || locked[A_Index])
+    if (A_Index = focusInstance || (locked[A_Index] && !bypassLock)) {
       Continue
+    }
     ResetInstance(A_Index)
   }
   LockInstance(focusInstance, false)
@@ -366,10 +368,10 @@ FocusReset(focusInstance, bypassLock:=false) {
 
 ; Reset all instances
 ResetAll(bypassLock:=false) {
-  if bypassLock
-    UnlockAll(false)
+  if (bypassLock && useObsWebsocket)
+    FileAppend, li u a`n, %liFile%
   loop, %instances% {
-    if locked[A_Index]
+    if (locked[A_Index] && !bypassLock)
       Continue
     ResetInstance(A_Index)
   }
@@ -397,36 +399,16 @@ UnlockInstance(idx, sound:=true) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
-LockAll(sound:=true) {
-  loop, %instances%
-    LockInstance(A_Index, false)
-  if (lockSounds && sound)
-    SoundPlay, A_ScriptDir\..\media\lock.wav
+LockAll() {
+  loop, %instances% {
+    LockInstance(A_Index)
+  }
 }
 
-UnlockAll(sound:=true) {
-  loop, %instances%
-    UnlockInstance(A_Index, false)
-  if (lockSounds && sound)
-    SoundPlay, A_ScriptDir\..\media\unlock.wav
-}
-
-PlayNextLock(focusReset:=false, bypassLock:=false) {
-  loop, %instances%
-    if locked[A_Index] {
-      if focusReset
-        FocusReset(A_Index, bypassLock)
-      else
-        SwitchInstance(A_Index)
-      return
-    }
-}
-
-GetLineCount(file) {
-  lineNum := 0
-  Loop, Read, %file%
-    lineNum := A_Index
-  return lineNum
+UnlockAll() {
+  loop, %instances% {
+    UnlockInstance(A_Index)
+  }
 }
 
 ; Shoutout peej
