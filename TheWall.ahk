@@ -35,6 +35,7 @@ global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
+global liFile := A_ScriptDir . "/scripts/li.ops"
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -44,6 +45,8 @@ GetAllPIDs()
 SetTitles()
 FileDelete, log.log
 FileDelete, %obsFile%
+if lockIndicators
+  FileDelete, %liFile%
 FileDelete, ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
@@ -117,6 +120,7 @@ ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
     SendOBSCommand(xx)
+    FileAppend, xx, %liFile%
     DetectHiddenWindows, On
     rms := RM_PIDs.MaxIndex()
     loop, %rms% {
