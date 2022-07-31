@@ -119,7 +119,7 @@ GetMcDir(pid)
 GetPIDFromMcDir(mcdir) {
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
     cmdLine := proc.Commandline
-    if(RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
+    if (RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
       StringTrimRight, rawInstDir, mcdir, 1
       thisInstDir := SubStr(StrReplace(instDir, "/", "\"), 21, StrLen(instDir)-28) . "\.minecraft"
       if (rawInstDir == thisInstDir)
@@ -231,7 +231,7 @@ SetAffinity(pid, mask) {
 }
 
 GetBitMask(threads) {
-  return (2 ** threads) - 1
+  return ((2 ** threads) - 1)
 }
 
 UnsuspendAll() {
@@ -286,7 +286,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
     pid := PIDs[idx]
-    if (affinity)
+    if affinity
       SetAffinities(true)
     LockInstance(idx, False)
     if (performanceMethod == "F")
@@ -351,7 +351,7 @@ ExitWorld()
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
-    if (affinity) {
+    if affinity {
       SetAffinities()
     }
   }
@@ -473,17 +473,17 @@ UnlockInstance(idx, sound:=true) {
 LockAll(sound:=true) {
   loop, %instances% {
     LockInstance(A_Index, false)
-    if (lockSounds && sound)
-      SoundPlay, A_ScriptDir\..\media\lock.wav
   }
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
 UnlockAll(sound:=true) {
   loop, %instances% {
     UnlockInstance(A_Index, false)
-    if (lockSounds && sound)
-      SoundPlay, A_ScriptDir\..\media\unlock.wav
   }
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
