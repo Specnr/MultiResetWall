@@ -120,15 +120,26 @@ GetMcDir(pid)
   }
 }
 
+CheckOnePIDFromMcDir(proc, mcdir) {
+  cmdLine := proc.Commandline
+  if (RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
+    StringTrimRight, rawInstDir, mcdir, 1
+    thisInstDir := SubStr(StrReplace(instDir, "/", "\"), 21, StrLen(instDir)-28) . "\.minecraft"
+    if (rawInstDir == thisInstDir)
+      return proc.ProcessId
+  }
+  return -1
+}
+
 GetPIDFromMcDir(mcdir) {
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
-    cmdLine := proc.Commandline
-    if (RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
-      StringTrimRight, rawInstDir, mcdir, 1
-      thisInstDir := SubStr(StrReplace(instDir, "/", "\"), 21, StrLen(instDir)-28) . "\.minecraft"
-      if (rawInstDir == thisInstDir)
-        return proc.ProcessId
-    }
+    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
+      return pid
+  }
+  ; Broader search if some people use java.exe or some other edge cases
+  for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%java%""") {
+    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
+      return pid
   }
   return -1
 }
@@ -504,7 +515,7 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
 CloseInstances() {
   MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
   IfMsgBox No
-    Return
+  Return
   for i, pid in PIDs {
     WinClose, ahk_pid %pid%
   }
@@ -553,7 +564,7 @@ VerifyInstance(mcdir, pid) {
       SendLog(LOG_LEVEL_ERROR, Format("Directory {1} includes incompatible mod: Krypton", moddir))
       MsgBox, 4, Krypton Detected, Directory %moddir% includes incompatible mod: Krypton. Would you like to disable it and restart the instance?
       IfMsgBox No
-        Continue
+      Continue
       FileMove, %A_LoopFileFullPath%, %A_LoopFileFullPath%.disabled
       WinClose, ahk_pid %pid%
       SendLog(LOG_LEVEL_INFO, Format("Directory {1} included incompatible mod: Krypton. Macro disabled and killed instance.", moddir))
@@ -589,7 +600,7 @@ VerifyInstance(mcdir, pid) {
       Loop, 1 {
         MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default?
         IfMsgBox No
-          break
+        break
         ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
         FileDelete, %standardSettingsFile%
         FileAppend, ssettings, %standardSettingsFile%
@@ -601,7 +612,7 @@ VerifyInstance(mcdir, pid) {
       Loop, 1 {
         MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default?
         IfMsgBox No
-          break
+        break
         ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
         FileDelete, %standardSettingsFile%
         FileAppend, ssettings, %standardSettingsFile%
