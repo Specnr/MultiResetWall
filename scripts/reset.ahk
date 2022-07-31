@@ -21,12 +21,10 @@ global previewFile := A_Args[5]
 global resetKey := A_Args[6]
 global lpKey := A_Args[7]
 global idx := A_Args[8]
-
-EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global highBitMask := (2 ** threadCount) - 1
-global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
-global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
-global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global highBitMask := A_Args[9]
+global midBitMask := A_Args[10]
+global lowBitMask := A_Args[11]
+global superLowBitMask := A_Args[12]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
