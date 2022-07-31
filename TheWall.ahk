@@ -12,7 +12,6 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Don't configure these
-EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global McDirectories := []
 global instances := 0
 global rawPIDs := []
@@ -25,8 +24,14 @@ global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
 global resetKeys := []
+global lpKeys := []
+
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global highBitMask := (2 ** threadCount) - 1
-global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
+global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
 
@@ -35,7 +40,6 @@ global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
-global liFile := A_ScriptDir . "/scripts/li.ops"
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -45,8 +49,6 @@ GetAllPIDs()
 SetTitles()
 FileDelete, log.log
 FileDelete, %obsFile%
-if lockIndicators
-  FileDelete, %liFile%
 FileDelete, ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
@@ -72,7 +74,10 @@ for i, mcdir in McDirectories {
   resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World", "F6")
   SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, i))
   resetkeys[i] := resetKey
-  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey%, %A_ScriptDir%,, rmpid
+  lpKey := CheckOptionsForHotkey(mcdir, "key_Leave Preview", "h")
+  SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, i))
+  lpKeys[i] := lpKey
+  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -84,7 +89,11 @@ for i, mcdir in McDirectories {
     FileDelete, %hold%
   if FileExist(preview)
     FileDelete, %preview%
-  if (wideResets) {
+  if (windowMode == "B")
+    WinSet, Style, -0xC00000, ahk_pid %pid%
+    WinSet, Style, -0x40000, ahk_pid %pid%
+    WinSet, ExStyle, -0x00000200, ahk_pid %pid%
+  if (widthMultiplier) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%A_ScreenHeight%
@@ -108,10 +117,6 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
-if (lockIndicators && useObsWebsocket) {
-  FileAppend, li u a`n, %liFile%
-}
-
 #Persistent
 OnExit, ExitSub
 SetTimer, CheckScripts, 20
@@ -121,7 +126,6 @@ ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
     FileAppend, xx, %obsFile%
-    FileAppend, xx, %liFile%
     DetectHiddenWindows, On
     rms := RM_PIDs.MaxIndex()
     loop, %rms% {

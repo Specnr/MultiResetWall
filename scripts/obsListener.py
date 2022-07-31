@@ -17,10 +17,7 @@ except:
 
 instances = int(sys.argv[1])
 last_completed_obs_line = -1
-last_completed_li_line = -1
 ops_file = "./scripts/obs.ops"
-li_file = "./scripts/li.ops"
-
 
 def tinderMotion(data):
     hide, show = data
@@ -78,43 +75,8 @@ def toWall(isSS, data):
             with open("obs.log", "a") as log:
                 log.write("tw: failed (reason unknown)\n")
 
-
-def lockIndicator(data):
-    lock, which = data
-    lock = lock == "l"
-    if which == "a":
-        for i in range(instances):
-            try:
-                ws.call(requests.SetSceneItemProperties(
-                    f"{config.lock_indicator_format}{i+1}", visible=lock))
-            except:
-                with open("obs.log", "a") as log:
-                    log.write(
-                        f"li {str((i+1))} {str(lock)}: failed (reason unknown)\n")
-    else:
-        try:
-            ws.call(requests.SetSceneItemProperties(
-                f"{config.lock_indicator_format}{which}", visible=lock))
-        except:
-            with open("obs.log", "a") as log:
-                log.write(
-                    f"li {str(which)} {str(lock)}: failed (reason unknown)\n")
-
-
 breaking = False
 while True:
-    if (os.path.exists(li_file)):
-        max_idx = sum(1 for _ in open(li_file)) - 1
-        if max_idx > last_completed_li_line:
-            with open(li_file) as li:
-                for i, line in enumerate(li):
-                    if i > last_completed_li_line:
-                        last_completed_li_line += 1
-                        splt = line.split(' ')
-                        splt[-1] = splt[-1].strip()
-                        op, args = splt[0], splt[1:]
-                        if op == "li":
-                            lockIndicator(args)
     if (os.path.exists(ops_file)):
         max_idx = sum(1 for _ in open(ops_file)) - 1
         if max_idx > last_completed_obs_line:
@@ -132,8 +94,6 @@ while True:
                             break
                         elif op == "tm":
                             tinderMotion(args)
-                        elif op == "li":
-                            lockIndicator(args)
                         else:
                             isSS = op[:2] == "ss"
                             if op[-2] + op[-1] == "tw":

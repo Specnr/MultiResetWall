@@ -19,126 +19,104 @@ global idleFile := A_Args[3]
 global holdFile := A_Args[4]
 global previewFile := A_Args[5]
 global resetKey := A_Args[6]
+global lpKey := A_Args[7]
+
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
+global highBitMask := (2 ** threadCount) - 1
+global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
 
 global idx := GetInstanceNumberFromMcDir(GetMcDir(pid))
 global state := "unknown"
-global lastLineCount := 0
-global lastPreview := 0
+global lastImportantLine := GetLineCount(logFile)
 
 SendLog(LOG_LEVEL_INFO, Format("Inst {1} reset manager started", idx))
 
 OnMessage(MSG_RESET, "Reset")
 
 Reset() {
-  if (state == "resetting")
+  if (state == "resetting" || state == "kill")
     return
-  state := "resetting"
-  if FileExist(idleFile)
-    FileDelete, %idleFile%
+  state := "kill"
+  lastImportantLine := GetLineCount(logFile)
+  SetTimer, ManageReset, -200
+  if FileExist("instance.txt")
+    FileRead, activeInstance, instance.txt
+  if (affinity)
+    if (activeInstance)
+      SetAffinity(pid, lowBitMask)
+    else
+      SetAffinity(pid, midBitMask)
+  FileAppend,, %holdFile%
+  FileDelete, %idleFile%
   if (resetSounds)
     SoundPlay, A_ScriptDir\..\media\reset.wav
-  SetTimer, ManageReset, -200
 }
 
 ManageReset() {
   start := A_TickCount
-  SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset", idx))
+  state := "resetting"
+  SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset management", idx))
   while (True) {
+    if (state == "kill")
+      return
     sleep, 70
-    numLines := 0
-    Loop, Read, %logFile%
-      numLines := A_Index
-    if (lastLineCount >= numLines)
-      Continue
     Loop, Read, %logFile%
     {
-      if ((A_Index > lastPreview) && (A_Index > lastLineCount) && (numLines - A_Index) < 7)
-      {
-        if (InStr(A_LoopReadLine, "Starting Preview")) {
-          state := "preview"
-          lastPreview := A_Index
-          lastLineCount := numLines
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
-          break 2
-        }
-        sleep, 30
-      }
-      if (A_TickCount - start > 4000 && (numLines - A_Index) < 3)
-      {
-        SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
-        if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-          state := "idle"
-          lastPreview := A_Index
-          lastLineCount := numLines
-          if FileExist(holdFile)
-            FileDelete, %holdFile%
-          if FileExist(previewFile)
-            FileDelete, %previewFile%
+      if (A_Index <= lastImportantLine)
+        Continue
+      if (state == "resetting" && InStr(A_LoopReadLine, "Starting Preview")) {
+        ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
+        state := "preview"
+        lastImportantLine := GetLineCount(logFile)
+        FileDelete, %holdFile%
+        FileDelete, %previewFile%
+        FileAppend, %A_TickCount%, %previewFile%
+        SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
+        if FileExist(instance.txt)
+          FileRead, activeInstance, instance.txt
+        Continue 2
+      } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
+        sleep, %beforePauseDelay%
+        ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
+        lastImportantLine := GetLineCount(logFile)
+        if (performanceMethod == "F")
+          sleep, %beforeFreezeDelay%
+        FileDelete, %holdFile%
+        if !FileExist(previewFile)
           FileAppend, %A_TickCount%, %previewFile%
-          sleep, %beforePauseDelay%
-          ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %pid%
-          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview. (No World Preview mod or lag?)", idx))
-          if (performanceMethod == "F")
-            sleep, %beforeFreezeDelay%
+        if !FileExist(idleFile)
           FileAppend, %A_TickCount%, %idleFile%
-          return
-        }
-        sleep, 40
-      }
-    }
-    lastLineCount := numLines
-  }
-
-  if FileExist(holdFile)
-    FileDelete, %holdFile%
-  if FileExist(previewFile)
-    FileDelete, %previewFile%
-  FileAppend, %A_TickCount%, %previewFile%
-  ControlSend,, {Blind}{F3 down}{Esc}{F3 up}, ahk_pid %pid%
-
-  while (True) {
-    if (state == "resetting")
-      return
-    WinGetTitle, title, ahk_pid %pid%
-    if (InStr(title, " - "))
-      break
-    sleep, 70
-  }
-
-  if FileExist(holdFile)
-    FileDelete, %holdFile%
-
-  while (True) {
-    if (state == "resetting")
-      return
-    sleep, 80
-    numLines := 0
-    Loop, Read, %logFile%
-      numLines := A_Index
-    if (lastLineCount >= numLines)
-      Continue
-    lastLineCount := numLines
-    Loop, Read, %logFile%
-    {
-      if ((numLines - A_Index) < 5)
-      {
-        SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
-        if (InStr(A_LoopReadLine, "Loaded 0") || (InStr(A_LoopReadLine, "Saving chunks for level 'ServerLevel") && InStr(A_LoopReadLine, "minecraft:the_end"))) {
-          state := "idle"
+        if (state == "resetting") {
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} line dump: {2}", idx, A_LoopReadLine))
+          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
+          state := "unknown"
+          Reset()
+        } else {
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
-          break 2
+          state := "idle"
         }
-        sleep, 20
+        if FileExist("instance.txt")
+          FileRead, activeInstance, instance.txt
+        if (affinity)
+          if (activeInstance)
+            SetAffinity(pid, superLowBitMask)
+          else
+            SetAffinity(pid, lowBitMask)
+        return
       }
     }
+    if (A_TickCount - start > 25000) {
+      SendLog(LOG_LEVEL_ERROR, Format("Inst {1} 25 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
+      state := "unknown"
+      lastImportantLine := GetLineCount(logFile)
+      FileDelete, %holdFile%
+      if !FileExist(previewFile)
+        FileAppend, %A_TickCount%, %previewFile%
+      if !FileExist(idleFile)
+        FileAppend, %A_TickCount%, %idleFile%
+      return
+    }
   }
-
-  sleep, %beforePauseDelay%
-  ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
-  if (performanceMethod == "F")
-    sleep, %beforeFreezeDelay%
-  FileAppend, %A_TickCount%, %idleFile%
-  if FileExist(holdFile)
-    FileDelete, %holdFile%
-  return
 }
