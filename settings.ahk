@@ -8,8 +8,7 @@ global affinity := True ; A funky performance addition, enable for minor perform
 ; Extra features
 global fullscreen := False 
 global disableTTS := False
-global wideResets := True ; Make windows wide on reset to maximize visibility
-global widthMultiplier := 2.5 ; How wide your instances go :)
+global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
 global resetSounds := True ; Make a sound when you reset an instance
 global lockSounds := True ; Make a sound when you lock an instance
 global countAttempts := True ; Makes a text file to count resets

@@ -89,7 +89,7 @@ for i, mcdir in McDirectories {
     FileDelete, %hold%
   if FileExist(preview)
     FileDelete, %preview%
-  if (wideResets) {
+  if (widthMultiplier) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%A_ScreenHeight%

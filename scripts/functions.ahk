@@ -255,7 +255,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
-    if (wideResets)
+    if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
     if (fullscreen) {
       ControlSend,, {Blind}{F11}, ahk_pid %pid%
@@ -293,7 +293,7 @@ ExitWorld()
   if (idx := GetActiveInstanceNum()) > 0
   {
     pid := PIDs[idx]
-    if (wideResets) {
+    if (widthMultiplier) {
       newHeight := Floor(A_ScreenHeight / widthMultiplier)
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
