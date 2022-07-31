@@ -12,7 +12,6 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 
 ; Don't configure these
-EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global McDirectories := []
 global instances := 0
 global rawPIDs := []
@@ -25,8 +24,14 @@ global needBgCheck := False
 global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
 global resetKeys := []
+global lpKeys := []
+
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global highBitMask := (2 ** threadCount) - 1
-global lowBitMask := (2 ** Ceil(threadCount * lowBitmaskMultiplier)) - 1
+global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
 
@@ -69,7 +74,10 @@ for i, mcdir in McDirectories {
   resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World", "F6")
   SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, i))
   resetkeys[i] := resetKey
-  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey%, %A_ScriptDir%,, rmpid
+  lpKey := CheckOptionsForHotkey(mcdir, "key_Leave Preview", "h")
+  SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, i))
+  lpKeys[i] := lpKey
+  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
