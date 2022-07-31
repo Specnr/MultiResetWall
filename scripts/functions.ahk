@@ -5,7 +5,7 @@ SendObsCmd(cmd) {
 }
 
 SendLog(lvlText, msg) {
-  FileAppend, %A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec% [SYS-%lvlText%] %msg%`n, log.log
+  FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, log.log
 }
 
 CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
@@ -16,7 +16,7 @@ CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
       split := StrSplit(A_LoopReadLine, ":")
       if (split.MaxIndex() == 2)
         return keyArray[split[2]]
-      SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly, defaulting to F6. Line: {1}", A_LoopReadLine))
+      SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly, defaulting to '{1}'. Line: {2}", defaultKey, A_LoopReadLine))
       return defaultKey
     }
   }
@@ -120,6 +120,19 @@ GetMcDir(pid)
   }
 }
 
+GetPIDFromMcDir(mcdir) {
+  for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
+    cmdLine := proc.Commandline
+    if(RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
+      StringTrimRight, rawInstDir, mcdir, 1
+      thisInstDir := SubStr(StrReplace(instDir, "/", "\"), 21, StrLen(instDir)-28) . "\.minecraft"
+      if (rawInstDir == thisInstDir)
+        return proc.ProcessId
+    }
+  }
+  return -1
+}
+
 GetInstanceTotal() {
   idx := 1
   global rawPIDs
@@ -148,16 +161,70 @@ GetInstanceNumberFromMcDir(mcdir) {
   return num
 }
 
+GetMcDirFromFile(idx) {
+  Loop, Read, mcdirs.txt
+  {
+    split := StrSplit(A_LoopReadLine,"~")
+    if (idx == split[1]) {
+      mcdir := split[2]
+      StringReplace,mcdir,mcdir,`n,,A
+      return mcdir
+    }
+  }
+}
+
 GetAllPIDs()
 {
   instances := GetInstanceTotal()
+  ; If there are more/less instances than usual, rebuild cache
+  if hasMcDirCache && GetLineCount("mcdirs.txt") != instances {
+    FileDelete,mcdirs.txt
+    hasMcDirCache := False
+  }
   ; Generate mcdir and order PIDs
   Loop, %instances% {
-    mcdir := GetMcDir(rawPIDs[A_Index])
+    if hasMcDirCache
+      mcdir := GetMcDirFromFile(A_Index)
+    else
+      mcdir := GetMcDir(rawPIDs[A_Index])
     if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
-    PIDs[num] := rawPIDs[A_Index]
+    if !hasMcDirCache {
+      FileAppend,%num%~%mcdir%`n,mcdirs.txt
+      PIDs[num] := rawPIDs[A_Index]
+    } else {
+      PIDs[num] := GetPIDFromMcDir(mcdir)
+    }
     McDirectories[num] := mcdir
+  }
+}
+
+SetAffinities(bg:=false) {
+  for i, mcdir in McDirectories {
+    pid := PIDs[i]
+    idle := mcdir . "idle.tmp"
+    hold := mcdir . "hold.tmp"
+    preview := mcdir . "preview.tmp"
+    if FileExist(idle) {
+      if bg
+        SetAffinity(pid, superLowBitMask)
+      else
+        SetAffinity(pid, lowBitMask)
+      Continue
+    } else if (FileExist(preview) || FileExist(hold)) {
+      if (locked[i] && bg)
+        SetAffinity(pid, midBitMask)
+      else if locked[i]
+        SetAffinity(pid, highBitMask)
+      else if bg
+        SetAffinity(pid, lowBitMask)
+      else
+        SetAffinity(pid, midBitMask)
+      Continue
+    } else {
+      SetAffinity(pid, midBitMask)
+      Continue
+    }
   }
 }
 
@@ -199,6 +266,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   idleFile := McDirectories[idx] . "idle.tmp"
   if (idx <= instances && FileExist(idleFile)) {
+    holdFile := McDirectories[idx] . "hold.tmp"
+    FileAppend,,%holdFile%
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
@@ -213,21 +282,13 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         SendOBSCommand("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
       Else
         SendOBSCommand(si . " " . idx)
-      if (lockIndicators)
-        FileAppend, li l %idx%`n, %liFile%
     }
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
-    if !locked[idx]
-      LockInstance(idx, False)
     pid := PIDs[idx]
-    if (affinity) {
-      for i, tmppid in PIDs {
-        if (tmppid != pid){
-          SetAffinity(tmppid, lowBitMask)
-        }
-      }
-    }
+    if (affinity)
+      SetAffinities(true)
+    LockInstance(idx, False)
     if (performanceMethod == "F")
       ResumeInstance(pid)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
@@ -236,9 +297,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
-    if (wideResets)
+    if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
-    if (fullscreen) {
+    if (windowMode == "F") {
       ControlSend,, {Blind}{F11}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
@@ -267,15 +328,14 @@ GetActiveInstanceNum() {
 
 ExitWorld()
 {
-  if (fullscreen) {
+  if (windowMode == "F") {
     send {F11}
     sleep, %fullScreenDelay%
   }
   if (idx := GetActiveInstanceNum()) > 0
   {
     pid := PIDs[idx]
-    if (wideResets) {
-      newHeight := Floor(A_ScreenHeight / widthMultiplier)
+    if (widthMultiplier) {
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
@@ -286,13 +346,13 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
+    holdFile := McDirectories[idx] . "hold.tmp"
+    FileDelete,%holdFile%
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
     if (affinity) {
-      for i, tmppid in PIDs {
-        SetAffinity(tmppid, highBitMask)
-      }
+      SetAffinities()
     }
   }
 }
@@ -303,20 +363,21 @@ ResetInstance(idx) {
   if FileExist(previewFile)
     FileRead, previewTime, %previewFile%
   if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
+    SendLog(LOG_LEVEL_INFO, Format("Inst {1} valid reset triggered", idx))
     FileAppend,,%holdFile%
     FileDelete, %previewFile%
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
     resetKey := resetkeys[idx]
+    lpKey := lpKeys[idx]
     if (performanceMethod == "F")
       ResumeInstance(pid)
     ; Reset
-    ControlSend, ahk_parent, {Blind}{%resetKey%}, ahk_pid %pid%
+    ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
     DetectHiddenWindows, On
     PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
     DetectHiddenWindows, Off
-    if locked[idx]
-      UnlockInstance(idx, False)
+    UnlockInstance(idx, False)
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -350,16 +411,17 @@ ToWall(comingFrom) {
     sleep, %obsDelay%
     send {F12 up}
   }
+  FileDelete,instance.txt
+  FileAppend,0,instance.txt
 }
 
 FocusReset(focusInstance, bypassLock:=false) {
-  if (bypassLock && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
+  if bypassLock
+    UnlockAll(false)
   SwitchInstance(focusInstance, true)
   loop, %instances% {
-    if (A_Index = focusInstance || (locked[A_Index] && !bypassLock)) {
+    if (A_Index = focusInstance || locked[A_Index])
       Continue
-    }
     ResetInstance(A_Index)
   }
   LockInstance(focusInstance, false)
@@ -368,10 +430,10 @@ FocusReset(focusInstance, bypassLock:=false) {
 
 ; Reset all instances
 ResetAll(bypassLock:=false) {
-  if (bypassLock && useObsWebsocket)
-    FileAppend, li u a`n, %liFile%
+  if bypassLock
+    UnlockAll(false)
   loop, %instances% {
-    if (locked[A_Index] && !bypassLock)
+    if locked[A_Index]
       Continue
     ResetInstance(A_Index)
   }
@@ -399,16 +461,39 @@ UnlockInstance(idx, sound:=true) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
-LockAll() {
+LockAll(sound:=true) {
   loop, %instances% {
-    LockInstance(A_Index)
+    LockInstance(A_Index, false)
+    if (lockSounds && sound)
+      SoundPlay, A_ScriptDir\..\media\lock.wav
   }
 }
 
-UnlockAll() {
+UnlockAll(sound:=true) {
   loop, %instances% {
-    UnlockInstance(A_Index)
+    UnlockInstance(A_Index, false)
+    if (lockSounds && sound)
+      SoundPlay, A_ScriptDir\..\media\unlock.wav
   }
+}
+
+PlayNextLock(focusReset:=false, bypassLock:=false) {
+  loop, %instances% {
+    if locked[A_Index] {
+      if focusReset
+        FocusReset(A_Index, bypassLock)
+      else
+        SwitchInstance(A_Index)
+      return
+    }
+  }
+}
+
+GetLineCount(file) {
+  lineNum := 0
+  Loop, Read, %file%
+    lineNum := A_Index
+  return lineNum
 }
 
 ; Shoutout peej
