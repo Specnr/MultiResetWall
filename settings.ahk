@@ -6,7 +6,7 @@ global performanceMethod := "N" ; F = Instance Freezing, N = Nothing
 global affinity := True ; A funky performance addition, enable for minor performance boost
 
 ; Extra features
-global fullscreen := False 
+global windowMode := "W" ; W = windowed mode, F = fullscreen mode, B = borderless windowed
 global disableTTS := False
 global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
 global resetSounds := True ; Make a sound when you reset an instance

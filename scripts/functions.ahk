@@ -257,7 +257,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     WinMinimize, Fullscreen Projector
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
-    if (fullscreen) {
+    if (windowMode == "F") {
       ControlSend,, {Blind}{F11}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
@@ -286,7 +286,7 @@ GetActiveInstanceNum() {
 
 ExitWorld()
 {
-  if (fullscreen) {
+  if (windowMode == "F") {
     send {F11}
     sleep, %fullScreenDelay%
   }
