@@ -498,6 +498,20 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
   }
 }
 
+CloseInstances() {
+  MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
+  IfMsgBox No
+    Return
+  for i, pid in PIDs {
+    WinClose, ahk_pid %pid%
+  }
+  DetectHiddenWindows, On
+  for i, rmpid in RM_PIDs {
+    WinClose, ahk_pid %rmpid%
+  }
+  DetectHiddenWindows, Off
+}
+
 GetLineCount(file) {
   lineNum := 0
   Loop, Read, %file%
@@ -515,27 +529,31 @@ VerifyInstance(mcdir, pid) {
   sleepBg := false
   sodium := false
   srigt := false
+  SendLog(LOG_LEVEL_INFO, Format("Starting instance verification for directory: {1}", mcdir))
   Loop, Files, %moddir%*.jar
   {
-    if (InStr(A_LoopFileName, "atum"))
+    if InStr(A_LoopFileName, "atum")
       atum := true
-    else if (InStr(A_LoopFileName, "worldpreview"))
+    else if InStr(A_LoopFileName, "worldpreview")
       wp := true
-    else if (InStr(A_LoopFileName, "standardsettings"))
+    else if InStr(A_LoopFileName, "standardsettings")
       standardSettings := true
-    else if (InStr(A_LoopFileName, "fast-reset"))
+    else if InStr(A_LoopFileName, "fast-reset")
       fastReset := true
-    else if (InStr(A_LoopFileName, "sleepbackground"))
+    else if InStr(A_LoopFileName, "sleepbackground")
       sleepBg := true
-    else if (InStr(A_LoopFileName, "sodium"))
+    else if InStr(A_LoopFileName, "sodium")
       sodium := true
-    else if (InStr(A_LoopFileName, "SpeedRunIGT"))
+    else if InStr(A_LoopFileName, "SpeedRunIGT")
       srigt := true
-    else if (InStr(A_LoopFileName, "krypton")) {
+    else if InStr(A_LoopFileName, "krypton") {
       SendLog(LOG_LEVEL_ERROR, Format("Directory {1} includes incompatible mod: Krypton", moddir))
       MsgBox, 4, Krypton Detected, Directory %moddir% includes incompatible mod: Krypton. Would you like to disable it and restart the instance?
-      IfMsgBox Yes
-        FixInstance("krypton", A_LoopFileFullPath, pid)
+      IfMsgBox No
+        Continue
+      FileMove, %A_LoopFileFullPath%, %A_LoopFileFullPath%.disabled
+      WinClose, ahk_pid %pid%
+      SendLog(LOG_LEVEL_INFO, Format("Directory {1} included incompatible mod: Krypton. Macro disabled and killed instance.", moddir))
     }
   }
   if !atum {
@@ -558,11 +576,35 @@ VerifyInstance(mcdir, pid) {
       FileAppend, ssettings, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had fullscreen set true, macro requires it false. Automatically fixed", standardSettingsFile))
     }
-    if InStr(standardSettingsFile, "pauseOnLostFocus:false") {
+    if InStr(standardSettingsFile, "pauseOnLostFocus:true") {
       ssettings := StrReplace(ssettings, "pauseOnLostFocus:true", "pauseOnLostFocus:false")
       FileDelete, %standardSettingsFile%
       FileAppend, ssettings, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile))
+    }
+    if (InStr(standardSettingsFile, "key_Create New World:key.keyboard.unknown") && atum) {
+      Loop, 1 {
+        MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default?
+        IfMsgBox No
+          break
+        ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
+        FileDelete, %standardSettingsFile%
+        FileAppend, ssettings, %standardSettingsFile%
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to F6", standardSettingsFile))
+      }
+      SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", standardSettingsFile))
+    }
+    if (InStr(standardSettingsFile, "key_Leave Preview:key.keyboard.unknown") && atum) {
+      Loop, 1 {
+        MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default?
+        IfMsgBox No
+          break
+        ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
+        FileDelete, %standardSettingsFile%
+        FileAppend, ssettings, %standardSettingsFile%
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile))
+      }
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Leave Preview key set", standardSettingsFile))
     }
   }
   if !fastReset
@@ -576,14 +618,7 @@ VerifyInstance(mcdir, pid) {
   FileRead, options, %optionsFile%
   if InStr(options, "fullscreen:true")
     ControlSend,, {Blind}{F11}, ahk_pid %pid%
-}
-
-FixInstance(fix, data, pid) {
-  if (fix == "krypton") {
-    FileMove, %data%, %data%.disabled
-    WinClose, ahk_pid %pid%
-    ; add restarting instance?
-  }
+  SendLog(LOG_LEVEL_INFO, Format("Finished instance verification for directory: {1}", mcdir))
 }
 
 ; Shoutout peej
