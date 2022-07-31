@@ -119,7 +119,7 @@ GetMcDir(pid)
 GetPIDFromMcDir(mcdir) {
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
     cmdLine := proc.Commandline
-    if(RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
+    if (RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
       StringTrimRight, rawInstDir, mcdir, 1
       thisInstDir := SubStr(StrReplace(instDir, "/", "\"), 21, StrLen(instDir)-28) . "\.minecraft"
       if (rawInstDir == thisInstDir)
@@ -230,6 +230,10 @@ SetAffinity(pid, mask) {
   DllCall("CloseHandle", "Ptr", hProc)
 }
 
+GetBitMask(threads) {
+  return ((2 ** threads) - 1)
+}
+
 UnsuspendAll() {
   WinGet, all, list
   Loop, %all%
@@ -282,7 +286,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
     pid := PIDs[idx]
-    if (affinity)
+    if affinity
       SetAffinities(true)
     LockInstance(idx, False)
     if (performanceMethod == "F")
@@ -347,7 +351,7 @@ ExitWorld()
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
-    if (affinity) {
+    if affinity {
       SetAffinities()
     }
   }
@@ -445,6 +449,10 @@ LockInstance(idx, sound:=true) {
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
+  if affinity {
+    pid := PIDs[idx]
+    SetAffinity(pid, highBitMask)
+  }
 }
 
 UnlockInstance(idx, sound:=true) {
@@ -456,22 +464,26 @@ UnlockInstance(idx, sound:=true) {
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
+  if affinity {
+    pid := PIDs[idx]
+    SetAffinity(pid, midBitMask)
+  }
 }
 
 LockAll(sound:=true) {
   loop, %instances% {
     LockInstance(A_Index, false)
-    if (lockSounds && sound)
-      SoundPlay, A_ScriptDir\..\media\lock.wav
   }
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\lock.wav
 }
 
 UnlockAll(sound:=true) {
   loop, %instances% {
     UnlockInstance(A_Index, false)
-    if (lockSounds && sound)
-      SoundPlay, A_ScriptDir\..\media\unlock.wav
   }
+  if (lockSounds && sound)
+    SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
@@ -486,11 +498,127 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
   }
 }
 
+CloseInstances() {
+  MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
+  IfMsgBox No
+    Return
+  for i, pid in PIDs {
+    WinClose, ahk_pid %pid%
+  }
+  DetectHiddenWindows, On
+  for i, rmpid in RM_PIDs {
+    WinClose, ahk_pid %rmpid%
+  }
+  DetectHiddenWindows, Off
+}
+
 GetLineCount(file) {
   lineNum := 0
   Loop, Read, %file%
     lineNum := A_Index
   return lineNum
+}
+
+VerifyInstance(mcdir, pid) {
+  moddir := mcdir . "mods\"
+  optionsFile := mcdir . "options.txt"
+  atum := false
+  wp := false
+  standardSettings := false
+  fastReset := false
+  sleepBg := false
+  sodium := false
+  srigt := false
+  SendLog(LOG_LEVEL_INFO, Format("Starting instance verification for directory: {1}", mcdir))
+  Loop, Files, %moddir%*.jar
+  {
+    if InStr(A_LoopFileName, "atum")
+      atum := true
+    else if InStr(A_LoopFileName, "worldpreview")
+      wp := true
+    else if InStr(A_LoopFileName, "standardsettings")
+      standardSettings := true
+    else if InStr(A_LoopFileName, "fast-reset")
+      fastReset := true
+    else if InStr(A_LoopFileName, "sleepbackground")
+      sleepBg := true
+    else if InStr(A_LoopFileName, "sodium")
+      sodium := true
+    else if InStr(A_LoopFileName, "SpeedRunIGT")
+      srigt := true
+    else if InStr(A_LoopFileName, "krypton") {
+      SendLog(LOG_LEVEL_ERROR, Format("Directory {1} includes incompatible mod: Krypton", moddir))
+      MsgBox, 4, Krypton Detected, Directory %moddir% includes incompatible mod: Krypton. Would you like to disable it and restart the instance?
+      IfMsgBox No
+        Continue
+      FileMove, %A_LoopFileFullPath%, %A_LoopFileFullPath%.disabled
+      WinClose, ahk_pid %pid%
+      SendLog(LOG_LEVEL_INFO, Format("Directory {1} included incompatible mod: Krypton. Macro disabled and killed instance.", moddir))
+    }
+  }
+  if !atum {
+    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases", moddir))
+    MsgBox, Directory %moddir% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases
+  }
+  if !wp {
+    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir))
+    MsgBox, Directory %moddir% missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
+  }
+  if !standardSettings {
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases", moddir))
+    MsgBox, Directory %moddir% missing highly recommended mod: standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases
+  } else {
+    standardSettingsFile := mcdir . "config\standardoptions.txt"
+    FileRead, ssettings, %standardSettingsFile%
+    if InStr(standardSettingsFile, "fullscreen:true") {
+      ssettings := StrReplace(ssettings, "fullscreen:true", "fullscreen:false")
+      FileDelete, %standardSettingsFile%
+      FileAppend, ssettings, %standardSettingsFile%
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} had fullscreen set true, macro requires it false. Automatically fixed", standardSettingsFile))
+    }
+    if InStr(standardSettingsFile, "pauseOnLostFocus:true") {
+      ssettings := StrReplace(ssettings, "pauseOnLostFocus:true", "pauseOnLostFocus:false")
+      FileDelete, %standardSettingsFile%
+      FileAppend, ssettings, %standardSettingsFile%
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile))
+    }
+    if (InStr(standardSettingsFile, "key_Create New World:key.keyboard.unknown") && atum) {
+      Loop, 1 {
+        MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default?
+        IfMsgBox No
+          break
+        ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
+        FileDelete, %standardSettingsFile%
+        FileAppend, ssettings, %standardSettingsFile%
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to F6", standardSettingsFile))
+      }
+      SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", standardSettingsFile))
+    }
+    if (InStr(standardSettingsFile, "key_Leave Preview:key.keyboard.unknown") && atum) {
+      Loop, 1 {
+        MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default?
+        IfMsgBox No
+          break
+        ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
+        FileDelete, %standardSettingsFile%
+        FileAppend, ssettings, %standardSettingsFile%
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile))
+      }
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Leave Preview key set", standardSettingsFile))
+    }
+  }
+  if !fastReset
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod fast-reset. Download: https://github.com/jan-leila/FastReset/releases", moddir))
+  if !sleepBg
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod sleepbackground. Download: https://github.com/RedLime/SleepBackground/releases", moddir))
+  if !sodium
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod sodium. Download: https://github.com/jan-leila/sodium-fabric/releases", moddir))
+  if !srigt
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod SpeedRunIGT. Download: https://redlime.github.io/SpeedRunIGT/", moddir))
+  FileRead, options, %optionsFile%
+  if InStr(options, "fullscreen:true")
+    ControlSend,, {Blind}{F11}, ahk_pid %pid%
+  SendLog(LOG_LEVEL_INFO, Format("Finished instance verification for directory: {1}", mcdir))
 }
 
 ; Shoutout peej

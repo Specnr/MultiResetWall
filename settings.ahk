@@ -32,3 +32,9 @@ global scriptBootDelay := 6000 ; increase if instance freezes before world gen
 global obsDelay := 100 ; increase if not changing scenes in obs
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
+
+; Super advanced settings (Do not change unless you know exactly absolutely what you are doing)
+global highThreadsOverride := -1
+global midThreadsOverride := -1
+global lowThreadsOverride := -1
+global superLowThreadsOverride := -1
