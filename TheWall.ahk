@@ -75,6 +75,7 @@ for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
   hold := mcdir . "hold.tmp"
   preview := mcdir . "preview.tmp"
+  VerifyInstance(mcdir, pid)
   resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World", "F6")
   SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, i))
   resetkeys[i] := resetKey

@@ -493,6 +493,87 @@ GetLineCount(file) {
   return lineNum
 }
 
+VerifyInstance(mcdir, pid) {
+  moddir := mcdir . "mods\"
+  optionsFile := mcdir . "options.txt"
+  atum := false
+  wp := false
+  standardSettings := false
+  fastReset := false
+  sleepBg := false
+  sodium := false
+  srigt := false
+  Loop, Files, %moddir%*.jar
+  {
+    if (InStr(A_LoopFileName, "atum"))
+      atum := true
+    else if (InStr(A_LoopFileName, "worldpreview"))
+      wp := true
+    else if (InStr(A_LoopFileName, "standardsettings"))
+      standardSettings := true
+    else if (InStr(A_LoopFileName, "fast-reset"))
+      fastReset := true
+    else if (InStr(A_LoopFileName, "sleepbackground"))
+      sleepBg := true
+    else if (InStr(A_LoopFileName, "sodium"))
+      sodium := true
+    else if (InStr(A_LoopFileName, "SpeedRunIGT"))
+      srigt := true
+    else if (InStr(A_LoopFileName, "krypton")) {
+      SendLog(LOG_LEVEL_ERROR, Format("Directory {1} includes incompatible mod: Krypton", moddir))
+      MsgBox, 4, Krypton Detected, Directory %moddir% includes incompatible mod: Krypton. Would you like to disable it and restart the instance?
+      IfMsgBox Yes
+        FixInstance("krypton", A_LoopFileFullPath, pid)
+    }
+  }
+  if !atum {
+    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases", moddir))
+    MsgBox, Directory %moddir% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases
+  }
+  if !wp {
+    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir))
+    MsgBox, Directory %moddir% missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
+  }
+  if !standardSettings {
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases", moddir))
+    MsgBox, Directory %moddir% missing highly recommended mod: standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases
+  } else {
+    standardSettingsFile := mcdir . "config\standardoptions.txt"
+    FileRead, ssettings, %standardSettingsFile%
+    if InStr(standardSettingsFile, "fullscreen:true") {
+      ssettings := StrReplace(ssettings, "fullscreen:true", "fullscreen:false")
+      FileDelete, %standardSettingsFile%
+      FileAppend, ssettings, %standardSettingsFile%
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} had fullscreen set true, macro requires it false. Automatically fixed", standardSettingsFile))
+    }
+    if InStr(standardSettingsFile, "pauseOnLostFocus:false") {
+      ssettings := StrReplace(ssettings, "pauseOnLostFocus:true", "pauseOnLostFocus:false")
+      FileDelete, %standardSettingsFile%
+      FileAppend, ssettings, %standardSettingsFile%
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile))
+    }
+  }
+  if !fastReset
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod fast-reset. Download: https://github.com/jan-leila/FastReset/releases", moddir))
+  if !sleepBg
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod sleepbackground. Download: https://github.com/RedLime/SleepBackground/releases", moddir))
+  if !sodium
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod sodium. Download: https://github.com/jan-leila/sodium-fabric/releases", moddir))
+  if !srigt
+    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod SpeedRunIGT. Download: https://redlime.github.io/SpeedRunIGT/", moddir))
+  FileRead, options, %optionsFile%
+  if InStr(options, "fullscreen:true")
+    ControlSend,, {Blind}{F11}, ahk_pid %pid%
+}
+
+FixInstance(fix, data, pid) {
+  if (fix == "krypton") {
+    FileMove, %data%, %data%.disabled
+    WinClose, ahk_pid %pid%
+    ; add restarting instance?
+  }
+}
+
 ; Shoutout peej
 global keyArray := Object("key.keyboard.f1", "F1"
 ,"key.keyboard.f2", "F2"
