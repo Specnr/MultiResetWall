@@ -87,7 +87,7 @@ for i, mcdir in McDirectories {
   lpKey := CheckOptionsForHotkey(mcdir, "key_Leave Preview", "h")
   SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, i))
   lpKeys[i] := lpKey
-  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey% %i%, %A_ScriptDir%,, rmpid
+  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -118,13 +118,15 @@ if (affinity) {
   }
 }
 
-if (!disableTTS)
-  ComObjCreate("SAPI.SpVoice").Speak("Ready")
-
 if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
 }
+
+Menu, Tray, Add, Close Instances, CloseInstances
+
+if (!disableTTS)
+  ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
 #Persistent
 OnExit, ExitSub
