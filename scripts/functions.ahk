@@ -1,5 +1,9 @@
 ; v0.8
 
+SendObsCmd(cmd) {
+  FileAppend, %cmd%`n, %obsFile%
+}
+
 SendLog(lvlText, msg) {
   FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, log.log
 }
@@ -56,7 +60,7 @@ TinderMotion(swipeLeft) {
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg))
-  FileAppend, tm %currBg% %newBg%`n, %obsFile%
+  SendOBSCommand("tm" . " " . currBg . " " . newBg)
   currBg := newBg
 }
 
@@ -279,9 +283,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        FileAppend, ss-si %from% %idx% %hideMini% %showMini%`n, %obsFile%
+        SendOBSCommand("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
       Else
-        FileAppend, si %idx%`n, %obsFile%
+        SendOBSCommand(si . " " . idx)
     }
     FileDelete,instance.txt
     FileAppend,%idx%,instance.txt
@@ -402,9 +406,9 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      FileAppend, ss-tw %comingFrom%`n, %obsFile%
+      SendOBSCommand("ss-tw" . " " . comingFrom)
     Else
-      FileAppend, tw`n, %obsFile%
+      SendOBSCommand(tw)
   }
   else {
     send {F12 down}
@@ -415,7 +419,6 @@ ToWall(comingFrom) {
   FileAppend,0,instance.txt
 }
 
-; Focus hovered instance and background reset all other instances
 FocusReset(focusInstance, bypassLock:=false) {
   if bypassLock
     UnlockAll(false)

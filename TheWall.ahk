@@ -61,19 +61,6 @@ FileDelete, %obsFile%
 FileDelete, ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
-if (useObsWebsocket) {
-  if (useSingleSceneOBS) {
-    lastInst := -1
-    if FileExist("instance.txt")
-      FileRead, lastInst, instance.txt
-    FileAppend, ss-tw %lastInst%`n, %obsFile%
-  }
-  else
-    FileAppend, tw`n, %obsFile%
-  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances
-  Run, %cmd%,, Hide
-}
-
 for i, mcdir in McDirectories {
   pid := PIDs[i]
   logs := mcdir . "logs\latest.log"
@@ -123,6 +110,22 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
+if (useObsWebsocket) {
+  WinWait, OBS
+  if (useSingleSceneOBS) {
+    lastInst := -1
+    if FileExist("instance.txt")
+      FileRead, lastInst, instance.txt
+    SendOBSCommand("ss-tw" . " " .lastInst)
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "True"
+  }
+  else {
+    SendOBSCommand(tw)
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "False"
+  }
+  Run, %cmd%,, Hide
+}
+
 Menu, Tray, Add, Close Instances, CloseInstances
 
 if (!disableTTS)
@@ -136,7 +139,7 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
-    FileAppend, xx, %obsFile%
+    SendOBSCommand(xx)
     DetectHiddenWindows, On
     rms := RM_PIDs.MaxIndex()
     loop, %rms% {
@@ -153,7 +156,7 @@ CheckScripts:
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
-      FileAppend, tm -1 %newBg%`n, %obsFile%
+      SendOBSCommand("tm -1" . " " . newBg)
       needBgCheck := False
       currBg := newBg
     }
