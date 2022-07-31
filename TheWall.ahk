@@ -34,6 +34,8 @@ global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 
 
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
+if (widthMultiplier)
+  global newHeight := Floor(A_ScreenHeight / widthMultiplier)
 
 global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
@@ -99,8 +101,6 @@ for i, mcdir in McDirectories {
   if (widthMultiplier) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
-    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%A_ScreenHeight%
-    newHeight := Floor(A_ScreenHeight / widthMultiplier)
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%

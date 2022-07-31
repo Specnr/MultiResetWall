@@ -116,6 +116,19 @@ GetMcDir(pid)
   }
 }
 
+GetPIDFromMcDir(mcdir) {
+  for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
+    cmdLine := proc.Commandline
+    if(RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
+      StringTrimRight, rawInstDir, mcdir, 1
+      thisInstDir := SubStr(StrReplace(instDir, "/", "\"), 21, StrLen(instDir)-28) . "\.minecraft"
+      if (rawInstDir == thisInstDir)
+        return proc.ProcessId
+    }
+  }
+  return -1
+}
+
 GetInstanceTotal() {
   idx := 1
   global rawPIDs
@@ -172,9 +185,12 @@ GetAllPIDs()
       mcdir := GetMcDir(rawPIDs[A_Index])
     if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
-    if !hasMcDirCache
+    if !hasMcDirCache {
       FileAppend,%num%~%mcdir%`n,mcdirs.txt
-    PIDs[num] := rawPIDs[A_Index]
+      PIDs[num] := rawPIDs[A_Index]
+    } else {
+      PIDs[num] := GetPIDFromMcDir(mcdir)
+    }
     McDirectories[num] := mcdir
   }
 }
@@ -316,7 +332,6 @@ ExitWorld()
   {
     pid := PIDs[idx]
     if (widthMultiplier) {
-      newHeight := Floor(A_ScreenHeight / widthMultiplier)
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
@@ -444,27 +459,30 @@ UnlockInstance(idx, sound:=true) {
 }
 
 LockAll(sound:=true) {
-  loop, %instances%
+  loop, %instances% {
     LockInstance(A_Index, false)
-  if (lockSounds && sound)
-    SoundPlay, A_ScriptDir\..\media\lock.wav
+    if (lockSounds && sound)
+      SoundPlay, A_ScriptDir\..\media\lock.wav
+  }
 }
 
 UnlockAll(sound:=true) {
-  loop, %instances%
+  loop, %instances% {
     UnlockInstance(A_Index, false)
-  if (lockSounds && sound)
-    SoundPlay, A_ScriptDir\..\media\unlock.wav
+    if (lockSounds && sound)
+      SoundPlay, A_ScriptDir\..\media\unlock.wav
+  }
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
-  loop, %instances%
-  if locked[A_Index] {
-    if focusReset
-      FocusReset(A_Index, bypassLock)
-    else
-      SwitchInstance(A_Index)
-    return
+  loop, %instances% {
+    if locked[A_Index] {
+      if focusReset
+        FocusReset(A_Index, bypassLock)
+      else
+        SwitchInstance(A_Index)
+      return
+    }
   }
 }
 
