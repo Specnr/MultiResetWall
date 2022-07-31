@@ -5,7 +5,7 @@ SendObsCmd(cmd) {
 }
 
 SendLog(lvlText, msg) {
-  FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, log.log
+  FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
 }
 
 CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
@@ -23,7 +23,7 @@ CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
 }
 
 CountAttempts(attemptType) {
-  file := attemptType . ".txt"
+  file := "data/" . attemptType . ".txt"
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber = 0
@@ -60,7 +60,7 @@ TinderMotion(swipeLeft) {
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg))
-  SendOBSCommand("tm" . " " . currBg . " " . newBg)
+  SendOBSCmd("tm" . " " . currBg . " " . newBg)
   currBg := newBg
 }
 
@@ -173,7 +173,7 @@ GetInstanceNumberFromMcDir(mcdir) {
 }
 
 GetMcDirFromFile(idx) {
-  Loop, Read, mcdirs.txt
+  Loop, Read, data/mcdirs.txt
   {
     split := StrSplit(A_LoopReadLine,"~")
     if (idx == split[1]) {
@@ -188,8 +188,8 @@ GetAllPIDs()
 {
   instances := GetInstanceTotal()
   ; If there are more/less instances than usual, rebuild cache
-  if hasMcDirCache && GetLineCount("mcdirs.txt") != instances {
-    FileDelete,mcdirs.txt
+  if hasMcDirCache && GetLineCount("data/mcdirs.txt") != instances {
+    FileDelete,data/mcdirs.txt
     hasMcDirCache := False
   }
   ; Generate mcdir and order PIDs
@@ -201,7 +201,7 @@ GetAllPIDs()
     if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
     if !hasMcDirCache {
-      FileAppend,%num%~%mcdir%`n,mcdirs.txt
+      FileAppend,%num%~%mcdir%`n,data/mcdirs.txt
       PIDs[num] := rawPIDs[A_Index]
     } else {
       PIDs[num] := GetPIDFromMcDir(mcdir)
@@ -294,12 +294,12 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         showMini := currBg
       }
       if (useSingleSceneOBS)
-        SendOBSCommand("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
+        SendOBSCmd("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
       Else
-        SendOBSCommand(si . " " . idx)
+        SendOBSCmd("si " . idx)
     }
-    FileDelete,instance.txt
-    FileAppend,%idx%,instance.txt
+    FileDelete,data/instance.txt
+    FileAppend,%idx%,data/instance.txt
     pid := PIDs[idx]
     if affinity
       SetAffinities(true)
@@ -417,9 +417,9 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   if (useObsWebsocket) {
     if (useSingleSceneOBS)
-      SendOBSCommand("ss-tw" . " " . comingFrom)
+      SendOBSCmd("ss-tw" . " " . comingFrom)
     Else
-      SendOBSCommand(tw)
+      SendOBSCmd("tw")
   }
   else {
     send {F12 down}
