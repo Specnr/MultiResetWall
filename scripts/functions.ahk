@@ -137,7 +137,7 @@ GetInstanceNumberFromMcDir(mcdir) {
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
     Reload
-  if (mcdir != -1 && !FileExist(numFile))
+  if (!FileExist(numFile))
     MsgBox, Missing instanceNumber.txt in %mcdir%
   else
     FileRead, num, %numFile%
