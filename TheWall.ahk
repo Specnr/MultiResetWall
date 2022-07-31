@@ -34,12 +34,16 @@ global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 
 
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
+if (widthMultiplier)
+  global newHeight := Floor(A_ScreenHeight / widthMultiplier)
 
 global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
+
+global hasMcDirCache := FileExist("mcdirs.txt")
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -77,7 +81,7 @@ for i, mcdir in McDirectories {
   lpKey := CheckOptionsForHotkey(mcdir, "key_Leave Preview", "h")
   SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, i))
   lpKeys[i] := lpKey
-  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey%, %A_ScriptDir%,, rmpid
+  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey% %i%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -89,15 +93,14 @@ for i, mcdir in McDirectories {
     FileDelete, %hold%
   if FileExist(preview)
     FileDelete, %preview%
-  if (windowMode == "B")
+  if (windowMode == "B") {
     WinSet, Style, -0xC00000, ahk_pid %pid%
     WinSet, Style, -0x40000, ahk_pid %pid%
     WinSet, ExStyle, -0x00000200, ahk_pid %pid%
+  }
   if (widthMultiplier) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
-    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%A_ScreenHeight%
-    newHeight := Floor(A_ScreenHeight / widthMultiplier)
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%

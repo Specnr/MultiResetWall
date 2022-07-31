@@ -20,6 +20,7 @@ global holdFile := A_Args[4]
 global previewFile := A_Args[5]
 global resetKey := A_Args[6]
 global lpKey := A_Args[7]
+global idx := A_Args[8]
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global highBitMask := (2 ** threadCount) - 1
@@ -27,7 +28,6 @@ global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) <
 global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
 global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
 
-global idx := GetInstanceNumberFromMcDir(GetMcDir(pid))
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 
@@ -43,11 +43,12 @@ Reset() {
   SetTimer, ManageReset, -200
   if FileExist("instance.txt")
     FileRead, activeInstance, instance.txt
-  if (affinity)
+  if (affinity) {
     if (activeInstance)
       SetAffinity(pid, lowBitMask)
     else
       SetAffinity(pid, midBitMask)
+  }
   FileAppend,, %holdFile%
   FileDelete, %idleFile%
   if (resetSounds)
@@ -99,11 +100,12 @@ ManageReset() {
         }
         if FileExist("instance.txt")
           FileRead, activeInstance, instance.txt
-        if (affinity)
+        if (affinity) {
           if (activeInstance)
             SetAffinity(pid, superLowBitMask)
           else
             SetAffinity(pid, lowBitMask)
+        }
         return
       }
     }
