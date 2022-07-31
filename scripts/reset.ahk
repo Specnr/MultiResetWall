@@ -43,11 +43,12 @@ Reset() {
   SetTimer, ManageReset, -200
   if FileExist("instance.txt")
     FileRead, activeInstance, instance.txt
-  if (affinity)
+  if (affinity) {
     if (activeInstance)
-    SetAffinity(pid, lowBitMask)
-  else
-    SetAffinity(pid, midBitMask)
+      SetAffinity(pid, lowBitMask)
+    else
+      SetAffinity(pid, midBitMask)
+  }
   FileAppend,, %holdFile%
   FileDelete, %idleFile%
   if (resetSounds)
@@ -99,11 +100,12 @@ ManageReset() {
         }
         if FileExist("instance.txt")
           FileRead, activeInstance, instance.txt
-        if (affinity)
+        if (affinity) {
           if (activeInstance)
-          SetAffinity(pid, superLowBitMask)
-        else
-          SetAffinity(pid, lowBitMask)
+            SetAffinity(pid, superLowBitMask)
+          else
+            SetAffinity(pid, lowBitMask)
+        }
         return
       }
     }
