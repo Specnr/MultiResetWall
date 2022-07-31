@@ -19,6 +19,13 @@ global idleFile := A_Args[3]
 global holdFile := A_Args[4]
 global previewFile := A_Args[5]
 global resetKey := A_Args[6]
+global lpKey := A_Args[7]
+
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
+global highBitMask := (2 ** threadCount) - 1
+global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
 
 global idx := GetInstanceNumberFromMcDir(GetMcDir(pid))
 global state := "unknown"
@@ -34,10 +41,15 @@ Reset() {
   state := "kill"
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -200
-  if FileExist(idleFile)
-    FileDelete, %idleFile%
-  if (!FileExist(holdFile))
-    FileAppend,, %holdFile%
+  if FileExist("instance.txt")
+    FileRead, activeInstance, instance.txt
+  if (affinity)
+    if (activeInstance)
+      SetAffinity(pid, lowBitMask)
+    else
+      SetAffinity(pid, midBitMask)
+  FileAppend,, %holdFile%
+  FileDelete, %idleFile%
   if (resetSounds)
     SoundPlay, A_ScriptDir\..\media\reset.wav
 }
@@ -58,12 +70,12 @@ ManageReset() {
         ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
         state := "preview"
         lastImportantLine := GetLineCount(logFile)
-        if FileExist(holdFile)
-          FileDelete, %holdFile%
-        if FileExist(previewFile)
-          FileDelete, %previewFile%
+        FileDelete, %holdFile%
+        FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
         SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
+        if FileExist(instance.txt)
+          FileRead, activeInstance, instance.txt
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
         sleep, %beforePauseDelay%
@@ -71,16 +83,13 @@ ManageReset() {
         lastImportantLine := GetLineCount(logFile)
         if (performanceMethod == "F")
           sleep, %beforeFreezeDelay%
-        if FileExist(holdFile)
-          FileDelete, %holdFile%
-        if FileExist(previewFile)
-          FileDelete, %previewFile%
-        FileAppend, %A_TickCount%, %previewFile%
-        if FileExist(idleFile)
-          FileDelete, %idleFile%
-        FileAppend, %A_TickCount%, %idleFile%
+        FileDelete, %holdFile%
+        if !FileExist(previewFile)
+          FileAppend, %A_TickCount%, %previewFile%
+        if !FileExist(idleFile)
+          FileAppend, %A_TickCount%, %idleFile%
         if (state == "resetting") {
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} current line dump: {2}", idx, A_LoopReadLine))
+          SendLog(LOG_LEVEL_INFO, Format("Inst {1} line dump: {2}", idx, A_LoopReadLine))
           SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
           state := "unknown"
           Reset()
@@ -88,14 +97,25 @@ ManageReset() {
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
         }
+        if FileExist("instance.txt")
+          FileRead, activeInstance, instance.txt
+        if (affinity)
+          if (activeInstance)
+            SetAffinity(pid, superLowBitMask)
+          else
+            SetAffinity(pid, lowBitMask)
         return
       }
     }
-    if (A_TickCount - start > 15000) {
-      SendLog(LOG_LEVEL_INFO, Format("Inst {1} 15 second timeout reached, forcing reset", idx))
-      ControlSend,, {Blind}{%resetKey%}, ahk_pid %pid%
+    if (A_TickCount - start > 25000) {
+      SendLog(LOG_LEVEL_WARNING, Format("Inst {1} 25 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
       state := "unknown"
-      Reset()
+      lastImportantLine := GetLineCount(logFile)
+      FileDelete, %holdFile%
+      if !FileExist(previewFile)
+        FileAppend, %A_TickCount%, %previewFile%
+      if !FileExist(idleFile)
+        FileAppend, %A_TickCount%, %idleFile%
       return
     }
   }
