@@ -305,6 +305,8 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
+    holdFile := McDirectories[idx] . "hold.tmp"
+    FileDelete,%holdFile%
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
