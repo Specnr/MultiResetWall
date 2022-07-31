@@ -426,8 +426,8 @@ ToWall(comingFrom) {
     sleep, %obsDelay%
     send {F12 up}
   }
-  FileDelete,instance.txt
-  FileAppend,0,instance.txt
+  FileDelete,data/instance.txt
+  FileAppend,0,data/instance.txt
 }
 
 FocusReset(focusInstance, bypassLock:=false) {
