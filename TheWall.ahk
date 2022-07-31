@@ -48,7 +48,7 @@ global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
 
-global hasMcDirCache := FileExist("mcdirs.txt")
+global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 if (performanceMethod == "F") {
   UnsuspendAll()
@@ -56,9 +56,9 @@ if (performanceMethod == "F") {
 }
 GetAllPIDs()
 SetTitles()
-FileDelete, log.log
 FileDelete, %obsFile%
-FileDelete, ATTEMPTS_DAY.txt
+FileDelete, data/log.log
+FileDelete, data/ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
 for i, mcdir in McDirectories {
@@ -114,13 +114,13 @@ if (useObsWebsocket) {
   WinWait, OBS
   if (useSingleSceneOBS) {
     lastInst := -1
-    if FileExist("instance.txt")
-      FileRead, lastInst, instance.txt
-    SendOBSCommand("ss-tw" . " " .lastInst)
+    if FileExist("data/instance.txt")
+      FileRead, lastInst, data/instance.txt
+    SendOBSCmd("ss-tw" . " " .lastInst)
     cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "True"
   }
   else {
-    SendOBSCommand(tw)
+    SendOBSCmd("tw")
     cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "False"
   }
   Run, %cmd%,, Hide
@@ -139,7 +139,7 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
-    SendOBSCommand(xx)
+    SendOBSCmd("xx")
     DetectHiddenWindows, On
     rms := RM_PIDs.MaxIndex()
     loop, %rms% {
@@ -156,7 +156,7 @@ CheckScripts:
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
-      SendOBSCommand("tm -1" . " " . newBg)
+      SendOBSCmd("tm -1" . " " . newBg)
       needBgCheck := False
       currBg := newBg
     }
