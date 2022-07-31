@@ -230,6 +230,10 @@ SetAffinity(pid, mask) {
   DllCall("CloseHandle", "Ptr", hProc)
 }
 
+GetBitMask(threads) {
+  return (2 ** threads) - 1
+}
+
 UnsuspendAll() {
   WinGet, all, list
   Loop, %all%

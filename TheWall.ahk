@@ -27,10 +27,15 @@ global resetKeys := []
 global lpKeys := []
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global highBitMask := (2 ** threadCount) - 1
-global midBitMask := ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.75 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
-global lowBitMask := ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.35 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
-global superLowBitMask := ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) < ((2 ** threadCount) - 1) ? ((2 ** Ceil(threadCount * (.1 / affinityStrength))) - 1) : ((2 ** threadCount) - 1)
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : threadCount
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : Ceil(threadCount * (.75 / affinityStrength)) < threadCount ? Ceil(threadCount * (.75 / affinityStrength)) : threadCount
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : Ceil(threadCount * (.35 / affinityStrength)) < threadCount ? Ceil(threadCount * (.35 / affinityStrength)) : threadCount
+global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : Ceil(threadCount * (.1 / affinityStrength)) < threadCount ? Ceil(threadCount * (.1 / affinityStrength)) : threadCount
+
+global highBitMask := GetBitMask(highThreads)
+global midBitMask := GetBitMask(midThreads)
+global lowBitMask := GetBitMask(lowThreads)
+global superLowBitMask := GetBitMask(superLowThreads)
 
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
