@@ -137,21 +137,43 @@ GetInstanceNumberFromMcDir(mcdir) {
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
     Reload
-  if (!FileExist(numFile))
+  if (mcdir != -1 && !FileExist(numFile))
     MsgBox, Missing instanceNumber.txt in %mcdir%
   else
     FileRead, num, %numFile%
   return num
 }
 
+GetMcDirFromFile(idx) {
+  Loop, Read, mcdirs.txt
+  {
+    split := StrSplit(A_LoopReadLine,"~")
+    if (idx == split[1]) {
+      mcdir := split[2]
+      StringReplace,mcdir,mcdir,`n,,A
+      return mcdir
+    }
+  }
+}
+
 GetAllPIDs()
 {
   instances := GetInstanceTotal()
+  ; If there are more/less instances than usual, rebuild cache
+  if hasMcDirCache && GetLineCount("mcdirs.txt") != instances {
+    FileDelete,mcdirs.txt
+    hasMcDirCache := False
+  }
   ; Generate mcdir and order PIDs
   Loop, %instances% {
-    mcdir := GetMcDir(rawPIDs[A_Index])
+    if hasMcDirCache
+      mcdir := GetMcDirFromFile(A_Index)
+    else
+      mcdir := GetMcDir(rawPIDs[A_Index])
     if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
       ExitApp
+    if !hasMcDirCache
+      FileAppend,%num%~%mcdir%`n,mcdirs.txt
     PIDs[num] := rawPIDs[A_Index]
     McDirectories[num] := mcdir
   }
@@ -435,13 +457,13 @@ UnlockAll(sound:=true) {
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
   loop, %instances%
-    if locked[A_Index] {
-      if focusReset
-        FocusReset(A_Index, bypassLock)
-      else
-        SwitchInstance(A_Index)
-      return
-    }
+  if locked[A_Index] {
+    if focusReset
+      FocusReset(A_Index, bypassLock)
+    else
+      SwitchInstance(A_Index)
+    return
+  }
 }
 
 GetLineCount(file) {
