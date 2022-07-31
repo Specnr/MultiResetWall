@@ -445,6 +445,10 @@ LockInstance(idx, sound:=true) {
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
+  if affinity {
+    pid := PIDs[idx]
+    SetAffinity(pid, highBitMask)
+  }
 }
 
 UnlockInstance(idx, sound:=true) {
@@ -456,6 +460,10 @@ UnlockInstance(idx, sound:=true) {
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
+  if affinity {
+    pid := PIDs[idx]
+    SetAffinity(pid, midBitMask)
+  }
 }
 
 LockAll(sound:=true) {
