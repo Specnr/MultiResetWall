@@ -246,34 +246,6 @@ GetBitMask(threads) {
   return ((2 ** threads) - 1)
 }
 
-UnsuspendAll() {
-  WinGet, all, list
-  Loop, %all%
-  {
-    WinGet, pid, PID, % "ahk_id " all%A_Index%
-    WinGetTitle, title, ahk_pid %pid%
-    if (InStr(title, "Minecraft*"))
-      ResumeInstance(pid)
-  }
-}
-
-SuspendInstance(pid) {
-  hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
-  If (hProcess) {
-    DllCall("ntdll.dll\NtSuspendProcess", "Int", hProcess)
-    DllCall("CloseHandle", "Int", hProcess)
-  }
-}
-
-ResumeInstance(pid) {
-  hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
-  If (hProcess) {
-    sleep, %resumeDelay%
-    DllCall("ntdll.dll\NtResumeProcess", "Int", hProcess)
-    DllCall("CloseHandle", "Int", hProcess)
-  }
-}
-
 SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   idleFile := McDirectories[idx] . "idle.tmp"
@@ -298,12 +270,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileDelete,data/instance.txt
     FileAppend,%idx%,data/instance.txt
     pid := PIDs[idx]
-    if affinity
-      SetAffinities(true, idx)
+    SetAffinities(true, idx)
     if !locked[idx]
       LockInstance(idx, False, False)
-    if (performanceMethod == "F")
-      ResumeInstance(pid)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
@@ -364,9 +333,7 @@ ExitWorld()
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
-    if affinity {
-      SetAffinities()
-    }
+    SetAffinities()
   }
 }
 
@@ -383,8 +350,6 @@ ResetInstance(idx) {
     rmpid := RM_PIDs[idx]
     resetKey := resetkeys[idx]
     lpKey := lpKeys[idx]
-    if (performanceMethod == "F")
-      ResumeInstance(pid)
     ; Reset
     ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
     DetectHiddenWindows, On
@@ -460,7 +425,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   FileSetTime,,%lockDest%,M
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
-  if (affinity && affinityChange) {
+  if (affinityChange) {
     pid := PIDs[idx]
     SetAffinity(pid, highBitMask)
   }
@@ -500,6 +465,19 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
         SwitchInstance(A_Index)
       return
     }
+  }
+}
+
+WorldBop() {
+  MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
+  IfMsgBox No
+  Return
+  if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
+    RunWait,%cmd%,,Hide
+    MsgBox, Completed World Bopping!
+  } else {
+    MsgBox, Missing Python installation. Try again after installing
   }
 }
 

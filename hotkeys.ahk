@@ -3,12 +3,12 @@ RAlt::Suspend ; Pause all macros
 ^LAlt:: ; Reload if macro locks up
   Reload
 return
-#If WinActive("Minecraft") && WinActive("ahk_exe javaw.exe")
-  {
-    *U:: ExitWorld() ; Reset
-    *CapsLock:: TinderMotion(True) ; Bg left swipe (reset)
-    *+CapsLock:: TinderMotion(False) ; Bg right swipe (keep)
-  }
+#If WinActive("Minecraft") && (WinActive("ahk_exe javaw.exe") || WinActive("ahk_exe java.exe"))
+{
+  *U:: ExitWorld() ; Reset
+  *CapsLock:: TinderMotion(True) ; Bg left swipe (reset)
+  *+CapsLock:: TinderMotion(False) ; Bg right swipe (keep)
+}
 return
 
 #IfWinActive, Fullscreen Projector
