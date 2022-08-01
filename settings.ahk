@@ -20,7 +20,7 @@ global wallBypass := False ; If you have at least one locked instance, it will s
 global multiMode := False ; Never send you back to the wall unless there are no playable instances
 global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
 global lockIndicators := False ; Visual indicator for locked instances (no websocket needed)
-global affinityStrength := 0.5 ; for affinity, find a happy medium, max=1.0 (higher means more extreme thread management)
+global affinityStrength := 0.5 ; for affinity, higher means more extreme thread management, raise if lagging on world join, etc.
 
 ; Delays (Defaults are probably fine)
 global resumeDelay := 50 ; increase if instance isnt resetting (or have to press reset twice)
@@ -33,8 +33,12 @@ global obsDelay := 100 ; increase if not changing scenes in obs
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
 
-; Super advanced settings (Do not change unless you know exactly absolutely what you are doing)
-global highThreadsOverride := -1
-global midThreadsOverride := -1
-global lowThreadsOverride := -1
-global superLowThreadsOverride := -1
+; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
+; -1 == use macro math to determine thread counts
+global playThreadsOverride := -1 ; Thread count dedicated to the instance you are playing
+global highThreadsOverride := -1 ; Thread count dedicated to instances that have just been reset but not previewing
+global midThreadsOverride := -1 ; Thread count dedicated to loading preview instances on wall
+global lowThreadsOverride := -1 ; Thread count dedicated to loading bg instances and idle wall instances
+global superLowThreadsOverride := -1 ; Thread count dedicated to idle bg instances
+
+global loadBurstLength := 400 ; How many milliseconds highThreads stays dedicated to an instance after a preview is detected before lowering to midThreads

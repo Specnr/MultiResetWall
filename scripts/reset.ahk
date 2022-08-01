@@ -41,15 +41,15 @@ Reset() {
   SetTimer, ManageReset, -200
   if FileExist("instance.txt")
     FileRead, activeInstance, instance.txt
-  if (affinity) {
-    if (activeInstance)
+  if affinity {
+    if activeInstance
       SetAffinity(pid, lowBitMask)
     else
-      SetAffinity(pid, midBitMask)
+      SetAffinity(pid, highBitMask)
   }
   FileAppend,, %holdFile%
   FileDelete, %idleFile%
-  if (resetSounds)
+  if resetSounds
     SoundPlay, A_ScriptDir\..\media\reset.wav
 }
 
@@ -73,8 +73,8 @@ ManageReset() {
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
         SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
-        if FileExist(instance.txt)
-          FileRead, activeInstance, instance.txt
+        if affinity
+          SetTimer, LowerAffinity, -%loadBurstLength%
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
         sleep, %beforePauseDelay%
@@ -98,17 +98,16 @@ ManageReset() {
         }
         if FileExist("instance.txt")
           FileRead, activeInstance, instance.txt
-        if (affinity) {
-          if (activeInstance)
+        if affinity
+          if activeInstance
             SetAffinity(pid, superLowBitMask)
           else
             SetAffinity(pid, lowBitMask)
-        }
         return
       }
     }
-    if (A_TickCount - start > 25000) {
-      SendLog(LOG_LEVEL_ERROR, Format("Inst {1} 25 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
+    if (A_TickCount - start > 15000) {
+      SendLog(LOG_LEVEL_WARNING, Format("Inst {1} 15 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
       FileDelete, %holdFile%
@@ -119,4 +118,13 @@ ManageReset() {
       return
     }
   }
+}
+
+LowerAffinity() {
+  if FileExist("instance.txt")
+    FileRead, activeInstance, instance.txt
+  if activeInstance
+    SetAffinity(pid, lowBitMask)
+  else
+    SetAffinity(pid, midBitMask)
 }

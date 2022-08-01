@@ -195,31 +195,28 @@ GetAllPIDs()
   }
 }
 
-SetAffinities(bg:=false) {
+SetAffinities(bg:=false, play:=0) {
   for i, mcdir in McDirectories {
     pid := PIDs[i]
     idle := mcdir . "idle.tmp"
     hold := mcdir . "hold.tmp"
     preview := mcdir . "preview.tmp"
-    if FileExist(idle) {
-      if bg
+    if (i == play) {
+      SetAffinity(pid, playBitMask)
+    } else if bg {
+      if FileExist(idle)
         SetAffinity(pid, superLowBitMask)
       else
         SetAffinity(pid, lowBitMask)
-      Continue
-    } else if (FileExist(preview) || FileExist(hold)) {
-      if (locked[i] && bg)
-        SetAffinity(pid, midBitMask)
+    } else {
+      if FileExist(idle)
+        SetAffinity(pid, lowBitMask)
       else if locked[i]
         SetAffinity(pid, highBitMask)
-      else if bg
-        SetAffinity(pid, lowBitMask)
-      else
+      else if FileExist(hold)
+        SetAffinity(pid, highBitMask)
+      else if FileExist(preview)
         SetAffinity(pid, midBitMask)
-      Continue
-    } else {
-      SetAffinity(pid, midBitMask)
-      Continue
     }
   }
 }
@@ -287,8 +284,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileAppend,%idx%,instance.txt
     pid := PIDs[idx]
     if affinity
-      SetAffinities(true)
-    LockInstance(idx, False)
+      SetAffinities(true, idx)
+    if !locked[idx]
+      LockInstance(idx, False, False)
     if (performanceMethod == "F")
       ResumeInstance(pid)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
@@ -377,7 +375,8 @@ ResetInstance(idx) {
     DetectHiddenWindows, On
     PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
     DetectHiddenWindows, Off
-    UnlockInstance(idx, False)
+    if locked[idx]
+      UnlockInstance(idx, false)
     Critical, On
     resetScriptTime.Push(A_TickCount)
     resetIdx.Push(idx)
@@ -440,7 +439,7 @@ ResetAll(bypassLock:=false) {
   }
 }
 
-LockInstance(idx, sound:=true) {
+LockInstance(idx, sound:=true, affinityChange:=true) {
   locked[idx] := true
   if (lockIndicators) {
     lockDest := McDirectories[idx] . "lock.png"
@@ -449,7 +448,7 @@ LockInstance(idx, sound:=true) {
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
-  if affinity {
+  if (affinity && affinityChange) {
     pid := PIDs[idx]
     SetAffinity(pid, highBitMask)
   }
@@ -464,10 +463,6 @@ UnlockInstance(idx, sound:=true) {
   }
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
-  if affinity {
-    pid := PIDs[idx]
-    SetAffinity(pid, midBitMask)
-  }
 }
 
 LockAll(sound:=true) {
