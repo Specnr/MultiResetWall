@@ -39,8 +39,8 @@ Reset() {
   state := "kill"
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -200
-  if FileExist("instance.txt")
-    FileRead, activeInstance, instance.txt
+  if FileExist("data/instance.txt")
+    FileRead, activeInstance, data/instance.txt
   if affinity {
     if activeInstance
       SetAffinity(pid, lowBitMask)
@@ -96,8 +96,8 @@ ManageReset() {
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
         }
-        if FileExist("instance.txt")
-          FileRead, activeInstance, instance.txt
+        if FileExist("data/instance.txt")
+          FileRead, activeInstance, data/instance.txt
         if affinity
           if activeInstance
             SetAffinity(pid, superLowBitMask)

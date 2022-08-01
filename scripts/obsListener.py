@@ -1,23 +1,46 @@
 # v0.8
 import os
 import sys
-from obswebsocket import obsws, requests
 import time
+from obswebsocket import obsws, requests
 import obsSettings as config
 
 ws = obsws(config.host, config.port, config.password)
 try:
     ws.connect()
-    with open("obs.log", "w") as log:
+    with open("data/obs.log", "w") as log:
         log.write("Connected\n")
 except:
-    with open("obs.log", "w") as log:
+    with open("data/obs.log", "w") as log:
         log.write("Could not connect to obsws\n")
         quit()
 
 instances = int(sys.argv[1])
 last_completed_obs_line = -1
 ops_file = "./scripts/obs.ops"
+
+
+def ssstartup():
+    ws.call(requests.SetSceneItemProperties(
+            f"{config.wall_scene_name}", visible=False))
+    for num in range(1, instances + 1):
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.mc_source_format}{num}", visible=True))
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.bg_mc_source_format}{num}", visible=True))
+    for num in range(1, instances + 1):
+        time.sleep(1)
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.mc_source_format}{num}", visible=False))
+        ws.call(requests.SetSceneItemProperties(
+            f"{config.bg_mc_source_format}{num}", visible=False))
+    ws.call(requests.SetSceneItemProperties(
+            f"{config.wall_scene_name}", visible=True))
+
+
+if sys.argv[2] == "True":
+    ssstartup()
+
 
 def tinderMotion(data):
     hide, show = data
@@ -51,7 +74,7 @@ def switchInstance(isSS, data):
             ws.call(requests.SetCurrentScene(
                 f"{config.scene_name_format}{data[0]}"))
         except:
-            with open("obs.log", "a") as log:
+            with open("data/obs.log", "a") as log:
                 log.write(
                     f"si {data[0]}: failed (reason unknown) (reason unknown\n")
 
@@ -72,8 +95,9 @@ def toWall(isSS, data):
         try:
             ws.call(requests.SetCurrentScene(f"{config.wall_scene_name}"))
         except:
-            with open("obs.log", "a") as log:
+            with open("data/obs.log", "a") as log:
                 log.write("tw: failed (reason unknown)\n")
+
 
 breaking = False
 while True:
@@ -89,7 +113,7 @@ while True:
                         op, args = splt[0], splt[1:]
                         if op == "xx":
                             breaking = True
-                            with open("obs.log", "a") as log:
+                            with open("data/obs.log", "a") as log:
                                 log.write("Breaking with xx\n")
                             break
                         elif op == "tm":
@@ -105,5 +129,5 @@ while True:
     time.sleep(1/config.checks_per_second)
 
 ws.disconnect()
-with open("obs.log", "a") as log:
+with open("data/obs.log", "a") as log:
     log.write("Exiting\n")
