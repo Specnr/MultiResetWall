@@ -469,6 +469,9 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
 }
 
 WorldBop() {
+  MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
+  IfMsgBox No
+  Return
   if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
     cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
     RunWait,%cmd%,,Hide
