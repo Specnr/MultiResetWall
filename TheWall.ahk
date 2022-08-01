@@ -33,6 +33,7 @@ global midThreads := midThreadsOverride > 0 ? midThreadsOverride : Ceil(threadCo
 global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : Ceil(threadCount * (.35 / affinityStrength)) < threadCount ? Ceil(threadCount * (.35 / affinityStrength)) : threadCount
 global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : Ceil(threadCount * (.1 / affinityStrength)) < threadCount ? Ceil(threadCount * (.1 / affinityStrength)) : threadCount
 
+global playBitMask := GetBitMask(playThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
