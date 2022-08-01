@@ -115,7 +115,7 @@ ManageReset() {
 
 LowerAffinity() {
   if FileExist("data/instance.txt")
-    FileRead, activeInstance, instance.txt
+    FileRead, activeInstance, data/instance.txt
   if activeInstance
     SetAffinity(pid, lowBitMask)
   else
