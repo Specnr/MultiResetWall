@@ -85,7 +85,7 @@ for i, mcdir in McDirectories {
   RM_PIDs[i] := rmpid
   UnlockInstance(i, False)
   if (!FileExist(idle))
-    FileAppend,,%idle%
+    FileAppend, %A_TickCount%, %idle%
   if FileExist(hold)
     FileDelete, %hold%
   if FileExist(preview)
@@ -103,7 +103,7 @@ for i, mcdir in McDirectories {
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
 }
 
-if (affinity) {
+if affinity {
   for i, tmppid in PIDs {
     SetAffinity(tmppid, highBitMask)
   }
@@ -113,6 +113,8 @@ if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
 }
+
+Menu, Tray, Add, Close Instances, CloseInstances
 
 if (useObsWebsocket) {
   WinWait, OBS
@@ -129,8 +131,6 @@ if (useObsWebsocket) {
   }
   Run, %cmd%,, Hide
 }
-
-Menu, Tray, Add, Close Instances, CloseInstances
 
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")

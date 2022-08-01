@@ -146,7 +146,6 @@ GetPIDFromMcDir(mcdir) {
 
 GetInstanceTotal() {
   idx := 1
-  global rawPIDs
   WinGet, all, list
   Loop, %all%
   {
