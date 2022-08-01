@@ -455,11 +455,9 @@ ResetAll(bypassLock:=false) {
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
   locked[idx] := true
-  if (lockIndicators) {
-    lockDest := McDirectories[idx] . "lock.png"
-    FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
-    FileSetTime,,%lockDest%,M
-  }
+  lockDest := McDirectories[idx] . "lock.png"
+  FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
+  FileSetTime,,%lockDest%,M
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
   if (affinity && affinityChange) {
@@ -470,11 +468,9 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
 
 UnlockInstance(idx, sound:=true) {
   locked[idx] := false
-  if (lockIndicators) {
-    lockDest := McDirectories[idx] . "lock.png"
-    FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
-    FileSetTime,,%lockDest%,M
-  }
+  lockDest := McDirectories[idx] . "lock.png"
+  FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
+  FileSetTime,,%lockDest%,M
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }

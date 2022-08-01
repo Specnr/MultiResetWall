@@ -32,9 +32,8 @@ Use [this world deletion program](https://gist.github.com/Specnr/8a572ac5c5cfdb5
 
 Adds the media/lock.png on screen whenever you lock an instance (does NOT require OBS Websocket)
 
-1) Set lockIndicators in settings.ahk to True
-2) Start the macro, then lock all instances
-3) This will create an image in each of your instance's .minecraft folder named lock.png, add an Image source to OBS for each corresponding instance and use the lock image created in that specific instance's .minecraft folder.
+1) Start the macro, then lock all instances
+2) This will create an image in each of your instance's .minecraft folder named lock.png, add an Image source to OBS for each corresponding instance and use the lock image created in that specific instance's .minecraft folder.
 
 Make sure you AREN'T adding the lock.png file that is included in the media folder. You may customize your lock images by simply replacing the png files in your wall media folder. Changing the files in your .minecraft folders won't do anything.
 

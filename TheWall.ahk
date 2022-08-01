@@ -49,6 +49,8 @@ global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
 
+if !FileExist("data")
+  FileCreateDir, data
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 if (performanceMethod == "F") {
