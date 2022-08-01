@@ -27,7 +27,8 @@ global resetKeys := []
 global lpKeys := []
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : threadCount
+global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : Ceil(threadCount * (.8 / affinityStrength)) < threadCount ? Ceil(threadCount * (.8 / affinityStrength)) : threadCount
 global midThreads := midThreadsOverride > 0 ? midThreadsOverride : Ceil(threadCount * (.75 / affinityStrength)) < threadCount ? Ceil(threadCount * (.75 / affinityStrength)) : threadCount
 global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : Ceil(threadCount * (.35 / affinityStrength)) < threadCount ? Ceil(threadCount * (.35 / affinityStrength)) : threadCount
 global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : Ceil(threadCount * (.1 / affinityStrength)) < threadCount ? Ceil(threadCount * (.1 / affinityStrength)) : threadCount
