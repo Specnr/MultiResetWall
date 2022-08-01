@@ -1,5 +1,4 @@
 ATTEMPTS*
-instance.txt
 TheWall*.zip
 *-Spec.*
 *MyOptions*
@@ -7,4 +6,4 @@ test.ahk
 *pycache*
 *.log
 *.ops
-mcdirs.txt
+*.txt

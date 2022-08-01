@@ -60,6 +60,11 @@ FileDelete, data/log.log
 FileDelete, data/ATTEMPTS_DAY.txt
 SendLog(LOG_LEVEL_INFO, "Starting Wall")
 
+if !FileExist("data/mmc.txt") {
+  mmc := StrSplit(McDirectories[1], "instances")[1]
+  FileAppend,%mmc%,data/mmc.txt
+}
+
 for i, mcdir in McDirectories {
   pid := PIDs[i]
   logs := mcdir . "logs\latest.log"
