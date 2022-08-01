@@ -356,10 +356,6 @@ ResetInstance(idx) {
     DetectHiddenWindows, Off
     if locked[idx]
       UnlockInstance(idx, false)
-    Critical, On
-    resetScriptTime.Push(A_TickCount)
-    resetIdx.Push(idx)
-    Critical, Off
     ; Count Attempts
     if (countAttempts)
     {
