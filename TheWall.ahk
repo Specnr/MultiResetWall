@@ -54,10 +54,6 @@ if !FileExist("data")
   FileCreateDir, data
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
-if (performanceMethod == "F") {
-  UnsuspendAll()
-  sleep, %restartDelay%
-}
 GetAllPIDs()
 SetTitles()
 FileDelete, %obsFile%
@@ -103,18 +99,14 @@ for i, mcdir in McDirectories {
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
 }
 
-if affinity {
-  for i, tmppid in PIDs {
-    SetAffinity(tmppid, highBitMask)
-  }
+for i, tmppid in PIDs {
+  SetAffinity(tmppid, highBitMask)
 }
 
 if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
 }
-
-Menu, Tray, Add, Close Instances, CloseInstances
 
 if (useObsWebsocket) {
   WinWait, OBS
@@ -131,6 +123,9 @@ if (useObsWebsocket) {
   }
   Run, %cmd%,, Hide
 }
+
+Menu, Tray, Add, Delete Worlds, WorldBop
+Menu, Tray, Add, Close Instances, CloseInstances
 
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
@@ -165,29 +160,6 @@ CheckScripts:
       currBg := newBg
     }
     lastChecked := A_NowUTC
-  }
-  if (performanceMethod == "F") {
-    toRemove := []
-    for i, rIdx in resetIdx {
-      idleCheck := McDirectories[rIdx] . "idle.tmp"
-      if (FileExist(idleCheck)) {
-        if (performanceMethod == "F" && A_TickCount - resetScriptTime[i] > scriptBootDelay) {
-          SuspendInstance(PIDs[rIdx])
-          toRemove.Push(resetScriptTime[i])
-        }
-      }
-    }
-    for i, x in toRemove {
-      idx := resetScriptTime.Length()
-      while (idx) {
-        resetTime := resetScriptTime[idx]
-        if (x == resetTime) {
-          resetScriptTime.RemoveAt(idx)
-          resetIdx.RemoveAt(idx)
-        }
-        idx--
-      }
-    }
   }
 return
 

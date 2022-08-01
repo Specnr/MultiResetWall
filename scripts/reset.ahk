@@ -41,12 +41,10 @@ Reset() {
   SetTimer, ManageReset, -200
   if FileExist("data/instance.txt")
     FileRead, activeInstance, data/instance.txt
-  if affinity {
-    if activeInstance
-      SetAffinity(pid, lowBitMask)
-    else
-      SetAffinity(pid, highBitMask)
-  }
+  if activeInstance
+    SetAffinity(pid, lowBitMask)
+  else
+    SetAffinity(pid, highBitMask)
   FileAppend,, %holdFile%
   FileDelete, %idleFile%
   if resetSounds
@@ -73,15 +71,11 @@ ManageReset() {
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
         SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
-        if affinity
-          SetTimer, LowerAffinity, -%loadBurstLength%
+        SetTimer, LowerAffinity, -%loadBurstLength%
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
-        sleep, %beforePauseDelay%
         ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
         lastImportantLine := GetLineCount(logFile)
-        if (performanceMethod == "F")
-          sleep, %beforeFreezeDelay%
         FileDelete, %holdFile%
         if !FileExist(previewFile)
           FileAppend, %A_TickCount%, %previewFile%
@@ -98,11 +92,10 @@ ManageReset() {
         }
         if FileExist("data/instance.txt")
           FileRead, activeInstance, data/instance.txt
-        if affinity
-          if activeInstance
-            SetAffinity(pid, superLowBitMask)
-          else
-            SetAffinity(pid, lowBitMask)
+        if activeInstance
+          SetAffinity(pid, superLowBitMask)
+        else
+          SetAffinity(pid, lowBitMask)
         return
       }
     }
