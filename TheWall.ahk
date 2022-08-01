@@ -129,6 +129,7 @@ if (useObsWebsocket) {
   Run, %cmd%,, Hide
 }
 
+Menu, Tray, Add, Delete Worlds, WorldBop
 Menu, Tray, Add, Close Instances, CloseInstances
 
 if (!disableTTS)

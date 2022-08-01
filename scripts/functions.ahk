@@ -503,6 +503,16 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
   }
 }
 
+WorldBop() {
+  if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
+    RunWait,%cmd%,,Hide
+    MsgBox, Completed World Bopping!
+  } else {
+    MsgBox, Missing Python installation. Try again after installing
+  }
+}
+
 CloseInstances() {
   MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
   IfMsgBox No
