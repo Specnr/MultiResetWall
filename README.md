@@ -39,6 +39,19 @@ Make sure you AREN'T adding the lock.png file that is included in the media fold
 
 After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
+## Utility Functions
+
+In the /utils folder, you'll find some helpful scripts which we will add to over time.
+
+### Startup.ahk
+This script will startup your instances for you, however it will only work after your first session.
+
+If you want, you can create a names.txt file in the /data folder with one name per line, and one line per instance to launch your instances in offline mode with custom names.
+
+### CloseInstances.ahk
+This script will simply close all your instances for you. This is also an option in TheWall.ahk tray options
+
+
 ## OBS Websocket
 
 1) Download [Python 3.7+](https://www.python.org/downloads/)

@@ -2,6 +2,11 @@
 #NoEnv
 
 path := A_ScriptDir . "\..\data\mmc.txt"
+if !FileExist(path) {
+  MsgBox, Missing cache, you need to run TheWall.ahk once before using this script
+  ExitApp
+}
+
 Loop, Read, %path%
 {
   mmc := A_LoopReadLine
