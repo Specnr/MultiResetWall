@@ -106,8 +106,8 @@ ManageReset() {
         return
       }
     }
-    if (A_TickCount - start > 15000) {
-      SendLog(LOG_LEVEL_WARNING, Format("Inst {1} 15 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
+    if (A_TickCount - start > 25000) {
+      SendLog(LOG_LEVEL_ERROR, Format("Inst {1} 25 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
       FileDelete, %holdFile%
