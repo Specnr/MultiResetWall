@@ -17,8 +17,6 @@ global instances := 0
 global rawPIDs := []
 global PIDs := []
 global RM_PIDs := []
-global resetScriptTime := []
-global resetIdx := []
 global locked := []
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
@@ -33,6 +31,7 @@ global midThreads := midThreadsOverride > 0 ? midThreadsOverride : Ceil(threadCo
 global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : Ceil(threadCount * (.35 / affinityStrength)) < threadCount ? Ceil(threadCount * (.35 / affinityStrength)) : threadCount
 global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : Ceil(threadCount * (.1 / affinityStrength)) < threadCount ? Ceil(threadCount * (.1 / affinityStrength)) : threadCount
 
+global playBitMask := GetBitMask(playThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
@@ -80,7 +79,7 @@ for i, mcdir in McDirectories {
   RM_PIDs[i] := rmpid
   UnlockInstance(i, False)
   if (!FileExist(idle))
-    FileAppend,,%idle%
+    FileAppend, %A_TickCount%, %idle%
   if FileExist(hold)
     FileDelete, %hold%
   if FileExist(preview)
