@@ -34,4 +34,4 @@ global midThreadsOverride := -1 ; Thread count dedicated to loading preview inst
 global lowThreadsOverride := -1 ; Thread count dedicated to loading bg instances and idle wall instances
 global superLowThreadsOverride := -1 ; Thread count dedicated to idle bg instances
 
-global loadBurstLength := 400 ; How many milliseconds highThreads stays dedicated to an instance after a preview is detected before lowering to midThreads
+global loadBurstLength := 400 ; How many milliseconds the prior thread count stays dedicated to an instance before switching to the next stage while ACTIVELY LOADING INSTANCES (less important for basic affinity)
