@@ -18,13 +18,15 @@ global logFile := A_Args[2]
 global idleFile := A_Args[3]
 global holdFile := A_Args[4]
 global previewFile := A_Args[5]
-global resetKey := A_Args[6]
-global lpKey := A_Args[7]
-global idx := A_Args[8]
-global highBitMask := A_Args[9]
-global midBitMask := A_Args[10]
-global lowBitMask := A_Args[11]
-global superLowBitMask := A_Args[12]
+global lockFile := A_Args[6]
+global resetKey := A_Args[7]
+global lpKey := A_Args[8]
+global idx := A_Args[9]
+global highBitMask := A_Args[10]
+global midBitMask := A_Args[11]
+global lowBitMask := A_Args[12]
+global superLowBitMask := A_Args[13]
+global lockBitMask := A_Args[14]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
@@ -71,7 +73,7 @@ ManageReset() {
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
         SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
-        SetTimer, LowerAffinity, -%loadBurstLength%
+        SetTimer, LowerPreviewAffinity, -%loadBurstLength%
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
         ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
@@ -90,12 +92,7 @@ ManageReset() {
           SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
         }
-        if FileExist("data/instance.txt")
-          FileRead, activeInstance, data/instance.txt
-        if activeInstance
-          SetAffinity(pid, superLowBitMask)
-        else
-          SetAffinity(pid, lowBitMask)
+        SetTimer, LowerLoadedAffinity, -%loadBurstLength%
         return
       }
     }
@@ -113,11 +110,24 @@ ManageReset() {
   }
 }
 
-LowerAffinity() {
+LowerPreviewAffinity() {
   if FileExist("data/instance.txt")
     FileRead, activeInstance, data/instance.txt
   if activeInstance
     SetAffinity(pid, lowBitMask)
   else
     SetAffinity(pid, midBitMask)
+}
+
+LowerLoadedAffinity() {
+  if FileExist("data/instance.txt")
+    FileRead, activeInstance, data/instance.txt
+  if (activeInstance == idx)
+    SetAffinity(pid, playBitMask)
+  else if (!activeInstance && FileExist(lockFile))
+    SetAffinity(pid, lockBitMask)
+  else if (!activeInstance)
+    SetAffinity(pid, lowBitMask)
+  else
+    SetAffinity(pid, superLowBitMask)
 }

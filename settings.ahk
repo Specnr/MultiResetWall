@@ -17,7 +17,6 @@ global audioGui := False ; A simple GUI so the OBS application audio plugin can 
 global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
 global multiMode := False ; Never send you back to the wall unless there are no playable instances
 global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
-global affinityStrength := 0.5 ; for affinity, higher means more extreme thread management, raise if lagging on world join, etc.
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
@@ -27,7 +26,9 @@ global tinderCheckBuffer := 5 ; When all instances cant reset, how often it chec
 
 ; Super advanced settings (Do not change unless you know exactly absolutely what you are doing)
 ; -1 == use macro math to determine thread counts
+global affinityType := "B" ; N = no affinity management, B = basic affinity management, A = advanced affinity mangement
 global playThreadsOverride := -1 ; Thread count dedicated to the instance you are playing
+global lockThreadsOverride := 16 ; Thread count dedicated to locked instances while on wall
 global highThreadsOverride := -1 ; Thread count dedicated to instances that have just been reset but not previewing
 global midThreadsOverride := -1 ; Thread count dedicated to loading preview instances on wall
 global lowThreadsOverride := -1 ; Thread count dedicated to loading bg instances and idle wall instances

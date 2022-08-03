@@ -223,12 +223,12 @@ SetAffinities(bg:=false, play:=0) {
       else
         SetAffinity(pid, lowBitMask)
     } else {
-      if FileExist(idle)
+      if (FileExist(idle) && !locked[i])
         SetAffinity(pid, lowBitMask)
+      else if (FileExist(hold))
+        SetAffinity(pid, highBitMask)
       else if locked[i]
-        SetAffinity(pid, highBitMask)
-      else if FileExist(hold)
-        SetAffinity(pid, highBitMask)
+        SetAffinity(pid, lockBitMask)
       else if FileExist(preview)
         SetAffinity(pid, midBitMask)
     }
@@ -331,8 +331,8 @@ ExitWorld()
     FileDelete,%holdFile%
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    ResetInstance(idx)
     SetAffinities()
+    ResetInstance(idx)
   }
 }
 
@@ -398,7 +398,8 @@ FocusReset(focusInstance, bypassLock:=false) {
       Continue
     ResetInstance(A_Index)
   }
-  LockInstance(focusInstance, false)
+  if !locked[focusInstance]
+    LockInstance(focusInstance, false)
   needBgCheck := true
 }
 
@@ -418,11 +419,13 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   lockDest := McDirectories[idx] . "lock.png"
   FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
   FileSetTime,,%lockDest%,M
+  lockDest := McDirectories[idx] . "lock.tmp"
+  FileAppend,, %lockDest%
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\lock.wav
-  if (affinityChange) {
+  if affinityChange {
     pid := PIDs[idx]
-    SetAffinity(pid, highBitMask)
+    SetAffinity(pid, lockBitMask)
   }
 }
 
@@ -431,6 +434,8 @@ UnlockInstance(idx, sound:=true) {
   lockDest := McDirectories[idx] . "lock.png"
   FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
   FileSetTime,,%lockDest%,M
+  lockDest := McDirectories[idx] . "lock.tmp"
+  FileDelete, %lockDest%
   if (lockSounds && sound)
     SoundPlay, A_ScriptDir\..\media\unlock.wav
 }
@@ -453,7 +458,7 @@ UnlockAll(sound:=true) {
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
   loop, %instances% {
-    if locked[A_Index] {
+    if (locked[A_Index] && FileExist(McDirectories[A_Index] . "idle.tmp")) {
       if focusReset
         FocusReset(A_Index, bypassLock)
       else
