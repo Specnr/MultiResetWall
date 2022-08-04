@@ -175,10 +175,19 @@ GetInstanceNumberFromMcDir(mcdir) {
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
     Reload
-  if (!FileExist(numFile))
-    MsgBox, Missing instanceNumber.txt in %mcdir%
-  else
+  if (!FileExist(numFile)) {
+    InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
+    FileAppend, %num%, %numFile%
+    SendLog(LOG_LEVEL_WARNING, Format("Instance {1} instanceNumber.txt was missing but was corrected by user", num))
+  } else {
     FileRead, num, %numFile%
+    if (!num || num > instances) {
+      InputBox, num, Bad instanceNumber.txt, Error in instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
+      FileDelete, %numFile%
+      FileAppend, %num%, %numFile%
+      SendLog(LOG_LEVEL_WARNING, Format("Instance {1} instanceNumber.txt contained either a number too high or nothing but was corrected by user", num))
+    }
+  }
   return num
 }
 
