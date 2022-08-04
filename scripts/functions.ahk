@@ -322,7 +322,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       Sleep, %obsDelay%
       Send {%obsKey% up}
     }
-  }
+  } else
+    if !locked[idx]
+      LockInstance(idx, False)
 }
 
 GetActiveInstanceNum() {
