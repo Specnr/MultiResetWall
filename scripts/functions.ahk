@@ -21,8 +21,16 @@ CheckOptionsForHotkey(file, optionsCheck, defaultKey) {
   }
 }
 
-CountAttempts(attemptType) {
-  file := "data/" . attemptType . ".txt"
+CountAttempts() {
+  file := overallAttemptsFile
+  FileRead, WorldNumber, %file%
+  if (ErrorLevel)
+    WorldNumber = 0
+  else
+    FileDelete, %file%
+  WorldNumber += 1
+  FileAppend, %WorldNumber%, %file%
+  file := dailyAttemptsFile
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber = 0
@@ -295,9 +303,15 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     Send {LButton} ; Make sure the window is activated
     if (!useObsWebsocket) {
-      send {Numpad%idx% down}
-      sleep, %obsDelay%
-      send {Numpad%idx% up}
+      if (obsSceneControlType == "N")
+        obsKey := "Numpad" . idx
+      else if (obsSceneControlType == "F")
+        obsKey := "F" . (idx+12)
+      else (obsSceneControlType == "A")
+        obsKey := obsCustomKeyArray[idx]
+      Send {%obsKey% down}
+      Sleep, %obsDelay%
+      Send {%obsKey% up}
     }
   }
 }
@@ -367,10 +381,7 @@ ResetInstance(idx) {
       UnlockInstance(idx, false)
     ; Count Attempts
     if (countAttempts)
-    {
-      CountAttempts("ATTEMPTS")
-      CountAttempts("ATTEMPTS_DAY")
-    }
+      CountAttempts()
   }
 }
 
@@ -430,8 +441,14 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
-  if (lockSounds && sound)
+  if (lockSounds && sound) {
     SoundPlay, A_ScriptDir\..\media\lock.wav
+    if obsLockMediaKey {
+      send {%obsLockMediaKey% down}
+      sleep, %obsDelay%
+      send {%obsLockMediaKey% up}
+    }
+  }
   if affinityChange {
     pid := PIDs[idx]
     SetAffinity(pid, lockBitMask)
@@ -445,24 +462,42 @@ UnlockInstance(idx, sound:=true) {
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileDelete, %lockDest%
-  if (lockSounds && sound)
+  if (lockSounds && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
+    if obsUnlockMediaKey {
+      send {%obsUnlockMediaKey% down}
+      sleep, %obsDelay%
+      send {%obsUnlockMediaKey% up}
+    }
+  }
 }
 
 LockAll(sound:=true) {
   loop, %instances% {
     LockInstance(A_Index, false)
   }
-  if (lockSounds && sound)
+  if (lockSounds && sound) {
     SoundPlay, A_ScriptDir\..\media\lock.wav
+    if obsLockMediaKey {
+      send {%obsLockMediaKey% down}
+      sleep, %obsDelay%
+      send {%obsLockMediaKey% up}
+    }
+  }
 }
 
 UnlockAll(sound:=true) {
   loop, %instances% {
     UnlockInstance(A_Index, false)
   }
-  if (lockSounds && sound)
+  if (lockSounds && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
+    if obsUnlockMediaKey {
+      send {%obsUnlockMediaKey% down}
+      sleep, %obsDelay%
+      send {%obsUnlockMediaKey% up}
+    }
+  }
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
@@ -507,7 +542,7 @@ GetLineCount(file) {
   return lineNum
 }
 
-VerifyInstance(mcdir, pid) {
+VerifyInstance(mcdir, pid, idx) {
   moddir := mcdir . "mods\"
   optionsFile := mcdir . "options.txt"
   atum := false
@@ -558,41 +593,72 @@ VerifyInstance(mcdir, pid) {
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
-    if InStr(standardSettingsFile, "fullscreen:true") {
+    if InStr(ssettings, ":\") {
+      standardSettingsFile := ssettings
+      FileRead, ssettings, %standardSettingsFile%
+    }
+    if InStr(ssettings, "fullscreen:true") {
       ssettings := StrReplace(ssettings, "fullscreen:true", "fullscreen:false")
       FileDelete, %standardSettingsFile%
-      FileAppend, ssettings, %standardSettingsFile%
+      FileAppend, %ssettings%, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had fullscreen set true, macro requires it false. Automatically fixed", standardSettingsFile))
     }
-    if InStr(standardSettingsFile, "pauseOnLostFocus:true") {
+    if InStr(ssettings, "pauseOnLostFocus:true") {
       ssettings := StrReplace(ssettings, "pauseOnLostFocus:true", "pauseOnLostFocus:false")
       FileDelete, %standardSettingsFile%
-      FileAppend, ssettings, %standardSettingsFile%
+      FileAppend, %ssettings%, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile))
     }
-    if (InStr(standardSettingsFile, "key_Create New World:key.keyboard.unknown") && atum) {
+    if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
       Loop, 1 {
-        MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default?
+        MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default (F6)?
         IfMsgBox No
         break
         ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
         FileDelete, %standardSettingsFile%
-        FileAppend, ssettings, %standardSettingsFile%
-        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to F6", standardSettingsFile))
+        FileAppend, %ssettings%, %standardSettingsFile%
+        resetKeys[idx] := "F6"
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to f6", standardSettingsFile))
       }
       SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", standardSettingsFile))
+    } else {
+      resetKey := CheckOptionsForHotkey(standardSettingsFile, "key_Create New World", "F6")
+      SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
+      resetkeys[idx] := resetKey
     }
-    if (InStr(standardSettingsFile, "key_Leave Preview:key.keyboard.unknown") && atum) {
+    if (InStr(ssettings, "key_Leave Preview:key.keyboard.unknown") && wp) {
       Loop, 1 {
-        MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default?
+        MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default (h)?
         IfMsgBox No
         break
         ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
         FileDelete, %standardSettingsFile%
-        FileAppend, ssettings, %standardSettingsFile%
+        FileAppend, %ssettings%, %standardSettingsFile%
+        lpKeys[idx] := "h"
         SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile))
       }
       SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Leave Preview key set", standardSettingsFile))
+    } else {
+      lpKey := CheckOptionsForHotkey(standardSettingsFile, "key_Leave Preview", "h")
+      SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, idx))
+      lpkeys[idx] := lpKey
+    }
+    if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
+      Loop, 1 {
+        MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
+        IfMsgBox No
+        break
+        ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
+        FileDelete, %standardSettingsFile%
+        FileAppend, %ssettings%, %standardSettingsFile%
+        fsKeys[idx] := "F11"
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'", standardSettingsFile))
+      }
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Fullscreen key set", standardSettingsFile))
+    } else {
+      fsKey := CheckOptionsForHotkey(standardSettingsFile, "key_key.fullscreen", "F11")
+      SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
+      fsKeys[idx] := fsKey
     }
   }
   if !fastReset
