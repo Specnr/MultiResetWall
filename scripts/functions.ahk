@@ -316,15 +316,16 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         obsKey := "Numpad" . idx
       else if (obsSceneControlType == "F")
         obsKey := "F" . (idx+12)
-      else (obsSceneControlType == "A")
+      else
         obsKey := obsCustomKeyArray[idx]
       Send {%obsKey% down}
       Sleep, %obsDelay%
       Send {%obsKey% up}
     }
-  } else
+  } else {
     if !locked[idx]
       LockInstance(idx, False)
+  }
 }
 
 GetActiveInstanceNum() {
