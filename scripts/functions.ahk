@@ -481,13 +481,9 @@ WorldBop() {
   MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
   IfMsgBox No
   Return
-  if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
-    RunWait,%cmd%,,Hide
-    MsgBox, Completed World Bopping!
-  } else {
-    MsgBox, Missing Python installation. Try again after installing
-  }
+  cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
+  RunWait,%cmd%,,Hide
+  MsgBox, Completed World Bopping!
 }
 
 CloseInstances() {

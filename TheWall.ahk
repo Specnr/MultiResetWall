@@ -125,7 +125,11 @@ if (useObsWebsocket) {
   Run, %cmd%,, Hide
 }
 
-Menu, Tray, Add, Delete Worlds, WorldBop
+if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
+  Menu, Tray, Add, Delete Worlds, WorldBop
+else
+  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray")
+
 Menu, Tray, Add, Close Instances, CloseInstances
 
 if (!disableTTS)
