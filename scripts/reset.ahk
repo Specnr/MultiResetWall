@@ -31,7 +31,7 @@ global lockBitMask := A_Args[14]
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 
-SendLog(LOG_LEVEL_INFO, Format("Inst {1} reset manager started", idx))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started", idx))
 
 OnMessage(MSG_RESET, "Reset")
 
@@ -40,7 +40,7 @@ Reset() {
     return
   state := "kill"
   lastImportantLine := GetLineCount(logFile)
-  SetTimer, ManageReset, -200
+  SetTimer, ManageReset, -%manageResetAfter%
   if FileExist("data/instance.txt")
     FileRead, activeInstance, data/instance.txt
   if activeInstance
@@ -49,8 +49,14 @@ Reset() {
     SetAffinity(pid, highBitMask)
   FileAppend,, %holdFile%
   FileDelete, %idleFile%
-  if resetSounds
+  if resetSounds {
     SoundPlay, A_ScriptDir\..\media\reset.wav
+    if obsResetMediaKey {
+      send {%obsResetMediaKey% down}
+      sleep, %obsDelay%
+      send {%obsResetMediaKey% up}
+    }
+  }
 }
 
 ManageReset() {
@@ -60,7 +66,7 @@ ManageReset() {
   while (True) {
     if (state == "kill")
       return
-    sleep, 70
+    sleep, %resetManagementLoopDelay%
     Loop, Read, %logFile%
     {
       if (A_Index <= lastImportantLine)
@@ -96,7 +102,7 @@ ManageReset() {
         return
       }
     }
-    if (A_TickCount - start > 25000) {
+    if (A_TickCount - start > %resetManagementTimeout%) {
       SendLog(LOG_LEVEL_ERROR, Format("Inst {1} 25 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
