@@ -57,7 +57,7 @@ global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, C:\Users\Jude\Desktop\Minecraft\Daily Resets.txt
+FileDelete, %dailyAttemptsFile%
 
 SendLog(LOG_LEVEL_INFO, "Wall launched")
 
@@ -132,6 +132,7 @@ else
 
 Menu, Tray, Add, Close Instances, CloseInstances
 
+SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
