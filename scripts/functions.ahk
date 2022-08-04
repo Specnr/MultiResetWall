@@ -8,9 +8,8 @@ SendLog(lvlText, msg) {
   FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
 }
 
-CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
-  optionsFile := mcdir . "options.txt"
-  Loop, Read, %optionsFile%
+CheckOptionsForHotkey(file, optionsCheck, defaultKey) {
+  Loop, Read, %file%
   {
     if (InStr(A_LoopReadLine, optionsCheck)) {
       split := StrSplit(A_LoopReadLine, ":")
@@ -105,6 +104,7 @@ RunHide(Command)
 
 GetMcDir(pid)
 {
+  SendLog(LOG_LEVEL_INFO, Format("Getting mcdir from pid: {1}", pid))
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
   if (InStr(rawOut, "--gameDir")) {
@@ -132,6 +132,7 @@ CheckOnePIDFromMcDir(proc, mcdir) {
 }
 
 GetPIDFromMcDir(mcdir) {
+  SendLog(LOG_LEVEL_INFO, Format("Getting PID from mcdir: {1}", mcdir))
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
     if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
       return pid
@@ -145,6 +146,7 @@ GetPIDFromMcDir(mcdir) {
 }
 
 GetInstanceTotal() {
+  SendLog(LOG_LEVEL_INFO, "Getting instance total")
   idx := 1
   WinGet, all, list
   Loop, %all%
@@ -160,6 +162,7 @@ GetInstanceTotal() {
 }
 
 GetInstanceNumberFromMcDir(mcdir) {
+  SendLog(LOG_LEVEL_INFO, Format("Getting instance number from mcdir: {1}", mcdir))
   numFile := mcdir . "instanceNumber.txt"
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
@@ -172,6 +175,7 @@ GetInstanceNumberFromMcDir(mcdir) {
 }
 
 GetMcDirFromFile(idx) {
+  SendLog(LOG_LEVEL_INFO, Format("Getting mcdir from cache for {1}", idx))
   Loop, Read, data/mcdirs.txt
   {
     split := StrSplit(A_LoopReadLine,"~")
@@ -185,7 +189,9 @@ GetMcDirFromFile(idx) {
 
 GetAllPIDs()
 {
+  SendLog(LOG_LEVEL_INFO, "Getting all PIDs")
   instances := GetInstanceTotal()
+  SendLog(LOG_LEVEL_INFO, Format("Instance total is {1}", instances))
   ; If there are more/less instances than usual, rebuild cache
   if hasMcDirCache && GetLineCount("data/mcdirs.txt") != instances {
     FileDelete,data/mcdirs.txt
@@ -281,7 +287,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
     if (windowMode == "F") {
-      ControlSend,, {Blind}{F11}, ahk_pid %pid%
+      fsKey := fsKeys[idx]
+      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
     if (coop)
@@ -309,13 +316,15 @@ GetActiveInstanceNum() {
 
 ExitWorld()
 {
+  idx := GetActiveInstanceNum()
+  pid := PIDs[idx]
   if (windowMode == "F") {
-    send {F11}
+    fsKey := fsKeys[idx]
+    ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
     sleep, %fullScreenDelay%
   }
-  if (idx := GetActiveInstanceNum()) > 0
+  if (idx > 0)
   {
-    pid := PIDs[idx]
     if (widthMultiplier) {
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%

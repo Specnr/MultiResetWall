@@ -23,6 +23,7 @@ global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
+global fsKeys := []
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; playThreads = threadCount unless override
@@ -54,17 +55,14 @@ if !FileExist("data")
   FileCreateDir, data
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
-GetAllPIDs()
-SetTitles()
 FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, data/ATTEMPTS_DAY.txt
-SendLog(LOG_LEVEL_INFO, "Starting Wall")
+FileDelete, C:\Users\Jude\Desktop\Minecraft\Daily Resets.txt
 
-if !FileExist("data/mmc.txt") {
-  mmc := StrSplit(McDirectories[1], "instances")[1]
-  FileAppend,%mmc%,data/mmc.txt
-}
+SendLog(LOG_LEVEL_INFO, "Wall launched")
+
+GetAllPIDs()
+SetTitles()
 
 for i, mcdir in McDirectories {
   pid := PIDs[i]
@@ -73,13 +71,9 @@ for i, mcdir in McDirectories {
   hold := mcdir . "hold.tmp"
   preview := mcdir . "preview.tmp"
   lock := mcdir . "lock.tmp"
-  VerifyInstance(mcdir, pid)
-  resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World", "F6")
-  SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, i))
-  resetkeys[i] := resetKey
-  lpKey := CheckOptionsForHotkey(mcdir, "key_Leave Preview", "h")
-  SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, i))
-  lpKeys[i] := lpKey
+  VerifyInstance(mcdir, pid, i)
+  resetKey := resetKeys[i]
+  lpKey := lpKeys[i]
   Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %lock% %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask% %lockBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
@@ -103,6 +97,7 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
 }
 
 for i, tmppid in PIDs {
