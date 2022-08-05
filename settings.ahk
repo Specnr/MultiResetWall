@@ -2,6 +2,7 @@
 ; General settings
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
+global mode := "W" ; W = Normal wall, B = Wall bypass (skip to next locked), M = Modern multi (send to wall when none loaded), C = Classic original multi (always force to next instance)
 global windowMode := "W" ; W = windowed mode, F = fullscreen mode, B = borderless windowed
 
 ; Extra features
@@ -14,8 +15,6 @@ global coop := False ; Automatically opens to LAN when you load in a world
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. (Additional setup required)
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
-global wallBypass := False ; If you have at least one locked instance, it will skip the wall and go to it
-global multiMode := False ; Never send you back to the wall unless there are no playable instances
 global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
 
 ; Delays (Defaults are probably fine)
