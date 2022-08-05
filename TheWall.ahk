@@ -71,10 +71,11 @@ for i, mcdir in McDirectories {
   hold := mcdir . "hold.tmp"
   preview := mcdir . "preview.tmp"
   lock := mcdir . "lock.tmp"
+  kill := mcdir . "kill.tmp"
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %lock% %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask% %lockBitMask%, %A_ScriptDir%,, rmpid
+  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %lock% %kill% %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask% %lockBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -84,6 +85,8 @@ for i, mcdir in McDirectories {
     FileAppend, %A_TickCount%, %idle%
   if FileExist(hold)
     FileDelete, %hold%
+  if FileExist(kill)
+    FileDelete, %kill%
   if FileExist(preview)
     FileDelete, %preview%
   if (windowMode == "B") {
