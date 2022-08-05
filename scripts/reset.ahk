@@ -19,14 +19,15 @@ global idleFile := A_Args[3]
 global holdFile := A_Args[4]
 global previewFile := A_Args[5]
 global lockFile := A_Args[6]
-global resetKey := A_Args[7]
-global lpKey := A_Args[8]
-global idx := A_Args[9]
-global highBitMask := A_Args[10]
-global midBitMask := A_Args[11]
-global lowBitMask := A_Args[12]
-global superLowBitMask := A_Args[13]
-global lockBitMask := A_Args[14]
+global killFile := A_Args[7]
+global resetKey := A_Args[8]
+global lpKey := A_Args[9]
+global idx := A_Args[10]
+global highBitMask := A_Args[11]
+global midBitMask := A_Args[12]
+global lowBitMask := A_Args[13]
+global superLowBitMask := A_Args[14]
+global lockBitMask := A_Args[15]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
@@ -36,8 +37,10 @@ SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started", idx))
 OnMessage(MSG_RESET, "Reset")
 
 Reset() {
-  if (state == "resetting" || state == "kill")
+  if (state == "resetting" || state == "kill" || FileExist(killFile)) {
+    FileDelete, %killFile%
     return
+  }
   state := "kill"
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -%manageResetAfter%
@@ -62,10 +65,12 @@ Reset() {
 ManageReset() {
   start := A_TickCount
   state := "resetting"
-  SendLog(LOG_LEVEL_INFO, Format("Inst {1} starting reset management", idx))
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx))
   while (True) {
-    if (state == "kill")
+    if (state == "kill" || FileExist(killFile)) {
+      FileDelete, %killFile%
       return
+    }
     sleep, %resetManagementLoopDelay%
     Loop, Read, %logFile%
     {
@@ -78,7 +83,7 @@ ManageReset() {
         FileDelete, %holdFile%
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
-        SendLog(LOG_LEVEL_INFO, Format("Inst {1} found preview on log line: {2}", idx, A_Index))
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
         SetTimer, LowerPreviewAffinity, -%loadBurstLength%
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
@@ -90,12 +95,12 @@ ManageReset() {
         if !FileExist(idleFile)
           FileAppend, %A_TickCount%, %idleFile%
         if (state == "resetting") {
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} line dump: {2}", idx, A_LoopReadLine))
-          SendLog(LOG_LEVEL_WARNING, Format("Inst {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
+          SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine))
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
           state := "unknown"
           Reset()
         } else {
-          SendLog(LOG_LEVEL_INFO, Format("Inst {1} found save on log line: {2}", idx, A_Index))
+          SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
         }
         SetTimer, LowerLoadedAffinity, -%loadBurstLength%
@@ -103,7 +108,7 @@ ManageReset() {
       }
     }
     if (A_TickCount - start > resetManagementTimeout) {
-      SendLog(LOG_LEVEL_ERROR, Format("Inst {1} 25 second timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx))
+      SendLog(LOG_LEVEL_ERROR, Format("Instance {1} {2} millisecond timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx, resetManagementTimeout))
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
       FileDelete, %holdFile%
