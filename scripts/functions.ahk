@@ -602,10 +602,48 @@ VerifyInstance(mcdir, pid, idx) {
   if !standardSettings {
     SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases", moddir))
     MsgBox, Directory %moddir% missing highly recommended mod: standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases
+    FileRead, settings, %optionsFile%
+    if InStr(settings, "pauseOnLostFocus:true") {
+      MsgBox, Instance %idx% has required disabled setting pauseOnLostFocus enabled. Please disable it with f3+p and then press OK to continue
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. User was informed", optionsFile))
+    }
+    if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
+      MsgBox, Instance %idx% missing required hotkey: Create New World. Please set it in your hotkeys and then press OK to continue
+      SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile))
+      resetKey := CheckOptionsForHotkey(optionsFile, "key_Create New World", "F6")
+      SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
+      resetkeys[idx] := resetKey
+    } else if (atum) {
+      resetKey := CheckOptionsForHotkey(optionsFile, "key_Create New World", "F6")
+      SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
+      resetkeys[idx] := resetKey
+    }
+    if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
+      MsgBox, Instance %idx% missing recommended hotkey: Leave Preview. Please set it in your hotkeys and then press OK to continue
+      SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set. User was informed", optionsFile))
+      lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
+      SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, idx))
+      lpkeys[idx] := lpKey
+    } else if (wp) {
+      lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
+      SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, idx))
+      lpkeys[idx] := lpKey
+    }
+    if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
+      MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and then press OK to continue
+      SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
+      fsKey := CheckOptionsForHotkey(optionsFile, "key_key.fullscreen", "F11")
+      SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
+      fsKeys[idx] := fsKey
+    } else if (windowMode == "F") {
+      fsKey := CheckOptionsForHotkey(optionsFile, "key_key.fullscreen", "F11")
+      SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
+      fsKeys[idx] := fsKey
+    }
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
-    if InStr(ssettings, ":\") {
+    if (InStr(ssettings, ":\") || InStr(ssettings, ":/")) {
       standardSettingsFile := ssettings
       FileRead, ssettings, %standardSettingsFile%
     }
@@ -621,56 +659,68 @@ VerifyInstance(mcdir, pid, idx) {
       FileAppend, %ssettings%, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile))
     }
-    if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
-      Loop, 1 {
-        MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default (F6)?
-        IfMsgBox No
+    Loop, 1 {
+      if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
+        Loop, 1 {
+          MsgBox, 4, Create New World Key, File %standardSettingsFile% missing required hotkey: Create New World. Would you like to set this back to default (F6)?
+          IfMsgBox No
+          break
+          ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
+          FileDelete, %standardSettingsFile%
+          FileAppend, %ssettings%, %standardSettingsFile%
+          resetKeys[idx] := "F6"
+          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to f6", standardSettingsFile))
+          break 2
+        }
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", standardSettingsFile))
+      } else {
+        resetKey := CheckOptionsForHotkey(standardSettingsFile, "key_Create New World", "F6")
+        SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
+        resetkeys[idx] := resetKey
         break
-        ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
-        FileDelete, %standardSettingsFile%
-        FileAppend, %ssettings%, %standardSettingsFile%
-        resetKeys[idx] := "F6"
-        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to f6", standardSettingsFile))
       }
-      SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", standardSettingsFile))
-    } else {
-      resetKey := CheckOptionsForHotkey(standardSettingsFile, "key_Create New World", "F6")
-      SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
-      resetkeys[idx] := resetKey
     }
-    if (InStr(ssettings, "key_Leave Preview:key.keyboard.unknown") && wp) {
-      Loop, 1 {
-        MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default (h)?
-        IfMsgBox No
+    Loop, 1 {
+      if (InStr(ssettings, "key_Leave Preview:key.keyboard.unknown") && wp) {
+        Loop, 1 {
+          MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default (h)?
+          IfMsgBox No
+          break
+          ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
+          FileDelete, %standardSettingsFile%
+          FileAppend, %ssettings%, %standardSettingsFile%
+          lpKeys[idx] := "h"
+          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile))
+          break 2
+        }
+        SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Leave Preview key set", standardSettingsFile))
+      } else {
+        lpKey := CheckOptionsForHotkey(standardSettingsFile, "key_Leave Preview", "h")
+        SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, idx))
+        lpkeys[idx] := lpKey
         break
-        ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
-        FileDelete, %standardSettingsFile%
-        FileAppend, %ssettings%, %standardSettingsFile%
-        lpKeys[idx] := "h"
-        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile))
       }
-      SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Leave Preview key set", standardSettingsFile))
-    } else {
-      lpKey := CheckOptionsForHotkey(standardSettingsFile, "key_Leave Preview", "h")
-      SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, idx))
-      lpkeys[idx] := lpKey
     }
-    if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
-      Loop, 1 {
-        MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
-        IfMsgBox No
+    Loop, 1 {
+      if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
+        Loop, 1 {
+          MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
+          IfMsgBox No
+          break
+          ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
+          FileDelete, %standardSettingsFile%
+          FileAppend, %ssettings%, %standardSettingsFile%
+          fsKeys[idx] := "F11"
+          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'", standardSettingsFile))
+          break 2
+        }
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Fullscreen key set", standardSettingsFile))
+      } else {
+        fsKey := CheckOptionsForHotkey(standardSettingsFile, "key_key.fullscreen", "F11")
+        SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
+        fsKeys[idx] := fsKey
         break
-        ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
-        FileDelete, %standardSettingsFile%
-        FileAppend, %ssettings%, %standardSettingsFile%
-        fsKeys[idx] := "F11"
-        SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'", standardSettingsFile))
       }
-      SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Fullscreen key set", standardSettingsFile))
-    } else {
-      fsKey := CheckOptionsForHotkey(standardSettingsFile, "key_key.fullscreen", "F11")
-      SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
-      fsKeys[idx] := fsKey
     }
   }
   if !fastReset
