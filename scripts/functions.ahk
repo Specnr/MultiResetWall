@@ -47,7 +47,7 @@ FindBypassInstance() {
     if (FileExist(idle) && isLocked && i != activeNum)
       return i
   }
-  if (multiMode) {
+  if (mode == "M") {
     for i, mcdir in McDirectories {
       idle := mcdir . "idle.tmp"
       if (FileExist(idle) && i != activeNum)
@@ -271,9 +271,11 @@ GetBitMask(threads) {
 SwitchInstance(idx, skipBg:=false, from:=-1)
 {
   idleFile := McDirectories[idx] . "idle.tmp"
-  if (idx <= instances && FileExist(idleFile)) {
+  if (idx <= instances && (FileExist(idleFile) || mode == "C")) {
     holdFile := McDirectories[idx] . "hold.tmp"
     FileAppend,,%holdFile%
+    killFile := McDirectories[idx] . "kill.tmp"
+    FileAppend,,%killFile%
     if (useObsWebsocket) {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
@@ -331,7 +333,12 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 GetActiveInstanceNum() {
   WinGet, pid, PID, A
   WinGetTitle, title, ahk_pid %pid%
-  if (InStr(title, " - ")) {
+  if (mode == "C") {
+    for i, tmppid in PIDs {
+      if (tmppid == pid)
+        return i
+    }
+  } else if (InStr(title, " - ")) {
     for i, tmppid in PIDs {
       if (tmppid == pid)
         return i
@@ -351,19 +358,23 @@ ExitWorld()
   }
   if (idx > 0)
   {
+    holdFile := McDirectories[idx] . "hold.tmp"
+    FileDelete,%holdFile%
+    killFile := McDirectories[idx] . "kill.tmp"
+    FileDelete, %killFile%
     if (widthMultiplier) {
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
     nextInst := -1
-    if (wallBypass || multiMode)
+    if (mode == "C") {
+      nextInst := Mod(idx, instances) + 1
+    } else if (mode == "B" || mode == "M")
       nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    holdFile := McDirectories[idx] . "hold.tmp"
-    FileDelete,%holdFile%
     if doF1
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     SetAffinities()
@@ -382,7 +393,7 @@ ResetInstance(idx) {
     FileDelete, %previewFile%
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
-    resetKey := resetkeys[idx]
+    resetKey := resetKeys[idx]
     lpKey := lpKeys[idx]
     ; Reset
     ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
