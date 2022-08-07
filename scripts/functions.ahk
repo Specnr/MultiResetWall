@@ -458,6 +458,8 @@ ResetAll(bypassLock:=false) {
 }
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
+  if (!idx || (idx > rows * cols))
+    return
   locked[idx] := true
   lockDest := McDirectories[idx] . "lock.png"
   FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
@@ -479,6 +481,8 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
 }
 
 UnlockInstance(idx, sound:=true) {
+  if (!idx || (idx > rows * cols))
+    return
   locked[idx] := false
   lockDest := McDirectories[idx] . "lock.png"
   FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
