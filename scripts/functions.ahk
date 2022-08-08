@@ -385,26 +385,20 @@ ExitWorld()
 ResetInstance(idx) {
   holdFile := McDirectories[idx] . "hold.tmp"
   previewFile := McDirectories[idx] . "preview.tmp"
-  if FileExist(previewFile)
-    FileRead, previewTime, %previewFile%
+  FileRead, previewTime, %previewFile%
   if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
     SendLog(LOG_LEVEL_INFO, Format("Inst {1} valid reset triggered", idx))
-    FileAppend,,%holdFile%
-    FileDelete, %previewFile%
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
     resetKey := resetKeys[idx]
     lpKey := lpKeys[idx]
-    ; Reset
     ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
     DetectHiddenWindows, On
     PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
     DetectHiddenWindows, Off
     if locked[idx]
       UnlockInstance(idx, false)
-    ; Count Attempts
-    if (countAttempts)
-      CountAttempts()
+    resets++
   }
 }
 
@@ -658,7 +652,7 @@ VerifyInstance(mcdir, pid, idx) {
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
-    if (InStr(ssettings, ":\") || InStr(ssettings, ":/")) {
+    if (RegExMatch(ssettings, "[A-Z]\w{0}:(\/|\\).+.txt")) {
       standardSettingsFile := ssettings
       FileRead, ssettings, %standardSettingsFile%
     }
