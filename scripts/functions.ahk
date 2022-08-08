@@ -333,17 +333,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 
 GetActiveInstanceNum() {
   WinGet, pid, PID, A
-  WinGetTitle, title, ahk_pid %pid%
-  if (mode == "C") {
-    for i, tmppid in PIDs {
+  for i, tmppid in PIDs {
       if (tmppid == pid)
         return i
-    }
-  } else if (InStr(title, " - ")) {
-    for i, tmppid in PIDs {
-      if (tmppid == pid)
-        return i
-    }
   }
   return -1
 }
