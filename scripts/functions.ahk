@@ -615,11 +615,11 @@ VerifyInstance(mcdir, pid, idx) {
       SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile))
       resetKey := CheckOptionsForHotkey(optionsFile, "key_Create New World", "F6")
       SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
-      resetkeys[idx] := resetKey
+      resetKeys[idx] := resetKey
     } else if (atum) {
       resetKey := CheckOptionsForHotkey(optionsFile, "key_Create New World", "F6")
       SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
-      resetkeys[idx] := resetKey
+      resetKeys[idx] := resetKey
     }
     if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
       MsgBox, Instance %idx% missing recommended hotkey: Leave Preview. Please set it in your hotkeys and then press OK to continue
@@ -679,7 +679,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else {
         resetKey := CheckOptionsForHotkey(standardSettingsFile, "key_Create New World", "F6")
         SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, idx))
-        resetkeys[idx] := resetKey
+        resetKeys[idx] := resetKey
         break
       }
     }
