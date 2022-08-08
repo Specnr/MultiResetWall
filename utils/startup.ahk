@@ -35,6 +35,5 @@ Loop, Read, %path%
     name := names[A_Index]
     cmd .= " -o -n """ . name . """"
   }
-  MsgBox, %cmd%
   Run,%cmd%,,Hide
 }
