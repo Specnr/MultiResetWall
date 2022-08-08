@@ -28,7 +28,7 @@ CountAttempts() {
     WorldNumber = 0
   else
     FileDelete, %file%
-  WorldNumber += 1
+  WorldNumber += resets
   FileAppend, %WorldNumber%, %file%
   file := dailyAttemptsFile
   FileRead, WorldNumber, %file%
@@ -36,8 +36,9 @@ CountAttempts() {
     WorldNumber = 0
   else
     FileDelete, %file%
-  WorldNumber += 1
+  WorldNumber += resets
   FileAppend, %WorldNumber%, %file%
+  resets := 0
 }
 
 FindBypassInstance() {
@@ -379,6 +380,7 @@ ExitWorld()
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     SetAffinities()
     ResetInstance(idx)
+    isWide := False
   }
 }
 
@@ -744,6 +746,72 @@ VerifyInstance(mcdir, pid, idx) {
   if InStr(options, "fullscreen:true")
     ControlSend,, {Blind}{F11}, ahk_pid %pid%
   SendLog(LOG_LEVEL_INFO, Format("Finished instance verification for directory: {1}", mcdir))
+}
+
+WideHardo() {
+  idx := GetActiveInstanceNum()
+  pid := PIDs[idx]
+  if (isWide)
+    WinMaximize, ahk_pid %pid%
+  else {
+    WinRestore, ahk_pid %pid%
+    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+  }
+  isWide := !isWide
+}
+
+OpenToLAN() {
+  Send, {Esc}
+  Send, {ShiftDown}{Tab 3}{Enter}{Tab}{ShiftUp}
+  Send, {Enter}{Tab}{Enter}
+  Send, {/}
+  Sleep, 100
+  Send, gamemode
+  Send, {Space}
+  Send, creative
+  Send, {Enter}
+}
+
+GoToNether() {
+  Send, {/}
+  Sleep, 100
+  Send, setblock
+  Send, {Space}{~}{Space}{~}{Space}{~}{Space}
+  Send, minecraft:nether_portal
+  Send, {Enter}
+}
+
+OpenToLANAndGoToNether() {
+  OpenToLAN()
+  GoToNether()
+}
+
+CheckFor(struct, x := "", z := "") {
+  Send, {/}
+  Sleep, 100
+  if (z != "" && x != "") {
+    Send, execute
+    Send, {Space}
+    Send, positioned
+    Send, {Space}
+    Send, %x%
+    Send, {Space}{0}{Space}
+    Send, %z%
+    Send, {Space}
+    Send, run
+    Send, {Space}
+  }
+  Send, locate
+  Send, {Space}
+  Send, %struct%
+  Send, {Enter}
+}
+
+CheckFourQuadrants(struct) {
+  CheckFor(struct, "1", "1")
+  CheckFor(struct, "-1", "1")
+  CheckFor(struct, "1", "-1")
+  CheckFor(struct, "-1", "-1")
 }
 
 ; Shoutout peej

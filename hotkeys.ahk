@@ -4,11 +4,20 @@ RAlt::Suspend ; Pause all macros
   Reload
 return
 #If WinActive("Minecraft") && (WinActive("ahk_exe javaw.exe") || WinActive("ahk_exe java.exe"))
-  {
-    *U:: ExitWorld() ; Reset
-    *CapsLock:: TinderMotion(True) ; Bg left swipe (reset)
-    *+CapsLock:: TinderMotion(False) ; Bg right swipe (keep)
-  }
+{
+  *U:: ExitWorld() ; Reset
+  *CapsLock:: TinderMotion(True) ; Bg left swipe (reset)
+  *+CapsLock:: TinderMotion(False) ; Bg right swipe (keep)
+
+  ; Utility (Remove semicolon and set a hotkey)
+  ; ::WideHardo()
+  ; ::OpenToLAN()
+  ; ::GoToNether()
+  ; ::OpenToLANAndGoToNether()
+  ; ::CheckFourQuadrants("fortress")
+  ; ::CheckFourQuadrants("bastion_remnant")
+  ; ::CheckFor("buried_treasure")
+}
 return
 
 #IfWinActive, Fullscreen Projector
