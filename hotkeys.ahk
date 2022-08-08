@@ -9,7 +9,7 @@ return
   *CapsLock:: TinderMotion(True) ; Bg left swipe (reset)
   *+CapsLock:: TinderMotion(False) ; Bg right swipe (keep)
 
-  ; Utility (Remove semicolon and set a hotkey)
+  ; Utility (Remove semicolon ';' and set a hotkey)
   ; ::WideHardo()
   ; ::OpenToLAN()
   ; ::GoToNether()
@@ -27,6 +27,9 @@ return
     *F::FocusReset(MousePosToInstNumber())
     *T::ResetAll()
     +LButton::LockInstance(MousePosToInstNumber()) ; lock an instance so the above "blanket reset" functions don't reset it
+
+    ; Optional (Remove semicolon ';' and set a hotkey)
+    ; ::PlayNextLock()
 
     ; Reset keys (1-9)
     *1::
