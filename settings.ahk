@@ -45,7 +45,7 @@ global obsUnlockMediaKey := "" ; Key pressed on any unlock instance with sound (
 
 ; Reset Management
 global resetManagementTimeout := 20000 ; Milliseconds that pass before reset manager gives up. Too high may leave unresetable instances, too low will leave instances unpaused. Default (20000) likely fine
-global manageResetAfter := 200 ; Delay before starting reset management log reading loop. Default (200) likely fine
+global manageResetAfter := 300 ; Delay before starting reset management log reading loop. Default (200) likely fine
 global resetManagementLoopDelay := 70 ; Buffer time between log lines check in reset management loop. Lowering will decrease possible pause latencies but increase cpu usage of reset managers. Default (70) likely fine
 
 ; Attempts
