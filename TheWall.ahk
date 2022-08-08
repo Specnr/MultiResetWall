@@ -24,6 +24,7 @@ global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
 global fsKeys := []
+global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; playThreads = threadCount unless override
@@ -171,6 +172,8 @@ CheckScripts:
     }
     lastChecked := A_NowUTC
   }
+  if resets
+    CountAttempts()
 return
 
 #Include hotkeys.ahk
