@@ -25,7 +25,7 @@ CountAttempts() {
   file := overallAttemptsFile
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
-    WorldNumber = 0
+    WorldNumber := resets
   else
     FileDelete, %file%
   WorldNumber += resets
@@ -33,7 +33,7 @@ CountAttempts() {
   file := dailyAttemptsFile
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
-    WorldNumber = 0
+    WorldNumber := resets
   else
     FileDelete, %file%
   WorldNumber += resets
@@ -360,8 +360,8 @@ ExitWorld()
   if (idx > 0)
   {
     holdFile := McDirectories[idx] . "hold.tmp"
-    FileDelete,%holdFile%
     killFile := McDirectories[idx] . "kill.tmp"
+    FileDelete,%holdFile%
     FileDelete, %killFile%
     if (widthMultiplier) {
       WinRestore, ahk_pid %pid%
