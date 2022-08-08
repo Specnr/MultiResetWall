@@ -22,6 +22,72 @@ CheckOptionsForHotkey(mcdir, optionsCheck, defaultKey) {
   }
 }
 
+WideHardo() {
+  idx := GetActiveInstanceNum()
+  pid := PIDs[idx]
+  if (isWide)
+    WinMaximize, ahk_pid %pid%
+  else {
+    WinRestore, ahk_pid %pid%
+    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+  }
+  isWide := !isWide
+}
+
+OpenToLAN() {
+  Send, {Esc}
+  Send, {ShiftDown}{Tab 3}{Enter}{Tab}{ShiftUp}
+  Send, {Enter}{Tab}{Enter}
+  Send, {/}
+  Sleep, 100
+  Send, gamemode
+  Send, {Space}
+  Send, creative
+  Send, {Enter}
+}
+
+GoToNether() {
+  Send, {/}
+  Sleep, 100
+  Send, setblock
+  Send, {Space}{~}{Space}{~}{Space}{~}{Space}
+  Send, minecraft:nether_portal
+  Send, {Enter}
+}
+
+OpenToLANAndGoToNether() {
+  OpenToLAN()
+  GoToNether()
+}
+
+CheckFor(struct, x := "", z := "") {
+  Send, {/}
+  Sleep, 100
+  if (z != "" && x != "") {
+    Send, execute
+    Send, {Space}
+    Send, positioned
+    Send, {Space}
+    Send, %x%
+    Send, {Space}{0}{Space}
+    Send, %z%
+    Send, {Space}
+    Send, run
+    Send, {Space}
+  }
+  Send, locate
+  Send, {Space}
+  Send, %struct%
+  Send, {Enter}
+}
+
+CheckFourQuadrants(struct) {
+  CheckFor(struct, "1", "1")
+  CheckFor(struct, "-1", "1")
+  CheckFor(struct, "1", "-1")
+  CheckFor(struct, "-1", "-1")
+}
+
 CountAttempts(attemptType) {
   file := "data/" . attemptType . ".txt"
   FileRead, WorldNumber, %file%
@@ -333,6 +399,7 @@ ExitWorld()
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     ResetInstance(idx)
     SetAffinities()
+    isWide := False
   }
 }
 

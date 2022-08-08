@@ -41,6 +41,7 @@ global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
 if (widthMultiplier)
   global newHeight := Floor(A_ScreenHeight / widthMultiplier)
+global isWide := False
 
 global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
