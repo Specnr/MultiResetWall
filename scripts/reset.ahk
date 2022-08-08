@@ -42,6 +42,9 @@ Reset() {
     return
   }
   state := "kill"
+  FileAppend,, %holdFile%
+  FileDelete, %previewFile%
+  FileDelete, %idleFile%
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -%manageResetAfter%
   if FileExist("data/instance.txt")
@@ -50,8 +53,6 @@ Reset() {
     SetAffinity(pid, lowBitMask)
   else
     SetAffinity(pid, highBitMask)
-  FileAppend,, %holdFile%
-  FileDelete, %idleFile%
   if resetSounds {
     SoundPlay, A_ScriptDir\..\media\reset.wav
     if obsResetMediaKey {
@@ -92,8 +93,7 @@ ManageReset() {
         FileDelete, %holdFile%
         if !FileExist(previewFile)
           FileAppend, %A_TickCount%, %previewFile%
-        if !FileExist(idleFile)
-          FileAppend, %A_TickCount%, %idleFile%
+        FileAppend,, %idleFile%
         if (state == "resetting") {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine))
           SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
@@ -112,10 +112,8 @@ ManageReset() {
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
       FileDelete, %holdFile%
-      if !FileExist(previewFile)
-        FileAppend, %A_TickCount%, %previewFile%
-      if !FileExist(idleFile)
-        FileAppend, %A_TickCount%, %idleFile%
+      FileAppend,, %previewFile%
+      FileAppend,, %idleFile%
       return
     }
   }
