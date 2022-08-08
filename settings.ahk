@@ -10,7 +10,6 @@ global disableTTS := False
 global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
 global resetSounds := True ; Make a sound when you reset an instance
 global lockSounds := True ; Make a sound when you lock an instance
-global countAttempts := True ; Makes a text file to count resets
 global coop := False ; Automatically opens to LAN when you load in a world
 global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
 global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. (Additional setup required)
@@ -22,7 +21,6 @@ global spawnProtection := 100 ; Prevent a new instance from being reset for this
 global fullScreenDelay := 100 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
-
 
 ; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
 

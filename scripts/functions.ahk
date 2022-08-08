@@ -334,8 +334,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
 GetActiveInstanceNum() {
   WinGet, pid, PID, A
   for i, tmppid in PIDs {
-      if (tmppid == pid)
-        return i
+    if (tmppid == pid)
+      return i
   }
   return -1
 }
@@ -363,7 +363,7 @@ ExitWorld()
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
     } else if (mode == "B" || mode == "M")
-      nextInst := FindBypassInstance()
+    nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
@@ -634,7 +634,7 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
       MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and then press OK to continue
-      SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
       fsKey := CheckOptionsForHotkey(optionsFile, "key_key.fullscreen", "F11")
       SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
       fsKeys[idx] := fsKey
@@ -708,7 +708,7 @@ VerifyInstance(mcdir, pid, idx) {
       if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
         Loop, 1 {
           MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
-          IfMsgBox No
+            IfMsgBox No
           break
           ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
           FileDelete, %standardSettingsFile%
