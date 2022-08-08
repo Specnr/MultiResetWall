@@ -23,15 +23,19 @@ global currBg := GetFirstBgInstance()
 global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
+global fsKeys := []
+global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : Ceil(threadCount * (.8 / affinityStrength)) < threadCount ? Ceil(threadCount * (.8 / affinityStrength)) : threadCount
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : Ceil(threadCount * (.75 / affinityStrength)) < threadCount ? Ceil(threadCount * (.75 / affinityStrength)) : threadCount
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : Ceil(threadCount * (.35 / affinityStrength)) < threadCount ? Ceil(threadCount * (.35 / affinityStrength)) : threadCount
-global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : Ceil(threadCount * (.1 / affinityStrength)) < threadCount ? Ceil(threadCount * (.1 / affinityStrength)) : threadCount
+global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; playThreads = threadCount unless override
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.9), threadCount - 4) : threadCount ; highThreads = 90% threadCount unless N or override
+global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : highThreads ; lockThreads = highThreads unless override
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.7) : highThreads ; midThreads = 70% threadCount if advanced, otherwise highThreads unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.5) : threadCount ; lowThreads = 50% threadCount unless N or override
+global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.2) : threadCount ; superLowThreads = 20% threadCount unless N or override
 
 global playBitMask := GetBitMask(playThreads)
+global lockBitMask := GetBitMask(lockThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
@@ -53,17 +57,14 @@ if !FileExist("data")
   FileCreateDir, data
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
-GetAllPIDs()
-SetTitles()
 FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, data/ATTEMPTS_DAY.txt
-SendLog(LOG_LEVEL_INFO, "Starting Wall")
+FileDelete, %dailyAttemptsFile%
 
-if !FileExist("data/mmc.txt") {
-  mmc := StrSplit(McDirectories[1], "instances")[1]
-  FileAppend,%mmc%,data/mmc.txt
-}
+SendLog(LOG_LEVEL_INFO, "Wall launched")
+
+GetAllPIDs()
+SetTitles()
 
 for i, mcdir in McDirectories {
   pid := PIDs[i]
@@ -71,14 +72,12 @@ for i, mcdir in McDirectories {
   idle := mcdir . "idle.tmp"
   hold := mcdir . "hold.tmp"
   preview := mcdir . "preview.tmp"
-  VerifyInstance(mcdir, pid)
-  resetKey := CheckOptionsForHotkey(mcdir, "key_Create New World", "F6")
-  SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2}", resetKey, i))
-  resetkeys[i] := resetKey
-  lpKey := CheckOptionsForHotkey(mcdir, "key_Leave Preview", "h")
-  SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, i))
-  lpKeys[i] := lpKey
-  Run, %A_ScriptDir%\scripts\reset.ahk %pid% %logs% %idle% %hold% %preview% %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask%, %A_ScriptDir%,, rmpid
+  lock := mcdir . "lock.tmp"
+  kill := mcdir . "kill.tmp"
+  VerifyInstance(mcdir, pid, i)
+  resetKey := resetKeys[i]
+  lpKey := lpKeys[i]
+  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask% %lockBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -88,6 +87,8 @@ for i, mcdir in McDirectories {
     FileAppend, %A_TickCount%, %idle%
   if FileExist(hold)
     FileDelete, %hold%
+  if FileExist(kill)
+    FileDelete, %kill%
   if FileExist(preview)
     FileDelete, %preview%
   if (windowMode == "B") {
@@ -101,6 +102,7 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
 }
 
 for i, tmppid in PIDs {
@@ -128,9 +130,14 @@ if (useObsWebsocket) {
   Run, %cmd%,, Hide
 }
 
-Menu, Tray, Add, Delete Worlds, WorldBop
+if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
+  Menu, Tray, Add, Delete Worlds, WorldBop
+else
+  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray")
+
 Menu, Tray, Add, Close Instances, CloseInstances
 
+SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
@@ -165,6 +172,8 @@ CheckScripts:
     }
     lastChecked := A_NowUTC
   }
+  if resets
+    CountAttempts()
 return
 
 #Include hotkeys.ahk
