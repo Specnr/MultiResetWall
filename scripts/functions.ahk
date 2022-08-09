@@ -585,15 +585,6 @@ VerifyInstance(mcdir, pid, idx) {
       sodium := true
     else if InStr(A_LoopFileName, "SpeedRunIGT")
       srigt := true
-    else if InStr(A_LoopFileName, "krypton") {
-      SendLog(LOG_LEVEL_ERROR, Format("Directory {1} includes incompatible mod: Krypton", moddir))
-      MsgBox, 4, Krypton Detected, Directory %moddir% includes incompatible mod: Krypton. Would you like to disable it and restart the instance?
-      IfMsgBox No
-      Continue
-      FileMove, %A_LoopFileFullPath%, %A_LoopFileFullPath%.disabled
-      WinClose, ahk_pid %pid%
-      SendLog(LOG_LEVEL_INFO, Format("Directory {1} included incompatible mod: Krypton. Macro disabled and killed instance.", moddir))
-    }
   }
   if !atum {
     SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases", moddir))
