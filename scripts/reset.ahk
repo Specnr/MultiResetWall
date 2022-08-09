@@ -32,7 +32,7 @@ global lockBitMask := A_Args[15]
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started", idx))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, highBitMask, midBitMask, lowBitMask, superLowBitMask, lockBitMask))
 
 OnMessage(MSG_RESET, "Reset")
 
