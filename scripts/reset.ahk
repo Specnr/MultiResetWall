@@ -88,7 +88,7 @@ ManageReset() {
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
         SetTimer, LowerPreviewAffinity, -%loadBurstLength%
         Continue 2
-      } else if (state != "idle" && InStr(A_LoopReadLine, "Loaded 0 advancements")) {
+      } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
         ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
         lastImportantLine := GetLineCount(logFile)
         FileDelete, %holdFile%
