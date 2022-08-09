@@ -37,8 +37,8 @@ SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} 
 OnMessage(MSG_RESET, "Reset")
 
 Reset() {
-  if (state == "resetting" || state == "kill" || FileExist(killFile)) {
-    FileDelete, %killFile%
+  if ((state == "resetting" && mode != "C") || state == "kill" || FileExist(killFile)) {
+    SendLog(LOG_LEVEL_INFO, Format("Instance {1} discarding reset management, state: {2}", idx, state))
     return
   }
   state := "kill"
@@ -69,6 +69,7 @@ ManageReset() {
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx))
   while (True) {
     if (state == "kill" || FileExist(killFile)) {
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} killing reset management from loop", idx))
       FileDelete, %killFile%
       return
     }

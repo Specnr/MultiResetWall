@@ -363,7 +363,7 @@ ExitWorld()
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
     } else if (mode == "B" || mode == "M")
-    nextInst := FindBypassInstance()
+      nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
@@ -381,7 +381,7 @@ ResetInstance(idx) {
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
   if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
-    SendLog(LOG_LEVEL_INFO, Format("Inst {1} valid reset triggered", idx))
+    SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
     resetKey := resetKeys[idx]
@@ -412,9 +412,9 @@ ToWall(comingFrom) {
       SendOBSCmd("tw")
   }
   else {
-    send {F12 down}
+    send {%obsWallSceneKey% down}
     sleep, %obsDelay%
-    send {F12 up}
+    send {%obsWallSceneKey% up}
   }
   FileDelete,data/instance.txt
   FileAppend,0,data/instance.txt
