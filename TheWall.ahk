@@ -27,19 +27,19 @@ global fsKeys := []
 global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; playThreads = threadCount unless override
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.9), threadCount - 4) : threadCount ; highThreads = 90% threadCount unless N or override
-global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : highThreads ; lockThreads = highThreads unless override
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.7) : highThreads ; midThreads = 70% threadCount if advanced, otherwise highThreads unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.5) : threadCount ; lowThreads = 50% threadCount unless N or override
-global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.2) : threadCount ; superLowThreads = 20% threadCount unless N or override
+global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.95), threadCount - 2) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.75) : highThreads ; 75% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.1) : highThreads ; 10% if advanced otherwise high unless override
+global idleThreads := idleThreadsOverride > 0 ? idleThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.05) : threadCount ; 5% unless override or none
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.5) : threadCount ; 50% unless override or none
 
-global playBitMask := GetBitMask(playThreads)
-global lockBitMask := GetBitMask(lockThreads)
+global superHighBitMask := GetBitMask(superHighThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
-global superLowBitMask := GetBitMask(superLowThreads)
+global idleBitMask := GetBitMask(idleThreads)
+global bgLoadBitMask := GetBitMask(bgLoadThreads)
 
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
@@ -77,8 +77,8 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, highBitMask, midBitMask, lowBitMask, superLowBitMask, lockBitMask))
-  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask% %lockBitMask%, %A_ScriptDir%,, rmpid
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, superHighBitMask, highBitMask, midBitMask, lowBitMask, idleBitMask, bgLoadBitMask))
+  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %superHighBitMask% %highBitMask% %midBitMask% %lowBitMask% %idleBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off

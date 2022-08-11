@@ -239,22 +239,28 @@ SetAffinities(bg:=false, play:=0) {
     idle := mcdir . "idle.tmp"
     hold := mcdir . "hold.tmp"
     preview := mcdir . "preview.tmp"
+    FileRead, idleTime, %idle%
+    FileRead, previewTime, %preview%
     if (i == play) {
-      SetAffinity(pid, playBitMask)
+      SetAffinity(pid, superHighBitMask)
     } else if bg {
-      if FileExist(idle)
-        SetAffinity(pid, superLowBitMask)
+      if (A_TickCount < (previewTime + previewBurstLength) || A_TickCount < (idleTime + loadedBurstLength) || locked[i])
+        SetAffinity(pid, bgLoadBitMask)
+      else if (A_TickCount > (previewTime + previewBurstLength) && FileExist(preview))
+        SetAffinity(pid, lowBitMask)
       else
-        SetAffinity(pid, lowBitMask)
+        SetAffinity(pid, idleBitMask)
     } else {
-      if (FileExist(idle) && !locked[i])
-        SetAffinity(pid, lowBitMask)
+      if (FileExist(idle) && A_TickCount > (idleTime + loadedBurstLength) && !locked[i])
+        SetAffinity(pid, idleBitMask)
       else if (FileExist(hold))
         SetAffinity(pid, highBitMask)
       else if locked[i]
-        SetAffinity(pid, lockBitMask)
-      else if FileExist(preview)
+        SetAffinity(pid, superHighBitMask)
+      else if ((A_TickCount < (previewTime + previewBurstLength) && FileExist(preview)) || (FileExist(idle) && A_TickCount < (idleTime + loadedBurstLength)))
         SetAffinity(pid, midBitMask)
+      else
+        SetAffinity(pid, lowBitMask)
     }
   }
 }
@@ -359,6 +365,7 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
+    ControlSend,, {Blind}{F3}, ahk_pid %pid%
     nextInst := -1
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
@@ -464,7 +471,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   }
   if affinityChange {
     pid := PIDs[idx]
-    SetAffinity(pid, lockBitMask)
+    SetAffinity(pid, superHighBitMask)
   }
 }
 
@@ -687,7 +694,7 @@ VerifyInstance(mcdir, pid, idx) {
         resetKeys[idx] := resetKey
         break
       } else if (atum) {
-        MsgBox, No Create New World hotkey found even though you have the mod, try restarting instance %idx%
+        MsgBox, No Create New World hotkey found even though you have the mod, you likely have an outdated version. Please update to version 1.1.0+
         SendLog(LOG_LEVEL_ERROR, Format("No Create New World hotkey found for instance {1} even though mod is installed", idx))
         break
       } else {
