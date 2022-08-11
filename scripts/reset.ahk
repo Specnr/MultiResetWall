@@ -89,12 +89,6 @@ ManageReset() {
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
-        ; if FileExist("data/instance.txt")
-        ;   FileRead, activeInstance, data/instance.txt
-        ; if activeInstance
-        ;   SetAffinity(pid, lowBitMask)
-        ; else
-        ;   SetAffinity(pid, highBitMask)
         SetTimer, PreviewBurst, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
