@@ -22,6 +22,7 @@ global fullScreenDelay := 100 ; increse if fullscreening issues
 global obsDelay := 100 ; increase if not changing scenes in obs
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
+
 ; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
 
 ; Affinity
