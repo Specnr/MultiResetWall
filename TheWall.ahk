@@ -148,6 +148,9 @@ ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
     SendOBSCmd("xx")
+    for i, tmppid in PIDs {
+      SetAffinity(tmppid, superHighBitMask)
+    }
     DetectHiddenWindows, On
     rms := RM_PIDs.MaxIndex()
     loop, %rms% {
