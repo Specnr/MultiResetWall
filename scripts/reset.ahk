@@ -92,7 +92,6 @@ ManageReset() {
         SetTimer, PreviewBurst, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
-        ; ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
         SetTimer, Pause, -%beforePauseDelay%
         lastImportantLine := GetLineCount(logFile)
         FileDelete, %holdFile%
@@ -111,7 +110,7 @@ ManageReset() {
         }
         if FileExist("data/instance.txt")
           FileRead, activeInstance, data/instance.txt
-        if (activeInstance == idx)
+        if (activeInstance == idx || FileExist(lockFile))
           SetAffinity(pid, superHighBitMask) ; this is active instance?
         else if activeInstance
           SetAffinity(pid, bgLoadBitMask) ; bg instance loaded, bg bitmask
