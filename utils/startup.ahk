@@ -4,7 +4,7 @@
 
 path := A_ScriptDir . "\..\data\mcdirs.txt"
 if !FileExist(path) {
-  MsgBox, Missing cache, you need to run TheWall.ahk once before using this script
+  MsgBox, Missing cache, you need to run TheWall.ahk with all instances open once before using this script
   ExitApp
 }
 
