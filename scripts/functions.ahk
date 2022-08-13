@@ -722,12 +722,13 @@ VerifyInstance(mcdir, pid, idx) {
         break
       } else {
         SendLog(LOG_LEVEL_ERROR, Format("No required atum mod in instance {1}", idx))
+        break
       }
     }
     Loop, 1 {
       if (InStr(ssettings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         Loop, 1 {
-          MsgBox, 4, Leave Preview Key, File %standardSettingsFile% missing recommended hotkey: Leave Preview. Would you like to set this back to default (h)?
+          MsgBox, 4, Leave Preview Key, File %standardSettingsFile% has no Leave Preview hotkey set. Would you like to set this back to default (h)?
           IfMsgBox No
           break
           ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
@@ -737,11 +738,53 @@ VerifyInstance(mcdir, pid, idx) {
           SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile))
           break 2
         }
-        SendLog(LOG_LEVEL_WARNING, Format("File {1} has no Leave Preview key set", standardSettingsFile))
-      } else {
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Leave Preview key set", standardSettingsFile))
+      } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
+        Loop, 1 {
+          MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
+          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Leave Preview key set. User was informed", optionsFile))
+          lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
+          SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile))
+          lpKeys[idx] := lpKey
+          break 2
+        }
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Leave Preview key set", optionsFile))
+      } else if (InStr(ssettings, "key_Leave Preview:") && wp) {
         lpKey := CheckOptionsForHotkey(standardSettingsFile, "key_Leave Preview", "h")
-        SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2}", lpKey, idx))
-        lpkeys[idx] := lpKey
+        if lpKey {
+          SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, standardSettingsFile))
+          lpKeys[idx] := lpKey
+          break
+        } else {
+          SendLog(LOG_LEVEL_WARNING, Format("Failed to read Leave Preview key from {1} instance {2}, trying to read from options.txt", standardSettingsFile, idx))
+          lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
+          if lpKey {
+            SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile))
+            lpKeys[idx] := lpKey
+            break
+          } else {
+            SendLog(LOG_LEVEL_ERROR, Format("Failed find Leave Preview key in {1} and {2}, falling back to 'h'", standardSettingsFile, optionsFile))
+            lpKeys[idx] := "h"
+            break
+          }
+        }
+      } else if (InStr(settings, "key_Leave Preview:") && wp) {
+        lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
+        if lpKey {
+          SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile))
+          lpKeys[idx] := lpKey
+          break
+        } else {
+          SendLog(LOG_LEVEL_ERROR, Format("Failed find Leave Preview key in {1}, falling back to 'h'", optionsFile))
+          lpKeys[idx] := "h"
+          break
+        }
+      } else if (wp) {
+        MsgBox, No Leave Preview hotkey found even though you have the mod, something went wrong trying to find the key.
+        SendLog(LOG_LEVEL_ERROR, Format("No Leave Preview hotkey found for instance {1} even though mod is installed", idx))
+        break
+      } else {
+        SendLog(LOG_LEVEL_ERROR, Format("No required World Preview mod in instance {1}", idx))
         break
       }
     }
