@@ -67,7 +67,7 @@ Reset() {
 
 ManageReset() {
   start := A_TickCount
-  state := state == "kill" ? "resetting" : state
+  state := "resetting"
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx))
   while (True) {
     if (state == "kill" || FileExist(killFile)) {
@@ -91,21 +91,21 @@ ManageReset() {
         SetTimer, PreviewBurst, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
+        SetTimer, Pause, -%beforePauseDelay%
+        lastImportantLine := GetLineCount(logFile)
         FileDelete, %holdFile%
         if !FileExist(previewFile)
           FileAppend, %A_TickCount%, %previewFile%
         FileDelete, %idleFile%
         FileAppend, %A_TickCount%, %idleFile%
-        if (state == "resetting") {
+        if (state == "resetting" && doubleCheckFalseLoads) {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine))
-          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting right as world loads/lag)", idx))
           state := "unknown"
           SetTimer, ManageReset, -%resetManagementLoopDelay%
         } else {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
-          SetTimer, Pause, -%beforePauseDelay%
-          lastImportantLine := GetLineCount(logFile)
         }
         if FileExist("data/instance.txt")
           FileRead, activeInstance, data/instance.txt
@@ -121,11 +121,11 @@ ManageReset() {
           PreviewLoaded()
         }
         lastImportantLine := GetLineCount(logFile)
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}%", idx, loadPercent))
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent))
       }
     }
     if (A_TickCount - start > resetManagementTimeout && resetManagementTimeout > 0) {
-      SendLog(LOG_LEVEL_ERROR, Format("Instance {1} {2} millisecond timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx, resetManagementTimeout))
+      SendLog(LOG_LEVEL_ERROR, Format("Instance {1} {2} millisecond timeout reached, ending reset management. May have left instance unpaused. (Lag/world load took too long/something else went wrong)", idx, resetManagementTimeout))
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
       FileDelete, %holdFile%
