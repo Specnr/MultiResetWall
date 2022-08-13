@@ -23,7 +23,7 @@ return
 #IfWinActive, Fullscreen Projector
   {
     *E Up::ResetInstance(MousePosToInstNumber())
-    *E::ResetInstance(MousePosToInstNumber(), false)
+    *E::ResetInstance(MousePosToInstNumber(), false) ; drag reset to ignore locked instances
     *R::SwitchInstance(MousePosToInstNumber())
     *F::FocusReset(MousePosToInstNumber())
     *T::ResetAll()
