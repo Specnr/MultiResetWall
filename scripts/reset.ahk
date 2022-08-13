@@ -111,10 +111,9 @@ ManageReset() {
           FileRead, activeInstance, data/instance.txt
         if (activeInstance == idx)
           SetAffinity(pid, superHighBitMask) ; this is active instance?
-        else if !activeInstance {
+        else if !activeInstance
           SetAffinity(pid, midBitMask) ; on wall, mid bitmask
-          SetTimer, LowerLoadedAffinity, -%loadedBurstLength%
-        }
+        SetTimer, LowerLoadedAffinity, -%loadedBurstLength%
         return
       } else if (state == "preview" && InStr(A_LoopReadLine, "%")) {
         loadPercent := StrSplit(StrSplit(A_LoopReadLine, ": ")[3], "%")[1]
