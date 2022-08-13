@@ -115,8 +115,8 @@ ManageReset() {
           SetAffinity(pid, midBitMask) ; on wall, mid bitmask
         SetTimer, LowerLoadedAffinity, -%loadedBurstLength%
         return
-      } else if (state == "preview" && InStr(A_LoopReadLine, "Preparing spawn area: ")) {
-        loadPercent := StrSplit(StrSplit(A_LoopReadLine, "area: ")[2], "%")[1]
+      } else if (state == "preview" && InStr(A_LoopReadLine, "%")) {
+        loadPercent := StrSplit(StrSplit(A_LoopReadLine, ": ")[3], "%")[1]
         if (loadPercent > previewLoadPercent && !FileExist(lockFile)) {
           PreviewLoaded()
         }
