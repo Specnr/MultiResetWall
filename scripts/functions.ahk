@@ -174,8 +174,10 @@ GetInstanceNumberFromMcDir(mcdir) {
   SendLog(LOG_LEVEL_INFO, Format("Getting instance number from mcdir: {1}", mcdir))
   numFile := mcdir . "instanceNumber.txt"
   num := -1
-  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
-    SendLog(LOG_LEVEL_ERROR, Format("Misread directory from somewhere. Might need to delete mcdirs.txt and restart macro. What was read: {1}", mcdir))
+  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
+    FileDelete, data/mcdirs.txt
+    Reload
+  }
   if (!FileExist(numFile)) {
     InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
     FileAppend, %num%, %numFile%
@@ -381,11 +383,11 @@ ExitWorld()
   }
 }
 
-ResetInstance(idx) {
+ResetInstance(idx, bypassLock:=true) {
   holdFile := McDirectories[idx] . "hold.tmp"
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
-  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
+  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
     SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
@@ -598,8 +600,8 @@ VerifyInstance(mcdir, pid, idx) {
     MsgBox, Directory %moddir% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases
   }
   if !wp {
-    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir))
-    MsgBox, Directory %moddir% missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
+    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir))
+    MsgBox, Directory %moddir% missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
   }
   if !standardSettings {
     SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases", moddir))
@@ -716,10 +718,12 @@ VerifyInstance(mcdir, pid, idx) {
         }
       } else if (atum) {
         MsgBox, No Create New World hotkey found even though you have the mod, you likely have an outdated version. Please update to version 1.1.0+
-        SendLog(LOG_LEVEL_ERROR, Format("No Create New World hotkey found for instance {1} even though mod is installed", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No Create New World hotkey found for instance {1} even though mod is installed. Using 'f6' to avoid reset manager errors", idx))
+        resetKeys[idx] := "F6"
         break
       } else {
-        SendLog(LOG_LEVEL_ERROR, Format("No required atum mod in instance {1}", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No required atum mod in instance {1}. Using 'f6' to avoid reset manager errors", idx))
+        resetKeys[idx] := "F6"
         break
       }
     }
@@ -779,10 +783,12 @@ VerifyInstance(mcdir, pid, idx) {
         }
       } else if (wp) {
         MsgBox, No Leave Preview hotkey found even though you have the mod, something went wrong trying to find the key.
-        SendLog(LOG_LEVEL_ERROR, Format("No Leave Preview hotkey found for instance {1} even though mod is installed", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No Leave Preview hotkey found for instance {1} even though mod is installed. Using 'h' to avoid reset manager errors", idx))
+        lpKeys[idx] := "h"
         break
       } else {
-        SendLog(LOG_LEVEL_ERROR, Format("No required World Preview mod in instance {1}", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No recommended World Preview mod in instance {1}. Using 'h' to avoid reset manager errors", idx))
+        lpKeys[idx] := "h"
         break
       }
     }

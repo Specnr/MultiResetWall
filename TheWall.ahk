@@ -30,7 +30,7 @@ EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
 global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.95), threadCount - 2) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
 global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.65) : highThreads ; 65% if advanced otherwise high unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.05) : threadCount ; 5% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.05) : highThreads ; 5% if advanced otherwise high unless override
 global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
 
 global superHighBitMask := GetBitMask(superHighThreads)
@@ -75,7 +75,7 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
   Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %superHighBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
@@ -90,8 +90,11 @@ for i, mcdir in McDirectories {
     FileDelete, %kill%
   if FileExist(preview)
     FileDelete, %preview%
-  if (windowMode == "B")
+  ControlClick, x0 y0, ahk_pid %pid%,, RIGHT
+  if (windowMode == "B") {
     WinSet, Style, -0xC40000, ahk_pid %pid%
+    WinSet, ExStyle, -0x00000200, ahk_pid %pid%
+  }
   if (widthMultiplier) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
@@ -132,6 +135,8 @@ else
   SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray")
 
 Menu, Tray, Add, Close Instances, CloseInstances
+
+ToWall(0)
 
 SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)
