@@ -600,8 +600,8 @@ VerifyInstance(mcdir, pid, idx) {
     MsgBox, Directory %moddir% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases
   }
   if !wp {
-    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir))
-    MsgBox, Directory %moddir% missing required mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
+    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir))
+    MsgBox, Directory %moddir% missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
   }
   if !standardSettings {
     SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases", moddir))
@@ -718,10 +718,12 @@ VerifyInstance(mcdir, pid, idx) {
         }
       } else if (atum) {
         MsgBox, No Create New World hotkey found even though you have the mod, you likely have an outdated version. Please update to version 1.1.0+
-        SendLog(LOG_LEVEL_ERROR, Format("No Create New World hotkey found for instance {1} even though mod is installed", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No Create New World hotkey found for instance {1} even though mod is installed. Using 'f6' to avoid reset manager errors", idx))
+        resetKeys[idx] := "F6"
         break
       } else {
-        SendLog(LOG_LEVEL_ERROR, Format("No required atum mod in instance {1}", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No required atum mod in instance {1}. Using 'f6' to avoid reset manager errors", idx))
+        resetKeys[idx] := "F6"
         break
       }
     }
@@ -781,10 +783,12 @@ VerifyInstance(mcdir, pid, idx) {
         }
       } else if (wp) {
         MsgBox, No Leave Preview hotkey found even though you have the mod, something went wrong trying to find the key.
-        SendLog(LOG_LEVEL_ERROR, Format("No Leave Preview hotkey found for instance {1} even though mod is installed", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No Leave Preview hotkey found for instance {1} even though mod is installed. Using 'h' to avoid reset manager errors", idx))
+        lpKeys[idx] := "h"
         break
       } else {
-        SendLog(LOG_LEVEL_ERROR, Format("No required World Preview mod in instance {1}", idx))
+        SendLog(LOG_LEVEL_ERROR, Format("No recommended World Preview mod in instance {1}. Using 'h' to avoid reset manager errors", idx))
+        lpKeys[idx] := "h"
         break
       }
     }
