@@ -57,7 +57,6 @@ This script is used for setting function hotkeys f13-f24 in your OBS hotkeys if 
 ### Delete Worlds
 This is a tray option for deleting ALL old worlds in your current instances. If you do not have this option it means the macro was not able to find a python install. After starting just wait until it tells you it's done.
 
-
 ## OBS Websocket
 
 1) Download [Python 3.7+](https://www.python.org/downloads/)
@@ -84,10 +83,56 @@ Note: If you don't want you use Tinder, ignore anything related to it below.
 
 After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
 
+## Super Advanced Settings
+
+These settings can be useful for optimizing performance, testing code, configuring slightly more advanced things, or for specific use cases.
+
+# Affinity
+
+Affinity is by far the most advanced section but can be used to fine tune performance of resetting and with good tuning can maybe increase instance count
+
+- affinityType: What kind of general affinity management do you want, this does not affect any override settings except -1. Options: No affinity management (N), Basic affinity management, resetting background instances have lower priority (B), Advanced affinity mangement, advanced priority system for wall resetting. Use with locking (A)
+- superHighThreadsOverride: Threads used for the instance you are currently playing or instances that are locked while fullscreen projector is focused. Default by macro math: total threads unless override is set
+- highThreadsOverride: Threads used for instances loading the "dirt screen" while fullscreen projector is focused. Default by macro math: 95% of threads or total threads minus 2, whichever is higher unless override is set
+- midThreadsOverride: Threads used for instances loading a preview (previewBurstLength) after detecting it. Default by macro math: 65% of threads if advanced mode otherwise same as high unless override is set
+- lowThreadsOverride: Threads used for instances that have reached (previewLoadPercent) requirement or for any idle instances. Default by macro math: 5% of threads if advanced mode otherwise high unless override is set
+- bgLoadThreadsOverride: Threads used for "dirt screen", (previewBurstLength) period, and locked instances for all bg instances. Default by macro math: 40% of threads unless override is set
+- previewBurstLength: The length of time in ms that instances spend on highThreads before switching to midThreads after a preview has been detected while fullscreen projector is focused. Default: 300
+- loadedBurstLength: The length of time that instances are increased to midThreads after a full load is detected while fullscreen projector is focused. Default: 300
+- previewLoadPercent: The percentage of world gen that must be reached after a preview is detected before lowering to lowThreads. Default: 10
+
+# OBS
+
+These are the OBS hotkey settings. If you want to use more than 9 instances or change the hotkeys that are used for OBS you can change these.
+
+- obsSceneControlType: What kind of hotkeys should the macro use for OBS scene control. Options: Numpad hotkeys 1-9 (N), Function hotkeys f13-f24, setup script in utils folder (F), Advanced key array, any keys you want, use the obsCustomKeyArray variable (A)
+- obsWallSceneKey: The key that is pressed when switching to the wall. All obs scene control types use wallSceneKey. Default: 'F12'
+- obsCustomKeyArray: Used with advanced key array setting. Add keys inside the brackets in quotes and separated by commas. The index of the key in the array corresponds to the scene that it will be used for. Default: empty
+- obsResetMediaKey: The key pressed when any instance is reset with sound. This can be used to play media sources in OBS. Default: none
+- obsLockMediaKey: The key pressed when any instance is locked with sound. This can be used to play media sources in OBS. Default: none
+- obsUnlockMediaKey: The key pressed when any instance is unlocked with sound. This can be used to play media sources in OBS. Default: none
+
+# Reset Management
+
+These are values used by the reset manager scripts. They can have minor performance impacts or be used if something doesn't seem to be working quite right.
+
+- beforePauseDelay: Extra delay added before the final pause for a loaded instance. May be needed for very laggy loading. Default: 0
+- resetManagementTimeout: Max Time in ms that can pass before reset manager gives up looking for a preview or load line in logs. May be needed if instances become unresetable often, too low can leave instances unpaused. Default: -1 (do not timeout)
+- manageResetAfter: Delay before starting reset management log reading loop. Too low might create delayed resets or previews that are not f3+esc paused. Default: 300
+- resetManagementLoopDelay: Buffer time for the loop that reads Minecraft logs to check for previews and loads. Lower might decrease pause latencies but increase cpu usage. Default: 70
+- doubleCheckUnexpectedLoads: If you plan to use the wall without World Preview mod you should disable this. If you reset right when an instance finishes loading it will detect the load and need to double check that there was just a reset. Default: True
+
+# Attempts
+
+The paths of the files used for counting attempts. This can make updating attempts through macro versions.
+
+- overallAttemptsFile: File path for overall attempt count. Default: "data/ATTEMPTS.txt"
+- dailyAttemptsFile: File path for session attempt count. Default: "data/ATTEMPTS_DAY.txt"
+
 ## Credit
 
 - Me
-- Mach for efficient reset manager & code optimizations
+- Mach for efficient reset managers & for affinity management
 - Ravalle for a lot of great ideas and code
 - Boyenn for the better lock indication idea
 - The collaborators listed for minor enhancements

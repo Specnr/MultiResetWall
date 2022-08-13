@@ -23,11 +23,11 @@ global obsDelay := 100 ; increase if not changing scenes in obs
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
 
-; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
+; Super advanced settings (Read about these settings on the README before changing)
 
 ; Affinity
 ; -1 == use macro math to determine thread counts
-global affinityType := "B" ; N = no affinity management, B = basic affinity management, A = advanced affinity mangement (best if used with locking+resetAll)
+global affinityType := "B" ; N = no affinity management, B = basic affinity management, A = advanced affinity mangement (use with locking)
 global superHighThreadsOverride := -1 ; Thread count for instance you are playing or locked instances you are loading on wall
 global highThreadsOverride := -1 ; Thread count for instances on the 0% dirt screen while on wall
 global midThreadsOverride := -1 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
