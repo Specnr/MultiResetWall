@@ -32,7 +32,7 @@ global bgLoadBitMask := A_Args[15]
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
 
 OnMessage(MSG_RESET, "Reset")
 
@@ -67,7 +67,7 @@ Reset() {
 
 ManageReset() {
   start := A_TickCount
-  state := "resetting"
+  state := state == "kill" ? "resetting" : state
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx))
   while (True) {
     if (state == "kill" || FileExist(killFile)) {
@@ -91,8 +91,6 @@ ManageReset() {
         SetTimer, PreviewBurst, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
-        SetTimer, Pause, -%beforePauseDelay%
-        lastImportantLine := GetLineCount(logFile)
         FileDelete, %holdFile%
         if !FileExist(previewFile)
           FileAppend, %A_TickCount%, %previewFile%
@@ -102,10 +100,12 @@ ManageReset() {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine))
           SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting too fast/lag)", idx))
           state := "unknown"
-          Reset()
+          SetTimer, ManageReset, -%resetManagementLoopDelay%
         } else {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
+          SetTimer, Pause, -%beforePauseDelay%
+          lastImportantLine := GetLineCount(logFile)
         }
         if FileExist("data/instance.txt")
           FileRead, activeInstance, data/instance.txt
