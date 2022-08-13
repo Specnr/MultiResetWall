@@ -127,7 +127,7 @@ ManageReset() {
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}%", idx, loadPercent))
       }
     }
-    if (A_TickCount - start > resetManagementTimeout) {
+    if (A_TickCount - start > resetManagementTimeout && resetManagementTimeout > 0) {
       SendLog(LOG_LEVEL_ERROR, Format("Instance {1} {2} millisecond timeout reached, ending reset management. May have left instance unpaused. (Lag/resetting too fast)", idx, resetManagementTimeout))
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
