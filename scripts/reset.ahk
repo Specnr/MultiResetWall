@@ -98,7 +98,7 @@ ManageReset() {
           FileAppend, %A_TickCount%, %previewFile%
         FileDelete, %idleFile%
         FileAppend, %A_TickCount%, %idleFile%
-        if (state == "resetting" && doubleCheckFalseLoads) {
+        if (state == "resetting" && doubleCheckUnexpectedLoads) {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine))
           SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting right as world loads/lag)", idx))
           state := "unknown"
