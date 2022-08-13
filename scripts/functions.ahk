@@ -174,8 +174,10 @@ GetInstanceNumberFromMcDir(mcdir) {
   SendLog(LOG_LEVEL_INFO, Format("Getting instance number from mcdir: {1}", mcdir))
   numFile := mcdir . "instanceNumber.txt"
   num := -1
-  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
-    SendLog(LOG_LEVEL_ERROR, Format("Misread directory from somewhere. Might need to delete mcdirs.txt and restart macro. What was read: {1}", mcdir))
+  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
+    FileDelete, data/mcdirs.txt
+    Reload
+  }
   if (!FileExist(numFile)) {
     InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
     FileAppend, %num%, %numFile%
