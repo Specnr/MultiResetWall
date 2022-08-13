@@ -31,7 +31,7 @@ global affinityType := "B" ; N = no affinity management, B = basic affinity mana
 global superHighThreadsOverride := -1 ; Thread count for instance you are playing or locked instances you are loading on wall
 global highThreadsOverride := -1 ; Thread count for instances on the 0% dirt screen while on wall
 global midThreadsOverride := -1 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
-global lowThreadsOverride := -1 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement
+global lowThreadsOverride := -1 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement and all idle instances
 global bgLoadThreadsOverride := -1 ; Thread count for 0% dirt screen, (previewBurstLength) period, (loadedBurstLength) period, and locked instances for bg instances
 global previewBurstLength := 300 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
 global loadedBurstLength := 300 ; The length of time that instances spend at either mid or bgLoad after a full load is detected
