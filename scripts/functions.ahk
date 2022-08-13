@@ -175,7 +175,7 @@ GetInstanceNumberFromMcDir(mcdir) {
   numFile := mcdir . "instanceNumber.txt"
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") ; Misread something
-    Reload
+    SendLog(LOG_LEVEL_ERROR, Format("Misread directory from somewhere. Might need to delete mcdirs.txt and restart macro. What was read: {1}", mcdir))
   if (!FileExist(numFile)) {
     InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
     FileAppend, %num%, %numFile%
