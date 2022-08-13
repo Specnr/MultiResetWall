@@ -87,7 +87,7 @@ After that it should be working. Open a ticket in the [Discord](https://discord.
 
 These settings can be useful for optimizing performance, testing code, configuring slightly more advanced things, or for specific use cases.
 
-# Affinity
+### Affinity
 
 Affinity is by far the most advanced section but can be used to fine tune performance of resetting and with good tuning can maybe increase instance count
 
@@ -101,7 +101,7 @@ Affinity is by far the most advanced section but can be used to fine tune perfor
 - loadedBurstLength: The length of time that instances are increased to midThreads after a full load is detected while fullscreen projector is focused. Default: 300
 - previewLoadPercent: The percentage of world gen that must be reached after a preview is detected before lowering to lowThreads. Default: 10
 
-# OBS
+### OBS
 
 These are the OBS hotkey settings. If you want to use more than 9 instances or change the hotkeys that are used for OBS you can change these.
 
@@ -112,7 +112,7 @@ These are the OBS hotkey settings. If you want to use more than 9 instances or c
 - obsLockMediaKey: The key pressed when any instance is locked with sound. This can be used to play media sources in OBS. Default: none
 - obsUnlockMediaKey: The key pressed when any instance is unlocked with sound. This can be used to play media sources in OBS. Default: none
 
-# Reset Management
+### Reset Management
 
 These are values used by the reset manager scripts. They can have minor performance impacts or be used if something doesn't seem to be working quite right.
 
@@ -122,7 +122,7 @@ These are values used by the reset manager scripts. They can have minor performa
 - resetManagementLoopDelay: Buffer time for the loop that reads Minecraft logs to check for previews and loads. Lower might decrease pause latencies but increase cpu usage. Default: 70
 - doubleCheckUnexpectedLoads: If you plan to use the wall without World Preview mod you should disable this. If you reset right when an instance finishes loading it will detect the load and need to double check that there was just a reset. Default: True
 
-# Attempts
+### Attempts
 
 The paths of the files used for counting attempts. This can make updating attempts through macro versions.
 
