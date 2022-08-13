@@ -31,12 +31,13 @@ path := A_ScriptDir . "\..\data\mcdirs.txt"
 Loop, Read, %path%
 {
   mcdir := StrSplit(A_LoopReadLine, "~")[2]
+  idx := StrSplit(A_LoopReadLine, "~")[1]
   if (GetPIDFromMcDir(mcdir) != -1)
     continue
   instName := StrSplit(StrSplit(A_LoopReadLine, "instances\")[2], "\.minecraft")[1]
   cmd := mmc . "MultiMC.exe -l """ . instName . """"
   if doOffline {
-    name := names[A_Index]
+    name := names[idx]
     cmd .= " -o -n """ . name . """"
   }
   Run,%cmd%,,Hide
