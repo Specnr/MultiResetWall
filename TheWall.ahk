@@ -29,16 +29,14 @@ global resets := 0
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
 global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.95), threadCount - 2) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.75) : highThreads ; 75% if advanced otherwise high unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.1) : highThreads ; 10% if advanced otherwise high unless override
-global idleThreads := idleThreadsOverride > 0 ? idleThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.05) : threadCount ; 5% unless override or none
-global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.5) : threadCount ; 50% unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.65) : highThreads ; 65% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.05) : threadCount ; 5% if advanced otherwise high unless override
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
 
 global superHighBitMask := GetBitMask(superHighThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
-global idleBitMask := GetBitMask(idleThreads)
 global bgLoadBitMask := GetBitMask(bgLoadThreads)
 
 global instWidth := Floor(A_ScreenWidth / cols)
@@ -77,8 +75,8 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, superHighBitMask, highBitMask, midBitMask, lowBitMask, idleBitMask, bgLoadBitMask))
-  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %superHighBitMask% %highBitMask% %midBitMask% %lowBitMask% %idleBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
+  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %superHighBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off

@@ -27,13 +27,12 @@ global superHighBitMask := A_Args[11]
 global highBitMask := A_Args[12]
 global midBitMask := A_Args[13]
 global lowBitMask := A_Args[14]
-global idleBitMask := A_Args[15]
-global bgLoadBitMask := A_Args[16]
+global bgLoadBitMask := A_Args[15]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, superHighBitMask, highBitMask, midBitMask, lowBitMask, idleBitMask, bgLoadBitMask))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
 
 OnMessage(MSG_RESET, "Reset")
 
@@ -110,11 +109,9 @@ ManageReset() {
         }
         if FileExist("data/instance.txt")
           FileRead, activeInstance, data/instance.txt
-        if (activeInstance == idx || FileExist(lockFile))
+        if (activeInstance == idx)
           SetAffinity(pid, superHighBitMask) ; this is active instance?
-        else if activeInstance
-          SetAffinity(pid, bgLoadBitMask) ; bg instance loaded, bg bitmask
-        else
+        else if !activeInstance
           SetAffinity(pid, midBitMask) ; on wall, mid bitmask
         SetTimer, LowerLoadedAffinity, -%loadedBurstLength%
         return
@@ -146,10 +143,8 @@ PreviewBurst() {
     FileRead, activeInstance, data/instance.txt
   if (activeInstance == idx)
     SetAffinity(pid, superHighBitMask) ; this is active instance?
-  else if activeInstance
-    SetAffinity(pid, bgLoadBitMask) ; bg instance, bg bitmask
-  else
-    SetAffinity(pid, midBitMask) ; on wall, mid bitmask
+  else if !activeInstance
+    SetAffinity(pid, midBitMask) ; bg instance, bg bitmask
 }
 
 PreviewLoaded() {
@@ -160,7 +155,7 @@ PreviewLoaded() {
   if (activeInstance == idx)
     SetAffinity(pid, superHighBitMask) ; this is active instance?
   else
-    SetAffinity(pid, lowBitMask) ; on wall, low bitmask
+    SetAffinity(pid, lowBitMask) ; low bitmask
 }
 
 LowerLoadedAffinity() {
@@ -168,12 +163,10 @@ LowerLoadedAffinity() {
     return
   if FileExist("data/instance.txt")
     FileRead, activeInstance, data/instance.txt
-  if (activeInstance == idx)
+  if (activeInstance == idx || (!activeInstance && FileExist(lockFile)))
     SetAffinity(pid, superHighBitMask) ; this is active instance
-  else if (!activeInstance && FileExist(lockFile))
-    SetAffinity(pid, superHighBitMask) ; locked on wall
-  else
-    SetAffinity(pid, idleBitMask) ; unlocked idle on wall, idle in bg
+  else if (!activeInstance)
+    SetAffinity(pid, lowBitMask) ; unlocked idle on wall, idle in bg
 }
 
 Pause() {
