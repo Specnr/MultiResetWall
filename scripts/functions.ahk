@@ -383,11 +383,11 @@ ExitWorld()
   }
 }
 
-ResetInstance(idx) {
+ResetInstance(idx, bypassLock:=true) {
   holdFile := McDirectories[idx] . "hold.tmp"
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
-  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount) {
+  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
     SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]

@@ -22,7 +22,8 @@ return
 
 #IfWinActive, Fullscreen Projector
   {
-    *E::ResetInstance(MousePosToInstNumber())
+    *E Up::ResetInstance(MousePosToInstNumber())
+    *E::ResetInstance(MousePosToInstNumber(), false)
     *R::SwitchInstance(MousePosToInstNumber())
     *F::FocusReset(MousePosToInstNumber())
     *T::ResetAll()
