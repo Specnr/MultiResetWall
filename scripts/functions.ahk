@@ -244,15 +244,13 @@ SetAffinities(bg:=false, play:=0) {
     if (i == play) {
       SetAffinity(pid, superHighBitMask)
     } else if bg {
-      if (A_TickCount < (previewTime + previewBurstLength) || A_TickCount < (idleTime + loadedBurstLength) || locked[i])
+      if (A_TickCount < (previewTime + previewBurstLength) || (locked[i] && !FileExist(idle)) || !FileExist(preview))
         SetAffinity(pid, bgLoadBitMask)
-      else if (A_TickCount > (previewTime + previewBurstLength) && FileExist(preview))
-        SetAffinity(pid, lowBitMask)
       else
-        SetAffinity(pid, idleBitMask)
+        SetAffinity(pid, lowBitMask)
     } else {
       if (FileExist(idle) && A_TickCount > (idleTime + loadedBurstLength) && !locked[i])
-        SetAffinity(pid, idleBitMask)
+        SetAffinity(pid, lowBitMask)
       else if (FileExist(hold))
         SetAffinity(pid, highBitMask)
       else if locked[i]
