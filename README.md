@@ -41,7 +41,7 @@ After that it should be working. Open a ticket in the [Discord](https://discord.
 
 ## Utility Functions
 
-In the /utils folder, you'll find some helpful scripts which we will add to over time.
+In the /utils folder, you'll find some helpful scripts which we will add to over time. You can also access some of these by right clicking on the tray icon for TheWall.ahk
 
 ### Startup.ahk
 This script will startup your instances for you, however it will only work after your first session.
@@ -50,6 +50,12 @@ If you want, you can create a names.txt file in the /data folder with one name p
 
 ### CloseInstances.ahk
 This script will simply close all your instances for you. This is also an option in TheWall.ahk tray options
+
+### setFunctionKeys.ahk
+This script is used for setting function hotkeys f13-f24 in your OBS hotkeys if you choose to use "F" or "A" for obsSceneControlType which allows for more than 9 instances.
+
+### Delete Worlds
+This is a tray option for deleting ALL old worlds in your current instances. If you do not have this option it means the macro was not able to find a python install. After starting just wait until it tells you it's done.
 
 
 ## OBS Websocket
