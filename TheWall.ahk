@@ -24,14 +24,15 @@ global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
 global fsKeys := []
+global f1States := []
 global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.95), threadCount - 2) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.65) : highThreads ; 65% if advanced otherwise high unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.05) : highThreads ; 5% if advanced otherwise high unless override
-global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
+global highThreads      := highThreadsOverride      > 0 ? highThreadsOverride      : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads       := midThreadsOverride       > 0 ? midThreadsOverride       : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads       := lowThreadsOverride       > 0 ? lowThreadsOverride       : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads    := bgLoadThreadsOverride    > 0 ? bgLoadThreadsOverride    : affinityType != "N" ? Ceil(threadCount * 0.4)  : threadCount ; 40% unless override or none
 
 global superHighBitMask := GetBitMask(superHighThreads)
 global highBitMask := GetBitMask(highThreads)
@@ -61,6 +62,7 @@ FileDelete, %dailyAttemptsFile%
 
 SendLog(LOG_LEVEL_INFO, "Wall launched")
 
+SetTheme(theme)
 GetAllPIDs()
 SetTitles()
 
@@ -90,7 +92,6 @@ for i, mcdir in McDirectories {
     FileDelete, %kill%
   if FileExist(preview)
     FileDelete, %preview%
-  ControlClick, x0 y0, ahk_pid %pid%,, RIGHT
   if (windowMode == "B") {
     WinSet, Style, -0xC40000, ahk_pid %pid%
     WinSet, ExStyle, -0x00000200, ahk_pid %pid%
@@ -113,9 +114,9 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
-if (useObsWebsocket) {
+if (obsControl == "W" || obsControl == "S") {
   WinWait, OBS
-  if (useSingleSceneOBS) {
+  if (obsControl == "S") {
     lastInst := -1
     if FileExist("data/instance.txt")
       FileRead, lastInst, data/instance.txt
@@ -167,7 +168,7 @@ ExitApp
 
 CheckScripts:
   Critical
-  if (useSingleSceneOBS && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
+  if (obsControl == "S" && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
