@@ -60,7 +60,7 @@ FindBypassInstance() {
 
 TinderMotion(swipeLeft) {
   ; left = reset, right = keep
-  if (!useSingleSceneOBS)
+  if (obsControl != "S")
     return
   if (swipeLeft)
     ResetInstance(currBg)
@@ -73,7 +73,7 @@ TinderMotion(swipeLeft) {
 }
 
 GetFirstBgInstance(toSkip := -1, skip := false) {
-  if !useSingleSceneOBS
+  if obsControl != "S"
     return 0
   if skip
     return -1
@@ -235,32 +235,30 @@ GetAllPIDs()
   }
 }
 
-SetAffinities(bg:=false, play:=0) {
+SetAffinities(idx:=0) {
   for i, mcdir in McDirectories {
     pid := PIDs[i]
     idle := mcdir . "idle.tmp"
     hold := mcdir . "hold.tmp"
     preview := mcdir . "preview.tmp"
-    FileRead, idleTime, %idle%
-    FileRead, previewTime, %preview%
-    if (i == play) {
+    if (idx == i) { ; this is active instance
       SetAffinity(pid, superHighBitMask)
-    } else if bg {
-      if (A_TickCount < (previewTime + previewBurstLength) || (locked[i] && !FileExist(idle)) || !FileExist(preview))
+    } else if idx { ; there is another active instance
+      if !FileExist(idle)
         SetAffinity(pid, bgLoadBitMask)
       else
         SetAffinity(pid, lowBitMask)
-    } else {
-      if (FileExist(idle) && A_TickCount > (idleTime + loadedBurstLength) && !locked[i])
+    } else { ; there is no active instance
+      if FileExist(idle)
         SetAffinity(pid, lowBitMask)
-      else if (FileExist(hold))
-        SetAffinity(pid, highBitMask)
       else if locked[i]
         SetAffinity(pid, superHighBitMask)
-      else if ((A_TickCount < (previewTime + previewBurstLength) && FileExist(preview)) || (FileExist(idle) && A_TickCount < (idleTime + loadedBurstLength)))
+      else if FileExist(hold)
+        SetAffinity(pid, highBitMask)
+      else if FileExist(preview)
         SetAffinity(pid, midBitMask)
       else
-        SetAffinity(pid, lowBitMask)
+        SetAffinity(pid, highBitMask)
     }
   }
 }
@@ -283,7 +281,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileAppend,,%holdFile%
     killFile := McDirectories[idx] . "kill.tmp"
     FileAppend,,%killFile%
-    if (useObsWebsocket) {
+    if (obsControl == "W" || obsControl == "S") {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
       if (prevBg == currBg) {
@@ -293,7 +291,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         hideMini := prevBg
         showMini := currBg
       }
-      if (useSingleSceneOBS)
+      if (obsControl == "S")
         SendOBSCmd("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
       Else
         SendOBSCmd("si " . idx)
@@ -301,11 +299,11 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileDelete,data/instance.txt
     FileAppend,%idx%,data/instance.txt
     pid := PIDs[idx]
-    SetAffinities(true, idx)
+    SetAffinities(idx)
     if !locked[idx]
       LockInstance(idx, False, False)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if doF1
+    if f1States[idx]
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -320,7 +318,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     Send {LButton} ; Make sure the window is activated
-    if (!useObsWebsocket) {
+    if (obsControl == "H") {
       if (obsSceneControlType == "N")
         obsKey := "Numpad" . idx
       else if (obsSceneControlType == "F")
@@ -375,8 +373,6 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    if doF1
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     SetAffinities()
     ResetInstance(idx)
     isWide := False
@@ -405,15 +401,16 @@ ResetInstance(idx, bypassLock:=true) {
 
 SetTitles() {
   for i, pid in PIDs {
-    WinSetTitle, ahk_pid %pid%, , Minecraft* - Instance %i%
+    name := StrReplace(minecraftWindowNaming, "#", i)
+    WinSetTitle, ahk_pid %pid%, , %name%
   }
 }
 
 ToWall(comingFrom) {
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  if (useObsWebsocket) {
-    if (useSingleSceneOBS)
+  if (obsControl == "W" || obsControl == "S") {
+    if (obsControl == "S")
       SendOBSCmd("ss-tw" . " " . comingFrom)
     Else
       SendOBSCmd("tw")
@@ -564,6 +561,17 @@ GetLineCount(file) {
   return lineNum
 }
 
+SetTheme(theme) {
+  SendLog(LOG_LEVEL_INFO, Format("Setting macro theme to {1}", theme))
+  Loop, Files, %A_ScriptDir%\themes\%theme%\*
+  {
+    fileDest := A_ScriptDir . "\media\" . A_LoopFileName
+    FileCopy, %A_LoopFileFullPath%, %fileDest%, 1
+    FileSetTime,,%fileDest%,M
+    SendLog(LOG_LEVEL_INFO, Format("Copying file {1} to {2}", A_LoopFileFullPath, fileDest))
+  }
+}
+
 VerifyInstance(mcdir, pid, idx) {
   moddir := mcdir . "mods\"
   optionsFile := mcdir . "options.txt"
@@ -642,6 +650,7 @@ VerifyInstance(mcdir, pid, idx) {
       SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, optionsFile))
       fsKeys[idx] := fsKey
     }
+    f1States[idx] := false
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
@@ -661,6 +670,12 @@ VerifyInstance(mcdir, pid, idx) {
       FileDelete, %standardSettingsFile%
       FileAppend, %ssettings%, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile))
+    }
+    if InStr(ssettings, "f1:true") {
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} using f1 toggle found in file {2}", idx, standardSettingsFile))
+      f1States[idx] := true
+    } else {
+      f1States[idx] := false
     }
     Loop, 1 {
       if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
