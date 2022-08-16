@@ -81,6 +81,8 @@ GetFirstBgInstance(toSkip := -1, skip := false) {
   for i, mcdir in McDirectories {
     hold := mcdir . "hold.tmp"
     if (i != activeNum && i != toSkip && !FileExist(hold) && !locked[i]) {
+      FileDelete,data/bg.txt
+      FileAppend,%i%,data/bg.txt
       return i
     }
   }
@@ -281,7 +283,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileAppend,,%holdFile%
     killFile := McDirectories[idx] . "kill.tmp"
     FileAppend,,%killFile%
-    if (obsControl == "W" || obsControl == "S") {
+    FileDelete,data/instance.txt
+    FileAppend,%idx%,data/instance.txt
+    if (obsControl == "S") {
       prevBg := currBg
       currBg := GetFirstBgInstance(idx, skipBg)
       if (prevBg == currBg) {
@@ -291,13 +295,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         hideMini := prevBg
         showMini := currBg
       }
-      if (obsControl == "S")
-        SendOBSCmd("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
-      Else
-        SendOBSCmd("si " . idx)
+      SendOBSCmd("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
     }
-    FileDelete,data/instance.txt
-    FileAppend,%idx%,data/instance.txt
     pid := PIDs[idx]
     SetAffinities(idx)
     if !locked[idx]
@@ -323,8 +322,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         obsKey := "Numpad" . idx
       else if (obsSceneControlType == "F")
         obsKey := "F" . (idx+12)
-      else
-        obsKey := obsCustomKeyArray[idx]
       Send {%obsKey% down}
       Sleep, %obsDelay%
       Send {%obsKey% up}
@@ -368,7 +365,7 @@ ExitWorld()
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
     } else if (mode == "B" || mode == "M")
-      nextInst := FindBypassInstance()
+    nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
@@ -407,21 +404,17 @@ SetTitles() {
 }
 
 ToWall(comingFrom) {
+  FileDelete,data/instance.txt
+  FileAppend,0,data/instance.txt
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  if (obsControl == "W" || obsControl == "S") {
-    if (obsControl == "S")
-      SendOBSCmd("ss-tw" . " " . comingFrom)
-    Else
-      SendOBSCmd("tw")
-  }
-  else {
+  if (obsControl == "S")
+    SendOBSCmd("ss-tw" . " " . comingFrom)
+  else if (obsControl == "H") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
     send {%obsWallSceneKey% up}
   }
-  FileDelete,data/instance.txt
-  FileAppend,0,data/instance.txt
 }
 
 FocusReset(focusInstance, bypassLock:=false) {
@@ -641,7 +634,7 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
       MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
-      SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
       fsKey := CheckOptionsForHotkey(optionsFile, "key_key.fullscreen", "F11")
       SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, optionsFile))
       fsKeys[idx] := fsKey
@@ -694,7 +687,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
         Loop, 1 {
           MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile))
+            SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile))
           resetKey := CheckOptionsForHotkey(optionsFile, "key_Create New World", "F6")
           SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile))
           resetKeys[idx] := resetKey
@@ -759,7 +752,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         Loop, 1 {
           MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Leave Preview key set. User was informed", optionsFile))
+            SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Leave Preview key set. User was informed", optionsFile))
           lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
           SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile))
           lpKeys[idx] := lpKey
@@ -811,7 +804,7 @@ VerifyInstance(mcdir, pid, idx) {
       if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
         Loop, 1 {
           MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
-          IfMsgBox No
+            IfMsgBox No
           break
           ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
           FileDelete, %standardSettingsFile%
