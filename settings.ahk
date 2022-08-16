@@ -6,15 +6,12 @@ global mode := "W" ; W = Normal wall, B = Wall bypass (skip to next locked), M =
 global windowMode := "W" ; W = windowed mode, F = fullscreen mode, B = borderless windowed
 
 ; Extra features
-global disableTTS := False
 global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
-global resetSounds := True ; Make a sound when you reset an instance
-global lockSounds := True ; Make a sound when you lock an instance
 global coop := False ; Automatically opens to LAN when you load in a world
-global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
-global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. (Additional setup required)
+global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
+global obsControl := "H" ; H = hotkeys, W = obs websocket, S = single scene obs websocket
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
-global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
+global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
@@ -32,9 +29,8 @@ global superHighThreadsOverride := -1 ; Thread count for instance you are playin
 global highThreadsOverride := -1 ; Thread count for instances on the 0% dirt screen while on wall
 global midThreadsOverride := -1 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
 global lowThreadsOverride := -1 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement and all idle instances
-global bgLoadThreadsOverride := -1 ; Thread count for 0% dirt screen, (previewBurstLength) period, (loadedBurstLength) period, and locked instances for bg instances
+global bgLoadThreadsOverride := -1 ; Thread count for loading instances, and locked instances in bg
 global previewBurstLength := 300 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
-global loadedBurstLength := 300 ; The length of time that instances spend at either mid or bgLoad after a full load is detected
 global previewLoadPercent := 10 ; The percentage of world gen that must be reached before lowering to low
 
 ; OBS
@@ -55,3 +51,6 @@ global doubleCheckUnexpectedLoads := True ; If you plan to use the wall without 
 ; Attempts
 global overallAttemptsFile := "data/ATTEMPTS.txt" ; File to write overall attempt count to
 global dailyAttemptsFile := "data/ATTEMPTS_DAY.txt" ; File to write daily attempt count to
+
+; Minecraft
+global minecraftWindowNaming := "Minecraft* 1.16.1 - Instance #" ; naming sceme used to set window titles on macro reload ('#' is replaced by the instance number)
