@@ -53,4 +53,4 @@ global overallAttemptsFile := "data/ATTEMPTS.txt" ; File to write overall attemp
 global dailyAttemptsFile := "data/ATTEMPTS_DAY.txt" ; File to write daily attempt count to
 
 ; Minecraft
-global minecraftWindowNaming := "Minecraft* 1.16.1 - Instance #" ; naming sceme used to set window titles on macro reload ('#' is replaced by the instance number)
+global minecraftWindowNaming := "Minecraft* - Instance #" ; naming sceme used to set window titles on macro reload ('#' is replaced by the instance number)
