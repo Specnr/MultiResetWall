@@ -31,6 +31,7 @@ global bgLoadBitMask := A_Args[15]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
+global previewLoaded := true
 
 SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
 
@@ -42,20 +43,13 @@ Reset() {
     return
   }
   state := "kill"
+  previewLoaded := false
   FileAppend,, %holdFile%
   FileDelete, %previewFile%
   FileDelete, %idleFile%
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -%manageResetAfter%
-  if FileExist("data/instance.txt")
-    FileRead, activeInstance, data/instance.txt
-  if (activeInstance == idx)
-    SetAffinity(pid, superHighBitMask) ; this is active instance?
-  else if activeInstance
-    SetAffinity(pid, bgLoadBitMask) ; bg instance, bg bitmask
-  else
-    SetAffinity(pid, highBitMask) ; on wall, high bitmask
-  if resetSounds {
+  if (sounds == "A" || sounds == "F" || sounds == "R") {
     SoundPlay, A_ScriptDir\..\media\reset.wav
     if obsResetMediaKey {
       send {%obsResetMediaKey% down}
@@ -68,6 +62,7 @@ Reset() {
 ManageReset() {
   start := A_TickCount
   state := "resetting"
+  ManageThisAffinity()
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx))
   while (True) {
     if (state == "kill" || FileExist(killFile)) {
@@ -88,7 +83,7 @@ ManageReset() {
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
-        SetTimer, PreviewBurst, -%previewBurstLength% ; turn down previewBurstLength after preview detected
+        SetTimer, ManageThisAffinity, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
         SetTimer, Pause, -%beforePauseDelay%
@@ -106,19 +101,16 @@ ManageReset() {
         } else {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
           state := "idle"
-        }
-        if FileExist("data/instance.txt")
           FileRead, activeInstance, data/instance.txt
-        if (activeInstance == idx)
-          SetAffinity(pid, superHighBitMask) ; this is active instance?
-        else if !activeInstance
-          SetAffinity(pid, midBitMask) ; on wall, mid bitmask
-        SetTimer, LowerLoadedAffinity, -%loadedBurstLength%
+          if (idx == activeInstance || !activeInstance)
+          SetTimer, ManageThisAffinity, -%previewBurstLength%
+        }
         return
       } else if (state == "preview" && InStr(A_LoopReadLine, "%")) {
         loadPercent := StrSplit(StrSplit(A_LoopReadLine, ": ")[3], "%")[1]
         if (loadPercent > previewLoadPercent && !FileExist(lockFile)) {
-          PreviewLoaded()
+          previewLoaded := true
+          ManageThisAffinity()
         }
         lastImportantLine := GetLineCount(logFile)
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent))
@@ -136,37 +128,27 @@ ManageReset() {
   }
 }
 
-PreviewBurst() {
-  if (state != "preview")
-    return
-  if FileExist("data/instance.txt")
-    FileRead, activeInstance, data/instance.txt
-  if (activeInstance == idx)
-    SetAffinity(pid, superHighBitMask) ; this is active instance?
-  else if !activeInstance
-    SetAffinity(pid, midBitMask) ; bg instance, bg bitmask
-}
-
-PreviewLoaded() {
-  if (state != "preview")
-    return
-  if FileExist("data/instance.txt")
-    FileRead, activeInstance, data/instance.txt
-  if (activeInstance == idx)
-    SetAffinity(pid, superHighBitMask) ; this is active instance?
-  else
-    SetAffinity(pid, lowBitMask) ; low bitmask
-}
-
-LowerLoadedAffinity() {
-  if (state != "idle")
-    return
-  if FileExist("data/instance.txt")
-    FileRead, activeInstance, data/instance.txt
-  if (activeInstance == idx || (!activeInstance && FileExist(lockFile)))
-    SetAffinity(pid, superHighBitMask) ; this is active instance
-  else if (!activeInstance)
-    SetAffinity(pid, lowBitMask) ; unlocked idle on wall, idle in bg
+ManageThisAffinity() {
+  FileRead, activeInstance, data/instance.txt
+  if (idx == activeInstance) { ; this is active instance
+    SetAffinity(pid, superHighBitMask)
+  } else if activeInstance { ; there is another active instance
+    if (state != "idle") ; if loading
+      SetAffinity(pid, bgLoadBitMask)
+    else
+      SetAffinity(pid, lowBitMask)
+  } else { ; there is no active instance
+    if (state == "idle" || previewLoaded) ; if preview gen reached or idle
+      SetAffinity(pid, lowBitMask)
+    else if FileExist(lockFile) ; if locked
+      SetAffinity(pid, superHighBitMask)
+    else if (state == "resetting") ; if resetting
+      SetAffinity(pid, highBitMask)
+    else if (!previewLoaded) ; if preview gen not reached
+      SetAffinity(pid, midBitMask)
+    else
+      SetAffinity(pid, highBitMask)
+  }
 }
 
 Pause() {
