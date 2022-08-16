@@ -30,8 +30,8 @@ global resets := 0
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
 global highThreads      := highThreadsOverride      > 0 ? highThreadsOverride      : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads       := midThreadsOverride       > 0 ? midThreadsOverride       : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
-global lowThreads       := lowThreadsOverride       > 0 ? lowThreadsOverride       : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global midThreads       := midThreadsOverride       > 0 ? midThreadsOverride       : affinityType == "A" ? Ceil(threadCount * 0.8)  : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads       := lowThreadsOverride       > 0 ? lowThreadsOverride       : affinityType != "N" ? Ceil(threadCount * 0.7)  : threadCount ; 70% if advanced otherwise high unless override
 global bgLoadThreads    := bgLoadThreadsOverride    > 0 ? bgLoadThreadsOverride    : affinityType != "N" ? Ceil(threadCount * 0.4)  : threadCount ; 40% unless override or none
 
 global superHighBitMask := GetBitMask(superHighThreads)
