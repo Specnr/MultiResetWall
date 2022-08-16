@@ -94,11 +94,10 @@ Affinity is by far the most advanced section but can be used to fine tune perfor
 - affinityType: What kind of general affinity management do you want, this does not affect any override settings except -1. Options: No affinity management (N), Basic affinity management, resetting background instances have lower priority (B), Advanced affinity mangement, advanced priority system for wall resetting. Use with locking (A)
 - superHighThreadsOverride: Threads used for the instance you are currently playing or instances that are locked while fullscreen projector is focused. Default by macro math: total threads unless override is set
 - highThreadsOverride: Threads used for instances loading the "dirt screen" while fullscreen projector is focused. Default by macro math: 95% of threads or total threads minus 2, whichever is higher unless override is set
-- midThreadsOverride: Threads used for instances loading a preview (previewBurstLength) after detecting it. Default by macro math: 65% of threads if advanced mode otherwise same as high unless override is set
-- lowThreadsOverride: Threads used for instances that have reached (previewLoadPercent) requirement or for any idle instances. Default by macro math: 5% of threads if advanced mode otherwise high unless override is set
-- bgLoadThreadsOverride: Threads used for "dirt screen", (previewBurstLength) period, and locked instances for all bg instances. Default by macro math: 40% of threads unless override is set
+- midThreadsOverride: Threads used for instances loading a preview (previewBurstLength) after detecting it. Default by macro math: 80% of threads if advanced mode otherwise same as high unless override is set
+- lowThreadsOverride: Threads used for instances that have reached (previewLoadPercent) requirement or for any idle instances. Default by macro math: 70% of threads if advanced mode otherwise high unless override is set
+- bgLoadThreadsOverride: Threads used for loading background instances. Default by macro math: 40% of threads unless override is set
 - previewBurstLength: The length of time in ms that instances spend on highThreads before switching to midThreads after a preview has been detected while fullscreen projector is focused. Default: 300
-- loadedBurstLength: The length of time that instances are increased to midThreads after a full load is detected while fullscreen projector is focused. Default: 300
 - previewLoadPercent: The percentage of world gen that must be reached after a preview is detected before lowering to lowThreads. Default: 10
 
 ### OBS
@@ -128,6 +127,10 @@ The paths of the files used for counting attempts. This can make updating attemp
 
 - overallAttemptsFile: File path for overall attempt count. Default: "data/ATTEMPTS.txt"
 - dailyAttemptsFile: File path for session attempt count. Default: "data/ATTEMPTS_DAY.txt"
+
+### Minecraft
+
+- minecraftWindowNaming: The format used to set the titles of your Minecraft windows on macro reload. Default: "Minecraft* 1.16.1 - Instance #"
 
 ## Credit
 
