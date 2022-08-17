@@ -29,10 +29,10 @@ global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
-global highThreads      := highThreadsOverride      > 0 ? highThreadsOverride      : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads       := midThreadsOverride       > 0 ? midThreadsOverride       : affinityType == "A" ? Ceil(threadCount * 0.8)  : highThreads ; 80% if advanced otherwise high unless override
-global lowThreads       := lowThreadsOverride       > 0 ? lowThreadsOverride       : affinityType != "N" ? Ceil(threadCount * 0.7)  : threadCount ; 70% if advanced otherwise high unless override
-global bgLoadThreads    := bgLoadThreadsOverride    > 0 ? bgLoadThreadsOverride    : affinityType != "N" ? Ceil(threadCount * 0.4)  : threadCount ; 40% unless override or none
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
 
 global superHighBitMask := GetBitMask(superHighThreads)
 global highBitMask := GetBitMask(highThreads)
@@ -51,14 +51,11 @@ global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global obsFile := A_ScriptDir . "/scripts/obs.ops"
-
-if !FileExist("data")
-  FileCreateDir, data
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, %dailyAttemptsFile%
+FileDelete, "data/ATTEMPTS_DAY.txt"
 
 SendLog(LOG_LEVEL_INFO, "Wall launched")
 
@@ -109,25 +106,14 @@ for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
 }
 
+if tinder {
+  FileDelete,data/bg.txt
+  FileAppend,0,data/bg.txt
+}
+
 if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
-}
-
-if (obsControl == "W" || obsControl == "S") {
-  WinWait, OBS
-  if (obsControl == "S") {
-    lastInst := -1
-    if FileExist("data/instance.txt")
-      FileRead, lastInst, data/instance.txt
-    SendOBSCmd("ss-tw" . " " .lastInst)
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "True"
-  }
-  else {
-    SendOBSCmd("tw")
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "False"
-  }
-  Run, %cmd%,, Hide
 }
 
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
@@ -151,7 +137,6 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
-    SendOBSCmd("xx")
     DetectHiddenWindows, On
     loop, %instances% {
       kill := McDirectories[A_Index] . "kill.tmp"
@@ -168,11 +153,10 @@ ExitApp
 
 CheckScripts:
   Critical
-  if (obsControl == "S" && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
+  if (tinder && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
-      SendOBSCmd("tm -1" . " " . newBg)
       needBgCheck := False
       currBg := newBg
     }

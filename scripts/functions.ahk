@@ -1,9 +1,5 @@
 ; v0.8
 
-SendObsCmd(cmd) {
-  FileAppend, %cmd%`n, %obsFile%
-}
-
 SendLog(lvlText, msg) {
   FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
 }
@@ -22,7 +18,7 @@ CheckOptionsForHotkey(file, optionsCheck, defaultKey) {
 }
 
 CountAttempts() {
-  file := overallAttemptsFile
+  file := "data/ATTEMPTS.txt"
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber := resets
@@ -30,7 +26,7 @@ CountAttempts() {
     FileDelete, %file%
   WorldNumber += resets
   FileAppend, %WorldNumber%, %file%
-  file := dailyAttemptsFile
+  file := "data/ATTEMPTS_DAY.txt"
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber := resets
@@ -60,20 +56,19 @@ FindBypassInstance() {
 
 TinderMotion(swipeLeft) {
   ; left = reset, right = keep
-  if (obsControl != "S")
+  if !tinder
     return
-  if (swipeLeft)
+  if swipeLeft
     ResetInstance(currBg)
   else
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg))
-  SendOBSCmd("tm" . " " . currBg . " " . newBg)
   currBg := newBg
 }
 
 GetFirstBgInstance(toSkip := -1, skip := false) {
-  if obsControl != "S"
+  if !tinder
     return 0
   if skip
     return -1
@@ -81,6 +76,8 @@ GetFirstBgInstance(toSkip := -1, skip := false) {
   for i, mcdir in McDirectories {
     hold := mcdir . "hold.tmp"
     if (i != activeNum && i != toSkip && !FileExist(hold) && !locked[i]) {
+      FileDelete,data/bg.txt
+      FileAppend,%i%,data/bg.txt
       return i
     }
   }
@@ -281,23 +278,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileAppend,,%holdFile%
     killFile := McDirectories[idx] . "kill.tmp"
     FileAppend,,%killFile%
-    if (obsControl == "W" || obsControl == "S") {
-      prevBg := currBg
-      currBg := GetFirstBgInstance(idx, skipBg)
-      if (prevBg == currBg) {
-        hideMini := -1
-        showMini := -1
-      } else {
-        hideMini := prevBg
-        showMini := currBg
-      }
-      if (obsControl == "S")
-        SendOBSCmd("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
-      Else
-        SendOBSCmd("si " . idx)
-    }
     FileDelete,data/instance.txt
     FileAppend,%idx%,data/instance.txt
+    if tinder
+      currBg := GetFirstBgInstance(idx, skipBg)
     pid := PIDs[idx]
     SetAffinities(idx)
     if !locked[idx]
@@ -323,8 +307,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
         obsKey := "Numpad" . idx
       else if (obsSceneControlType == "F")
         obsKey := "F" . (idx+12)
-      else
-        obsKey := obsCustomKeyArray[idx]
       Send {%obsKey% down}
       Sleep, %obsDelay%
       Send {%obsKey% up}
@@ -368,7 +350,7 @@ ExitWorld()
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
     } else if (mode == "B" || mode == "M")
-      nextInst := FindBypassInstance()
+    nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
@@ -401,27 +383,22 @@ ResetInstance(idx, bypassLock:=true) {
 
 SetTitles() {
   for i, pid in PIDs {
-    name := StrReplace(minecraftWindowNaming, "#", i)
-    WinSetTitle, ahk_pid %pid%, , %name%
+    WinSetTitle, ahk_pid %pid%, , Minecraft* - Instance %i%
   }
 }
 
 ToWall(comingFrom) {
+  FileDelete,data/instance.txt
+  FileAppend,0,data/instance.txt
+  FileDelete,data/bg.txt
+  FileAppend,0,data/bg.txt
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  if (obsControl == "W" || obsControl == "S") {
-    if (obsControl == "S")
-      SendOBSCmd("ss-tw" . " " . comingFrom)
-    Else
-      SendOBSCmd("tw")
-  }
-  else {
+  if (obsControl == "H") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
     send {%obsWallSceneKey% up}
   }
-  FileDelete,data/instance.txt
-  FileAppend,0,data/instance.txt
 }
 
 FocusReset(focusInstance, bypassLock:=false) {
@@ -641,7 +618,7 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
       MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
-      SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile))
       fsKey := CheckOptionsForHotkey(optionsFile, "key_key.fullscreen", "F11")
       SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, optionsFile))
       fsKeys[idx] := fsKey
@@ -694,7 +671,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
         Loop, 1 {
           MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile))
+            SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile))
           resetKey := CheckOptionsForHotkey(optionsFile, "key_Create New World", "F6")
           SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile))
           resetKeys[idx] := resetKey
@@ -759,7 +736,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         Loop, 1 {
           MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Leave Preview key set. User was informed", optionsFile))
+            SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Leave Preview key set. User was informed", optionsFile))
           lpKey := CheckOptionsForHotkey(optionsFile, "key_Leave Preview", "h")
           SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile))
           lpKeys[idx] := lpKey
@@ -811,7 +788,7 @@ VerifyInstance(mcdir, pid, idx) {
       if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
         Loop, 1 {
           MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
-          IfMsgBox No
+            IfMsgBox No
           break
           ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
           FileDelete, %standardSettingsFile%
