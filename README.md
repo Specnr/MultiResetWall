@@ -50,7 +50,7 @@ This script will simply close all your instances for you. This is also an option
 This script is used for setting function hotkeys f13-f24 in your OBS hotkeys if you choose to use "F" or "A" for obsSceneControlType which allows for more than 9 instances.
 
 ### Setup-OBS.exe
-This is a program that generates a scene collection for you which you can import in OBS, as well as settings for the Advanced Scene Switcher (see below for info) to eliminate OBS setup time. All files are generated into the data folder.
+This is a program that generates a scene collection for you which you can import in OBS, which also includes settings for the Advanced Scene Switcher (see below for info) to eliminate OBS setup time. All files are generated into the data folder.
 
 ### Startup.ahk
 This script will startup your instances for you, however it will only work after your first session.
@@ -62,10 +62,10 @@ If you want, you can create a names.txt file in the /data folder with one name p
 This is a much better OBS Websocket alternative which allows us to control all OBS actions without any hotkeys, including Tinder-style background resetting.
 
 Setting this up is simple:
+- Make sure to run the macro at least once with all instances open
 - Download the [Advanced Scene Switcher](https://obsproject.com/forum/resources/advanced-scene-switcher.395/) plugin and install it
-- Run the Setup-OBS.exe in the utils folder. This will generate a file in your data folder called `sceneSwitcher.txt`.
-- Open the Advanced Scene Switcher settings under the `Tools` tab in OBS
-- Select `Import` and use the `sceneSwitcher.txt` generated.
+- Run the Setup-OBS.exe in the utils folder. This will generate a file in your data folder called `sceneCollection.json`.
+- Hit `Import` under the `Scene Collection` tab in OBS, and select this file.
 
 ## Super Advanced Settings
 
