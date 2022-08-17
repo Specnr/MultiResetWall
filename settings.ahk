@@ -9,9 +9,10 @@ global windowMode := "W" ; W = windowed mode, F = fullscreen mode, B = borderles
 global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
 global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
-global obsControl := "A" ; H = hotkeys, A = advanced scene switcher, S = single scene obs
+global obsControl := "H" ; H = hotkeys, A = advanced scene switcher
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
+global tinder := False ; Set to True if you want to use tinder-style bg resetting
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible

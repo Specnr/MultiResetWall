@@ -109,19 +109,14 @@ for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
 }
 
+if tinder {
+  FileDelete,data/bg.txt
+  FileAppend,0,data/bg.txt
+}
+
 if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
-}
-
-if (obsControl == "S") {
-  WinWait, OBS
-  lastInst := -1
-  if FileExist("data/instance.txt")
-    FileRead, lastInst, data/instance.txt
-  SendOBSCmd("ss-tw" . " " .lastInst)
-  cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "True"
-  Run, %cmd%,, Hide
 }
 
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
@@ -145,7 +140,6 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
-    SendOBSCmd("xx")
     DetectHiddenWindows, On
     loop, %instances% {
       kill := McDirectories[A_Index] . "kill.tmp"
@@ -162,11 +156,10 @@ ExitApp
 
 CheckScripts:
   Critical
-  if (obsControl == "S" && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
+  if (tinder && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
-      SendOBSCmd("tm -1" . " " . newBg)
       needBgCheck := False
       currBg := newBg
     }

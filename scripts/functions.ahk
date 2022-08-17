@@ -1,9 +1,5 @@
 ; v0.8
 
-SendObsCmd(cmd) {
-  FileAppend, %cmd%`n, %obsFile%
-}
-
 SendLog(lvlText, msg) {
   FileAppend, [%A_TickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
 }
@@ -60,20 +56,19 @@ FindBypassInstance() {
 
 TinderMotion(swipeLeft) {
   ; left = reset, right = keep
-  if (obsControl != "S")
+  if !tinder
     return
-  if (swipeLeft)
+  if swipeLeft
     ResetInstance(currBg)
   else
     LockInstance(currBg)
   newBg := GetFirstBgInstance(currBg)
   SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg))
-  SendOBSCmd("tm" . " " . currBg . " " . newBg)
   currBg := newBg
 }
 
 GetFirstBgInstance(toSkip := -1, skip := false) {
-  if obsControl != "S"
+  if !tinder
     return 0
   if skip
     return -1
@@ -285,18 +280,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileAppend,,%killFile%
     FileDelete,data/instance.txt
     FileAppend,%idx%,data/instance.txt
-    if (obsControl == "S") {
-      prevBg := currBg
+    if tinder
       currBg := GetFirstBgInstance(idx, skipBg)
-      if (prevBg == currBg) {
-        hideMini := -1
-        showMini := -1
-      } else {
-        hideMini := prevBg
-        showMini := currBg
-      }
-      SendOBSCmd("ss-si" . " " . from . " " . idx . " " . hideMini . " " . showMini)
-    }
     pid := PIDs[idx]
     SetAffinities(idx)
     if !locked[idx]
@@ -406,11 +391,11 @@ SetTitles() {
 ToWall(comingFrom) {
   FileDelete,data/instance.txt
   FileAppend,0,data/instance.txt
+  FileDelete,data/bg.txt
+  FileAppend,0,data/bg.txt
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  if (obsControl == "S")
-    SendOBSCmd("ss-tw" . " " . comingFrom)
-  else if (obsControl == "H") {
+  if (obsControl == "H") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
     send {%obsWallSceneKey% up}
