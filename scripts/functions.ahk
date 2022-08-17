@@ -458,7 +458,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
-  if (lockSounds && sound) {
+  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\lock.wav
     if obsLockMediaKey {
       send {%obsLockMediaKey% down}
@@ -481,7 +481,7 @@ UnlockInstance(idx, sound:=true) {
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileDelete, %lockDest%
-  if (lockSounds && sound) {
+  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
     if obsUnlockMediaKey {
       send {%obsUnlockMediaKey% down}
@@ -495,7 +495,7 @@ LockAll(sound:=true) {
   loop, %instances% {
     LockInstance(A_Index, false)
   }
-  if (lockSounds && sound) {
+  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\lock.wav
     if obsLockMediaKey {
       send {%obsLockMediaKey% down}
@@ -509,7 +509,7 @@ UnlockAll(sound:=true) {
   loop, %instances% {
     UnlockInstance(A_Index, false)
   }
-  if (lockSounds && sound) {
+  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
     if obsUnlockMediaKey {
       send {%obsUnlockMediaKey% down}
