@@ -55,7 +55,7 @@ global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, %dailyAttemptsFile%
+FileDelete, "data/ATTEMPTS_DAY.txt"
 
 SendLog(LOG_LEVEL_INFO, "Wall launched")
 

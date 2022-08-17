@@ -18,7 +18,7 @@ CheckOptionsForHotkey(file, optionsCheck, defaultKey) {
 }
 
 CountAttempts() {
-  file := overallAttemptsFile
+  file := "data/ATTEMPTS.txt"
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber := resets
@@ -26,7 +26,7 @@ CountAttempts() {
     FileDelete, %file%
   WorldNumber += resets
   FileAppend, %WorldNumber%, %file%
-  file := dailyAttemptsFile
+  file := "data/ATTEMPTS_DAY.txt"
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber := resets
@@ -383,8 +383,7 @@ ResetInstance(idx, bypassLock:=true) {
 
 SetTitles() {
   for i, pid in PIDs {
-    name := StrReplace(minecraftWindowNaming, "#", i)
-    WinSetTitle, ahk_pid %pid%, , %name%
+    WinSetTitle, ahk_pid %pid%, , Minecraft* - Instance %i%
   }
 }
 

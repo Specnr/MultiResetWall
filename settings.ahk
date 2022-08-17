@@ -47,10 +47,3 @@ global resetManagementTimeout := -1 ; Milliseconds that can pass before reset ma
 global manageResetAfter := 300 ; Delay before starting reset management log reading loop. Default (300) likely fine
 global resetManagementLoopDelay := 70 ; Buffer time between log lines check in reset management loop. Lowering will decrease possible pause latencies but increase cpu usage of reset managers. Default (70) likely fine
 global doubleCheckUnexpectedLoads := True ; If you plan to use the wall without World Preview mod you should disable this. Default (True)
-
-; Attempts
-global overallAttemptsFile := "data/ATTEMPTS.txt" ; File to write overall attempt count to
-global dailyAttemptsFile := "data/ATTEMPTS_DAY.txt" ; File to write daily attempt count to
-
-; Minecraft
-global minecraftWindowNaming := "Minecraft* - Instance #" ; naming sceme used to set window titles on macro reload ('#' is replaced by the instance number)
