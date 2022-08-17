@@ -7,3 +7,4 @@ test.ahk
 *.log
 *.ops
 *.txt
+/data/*.json
