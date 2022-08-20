@@ -805,6 +805,27 @@ VerifyInstance(mcdir, pid, idx) {
         break
       }
     }
+    Loop, 1 {
+      if (InStr(ssettings, "key_key.command:key.keyboard.unknown")) {
+        Loop, 1 {
+          MsgBox, 4, Command Key, File %standardSettingsFile% missing required command hotkey. Would you like to set this back to default (/)?
+            IfMsgBox No
+          break
+          ssettings := StrReplace(ssettings, "key_key.command:key.keyboard.unknown", "key_key.command:key.keyboard.slash")
+          FileDelete, %standardSettingsFile%
+          FileAppend, %ssettings%, %standardSettingsFile%
+          commandkeys[idx] := "/"
+          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no command key set and chose to let it be automatically set to '/'", standardSettingsFile))
+          break 2
+        }
+        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no command key set", standardSettingsFile))
+      } else {
+        commandkey := CheckOptionsForHotkey(standardSettingsFile, "key_key.command", "/")
+        SendLog(LOG_LEVEL_INFO, Format("Found Command key: {1} for instance {2}", commandkey, idx))
+        commandkeys[idx] := fsKey
+        break
+      }
+    }
   }
   if !fastReset
     SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod fast-reset. Download: https://github.com/jan-leila/FastReset/releases", moddir))
@@ -836,7 +857,7 @@ OpenToLAN() {
   Send, {Esc}
   Send, {ShiftDown}{Tab 3}{Enter}{Tab}{ShiftUp}
   Send, {Enter}{Tab}{Enter}
-  Send, {/}
+  Send, {%commandkey%}
   Sleep, 100
   Send, gamemode
   Send, {Space}
@@ -845,7 +866,7 @@ OpenToLAN() {
 }
 
 GoToNether() {
-  Send, {/}
+  Send, {%commandkey%}
   Sleep, 100
   Send, setblock
   Send, {Space}{~}{Space}{~}{Space}{~}{Space}
@@ -859,7 +880,7 @@ OpenToLANAndGoToNether() {
 }
 
 CheckFor(struct, x := "", z := "") {
-  Send, {/}
+  Send, {%commandkey%}
   Sleep, 100
   if (z != "" && x != "") {
     Send, execute
