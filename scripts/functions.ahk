@@ -822,7 +822,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else {
         commandkey := CheckOptionsForHotkey(standardSettingsFile, "key_key.command", "/")
         SendLog(LOG_LEVEL_INFO, Format("Found Command key: {1} for instance {2}", commandkey, idx))
-        commandkeys[idx] := fsKey
+        commandkeys[idx] := commandkey
         break
       }
     }
