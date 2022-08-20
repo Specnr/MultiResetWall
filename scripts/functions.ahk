@@ -148,7 +148,7 @@ GetPIDFromMcDir(mcdir) {
     if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
       return pid
   }
-  return -1
+  return -1world
 }
 
 GetInstanceTotal() {
@@ -513,7 +513,7 @@ WorldBop() {
   IfMsgBox No
   Return
   cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
-  RunWait,%cmd%,,Hide
+  RunWait,%cmd%, %A_ScriptDir%\scripts ,Hide
   MsgBox, Completed World Bopping!
 }
 
