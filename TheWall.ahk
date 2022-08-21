@@ -24,6 +24,7 @@ global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
 global fsKeys := []
+global commandkeys := []
 global f1States := []
 global resets := 0
 
