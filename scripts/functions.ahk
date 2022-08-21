@@ -843,6 +843,7 @@ VerifyInstance(mcdir, pid, idx) {
 
 WideHardo() {
   idx := GetActiveInstanceNum()
+  commandkey := commandkeys[idx]
   pid := PIDs[idx]
   if (isWide)
     WinMaximize, ahk_pid %pid%
@@ -854,6 +855,8 @@ WideHardo() {
 }
 
 OpenToLAN() {
+  idx := GetActiveInstanceNum()
+  commandkey := commandkeys[idx]
   Send, {Esc}
   Send, {ShiftDown}{Tab 3}{Enter}{Tab}{ShiftUp}
   Send, {Enter}{Tab}{Enter}
@@ -866,6 +869,8 @@ OpenToLAN() {
 }
 
 GoToNether() {
+  idx := GetActiveInstanceNum()
+  commandkey := commandkeys[idx]
   Send, {%commandkey%}
   Sleep, 100
   Send, setblock
@@ -880,6 +885,8 @@ OpenToLANAndGoToNether() {
 }
 
 CheckFor(struct, x := "", z := "") {
+  idx := GetActiveInstanceNum()
+  commandkey := commandkeys[idx]
   Send, {%commandkey%}
   Sleep, 100
   if (z != "" && x != "") {
