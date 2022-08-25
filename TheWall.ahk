@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.8
+; v1.0
 
 #NoEnv
 #SingleInstance Force
@@ -29,10 +29,10 @@ global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
-global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
+global highThreads      := highThreadsOverride      > 0 ? highThreadsOverride      : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads       := midThreadsOverride       > 0 ? midThreadsOverride       : affinityType == "A" ? Ceil(threadCount * 0.8)  : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads       := lowThreadsOverride       > 0 ? lowThreadsOverride       : affinityType != "N" ? Ceil(threadCount * 0.7)  : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads    := bgLoadThreadsOverride    > 0 ? bgLoadThreadsOverride    : affinityType != "N" ? Ceil(threadCount * 0.4)  : threadCount ; 40% unless override or none
 
 global superHighBitMask := GetBitMask(superHighThreads)
 global highBitMask := GetBitMask(highThreads)
@@ -50,12 +50,10 @@ global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
-global obsFile := A_ScriptDir . "/scripts/obs.ops"
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
-FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, "data/ATTEMPTS_DAY.txt"
+FileDelete, %dailyAttemptsFile%
 
 SendLog(LOG_LEVEL_INFO, "Wall launched")
 
