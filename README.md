@@ -5,6 +5,8 @@
 
 Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw)
 
+If further help is needed, feel free to open a ticket in my [Discord server](https://discord.gg/tXxwrYw).
+
 ## Usage
 
 To use the macro, run TheWall.ahk and wait for it to say ready. Start up OBS, then start up a [Fullscreen projector](https://youtu.be/9YqZ6Ogv3rk).
@@ -26,7 +28,7 @@ Other optional hotkey functions include (to use, put the quoted text after a hot
 - "UnlockAll()": Unlock all instances (add False to the parentheses for it to be silent)
 - "PlayNextLock()": Play to the first locked instance (add True in the parentheses to reset all other non-locked instances, add 2 True separated by a comma to reset all other instances regardless of locks) (for use on wall only)
 
-Use [this world deletion program](https://gist.github.com/Specnr/8a572ac5c5cfdb54eb0dc7d1eb2906a3) to delete worlds.
+Use [this world deletion program](https://gist.github.com/Specnr/8a572ac5c5cfdb54eb0dc7d1eb2906a3) to delete worlds, or use the Delete Worlds option in the system tray (Requires Python).
 
 ## OBS Locked Instance Indicators
 
@@ -37,16 +39,9 @@ Adds the media/lock.png on screen whenever you lock an instance (does NOT requir
 
 Make sure you AREN'T adding the lock.png file that is included in the media folder. You may customize your lock images by simply replacing the png files in your wall media folder. Changing the files in your .minecraft folders won't do anything.
 
-After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
-
 ## Utility Functions
 
 In the /utils folder, you'll find some helpful scripts which we will add to over time. You can also access some of these by right clicking on the tray icon for TheWall.ahk
-
-### Startup.ahk
-This script will startup your instances for you, however it will only work after your first session.
-
-If you want, you can create a names.txt file in the /data folder with one name per line, and one line per instance to launch your instances in offline mode with custom names.
 
 ### CloseInstances.ahk
 This script will simply close all your instances for you. This is also an option in TheWall.ahk tray options
@@ -54,34 +49,23 @@ This script will simply close all your instances for you. This is also an option
 ### setFunctionKeys.ahk
 This script is used for setting function hotkeys f13-f24 in your OBS hotkeys if you choose to use "F" or "A" for obsSceneControlType which allows for more than 9 instances.
 
-### Delete Worlds
-This is a tray option for deleting ALL old worlds in your current instances. If you do not have this option it means the macro was not able to find a python install. After starting just wait until it tells you it's done.
+### Setup-OBS.exe
+This is a program that generates a scene collection for you which you can import in OBS, which also includes settings for the Advanced Scene Switcher (see below for info) to eliminate OBS setup time. All files are generated into the data folder.
 
-## OBS Websocket
+### Startup.ahk
+This script will startup your instances for you, however it will only work after your first session.
 
-1) Download [Python 3.7+](https://www.python.org/downloads/)
-2) Install [OBS websocket](https://obsproject.com/forum/resources/obs-websocket-remote-control-obs-studio-from-websockets.466/)
-3) Open up command prompt, and run this command in `pip install obs-websocket-py`
-4) Now, open up obsSettings.py in whatever text editor you want. 
-5) For scene_name_format you want to put in whatever the prefix of all your scenes are. 
-6) For wall_scene_name, its pretty self explanetory, just put in the scene name of your wall.
-7) Now, for the password, you can put in a password if you want, and if you use it you can go to `Tools -> WebSockets Server Settings -> Enable Authentication` and then put in whatever password you want. Then you can put the same password in the password variable quotes.
+If you want, you can create a names.txt file in the /data folder with one name per line, and one line per instance to launch your instances in offline mode with custom names.
 
-After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
+## Advanced Scene Switching
 
-## Single Scene OBS
+This is a much better OBS Websocket alternative which allows us to control all OBS actions without any hotkeys, including Tinder-style background resetting.
 
-This removes scene switching to lighten the load on OBS. It lowers lag also allows for the "Tinder" background resetting method
-
-Note: If you don't want you use Tinder, ignore anything related to it below.
-
-1) Follow the OBS websocket tutorial above
-2) You need 2 scenes: one which is just the wall, and the other which is our main scene. Whatever you call these, make sure it reflects in obsSettings.py
-3) The wall scene will be the same as usual, but if using Tinder, put your Tinder sources behind the wall sources so they match titles on startup.
-4) The main scene will have three levels: The wall level, the instances level, and the Tinder level. Put your sources in order from top to bottom with those priorities in mind. 
-5) Make sure your Tinder sources follow the bg_mc_source_format outlined in obsSettings.py, and are independant from your regular instance sources
-
-After that it should be working. Open a ticket in the [Discord](https://discord.gg/tXxwrYw) if you have any issues or need clarification.
+Setting this up is simple:
+- Make sure to run the macro at least once with all instances open
+- Download the [Advanced Scene Switcher](https://obsproject.com/forum/resources/advanced-scene-switcher.395/) plugin and install it
+- Run the Setup-OBS.exe in the utils folder. This will generate a file in your data folder called `sceneCollection.json`.
+- Hit `Import` under the `Scene Collection` tab in OBS, and select this file.
 
 ## Super Advanced Settings
 
@@ -120,17 +104,6 @@ These are values used by the reset manager scripts. They can have minor performa
 - manageResetAfter: Delay before starting reset management log reading loop. Too low might create delayed resets or previews that are not f3+esc paused. Default: 300
 - resetManagementLoopDelay: Buffer time for the loop that reads Minecraft logs to check for previews and loads. Lower might decrease pause latencies but increase cpu usage. Default: 70
 - doubleCheckUnexpectedLoads: If you plan to use the wall without World Preview mod you should disable this. If you reset right when an instance finishes loading it will detect the load and need to double check that there was just a reset. Default: True
-
-### Attempts
-
-The paths of the files used for counting attempts. This can make updating attempts through macro versions.
-
-- overallAttemptsFile: File path for overall attempt count. Default: "data/ATTEMPTS.txt"
-- dailyAttemptsFile: File path for session attempt count. Default: "data/ATTEMPTS_DAY.txt"
-
-### Minecraft
-
-- minecraftWindowNaming: The format used to set the titles of your Minecraft windows on macro reload. Default: "Minecraft* 1.16.1 - Instance #"
 
 ## Credit
 
