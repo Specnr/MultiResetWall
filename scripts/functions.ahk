@@ -800,7 +800,7 @@ VerifyInstance(mcdir, pid, idx) {
         SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Fullscreen key set", standardSettingsFile))
       } else {
         fsKey := CheckOptionsForHotkey(standardSettingsFile, "key_key.fullscreen", "F11")
-        SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2}", fsKey, idx))
+        SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, standardSettingsFile))
         fsKeys[idx] := fsKey
         break
       }
@@ -821,7 +821,7 @@ VerifyInstance(mcdir, pid, idx) {
         SendLog(LOG_LEVEL_ERROR, Format("File {1} has no command key set", standardSettingsFile))
       } else {
         commandkey := CheckOptionsForHotkey(standardSettingsFile, "key_key.command", "/")
-        SendLog(LOG_LEVEL_INFO, Format("Found Command key: {1} for instance {2}", commandkey, idx))
+        SendLog(LOG_LEVEL_INFO, Format("Found Command key: {1} for instance {2} from {3}", commandkey, idx, standardSettingsFile))
         commandkeys[idx] := commandkey
         break
       }
