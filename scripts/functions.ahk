@@ -243,7 +243,7 @@ SetAffinities(idx:=0) {
     preview := mcdir . "preview.tmp"
     if (idx == i) { ; this is active instance
       SetAffinity(pid, superHighBitMask)
-    } else if idx { ; there is another active instance
+    } else if (idx > 0) { ; there is another active instance
       if !FileExist(idle)
         SetAffinity(pid, bgLoadBitMask)
       else
@@ -363,7 +363,7 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
-    ControlSend,, {Blind}{F3}, ahk_pid %pid%
+    ControlSend,, {Blind}{F3}{Esc}{F3}, ahk_pid %pid%
     nextInst := -1
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
@@ -373,7 +373,7 @@ ExitWorld()
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    SetAffinities()
+    SetAffinities(nextInst)
     ResetInstance(idx)
     isWide := False
   }
