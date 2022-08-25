@@ -18,7 +18,7 @@ CheckOptionsForHotkey(file, optionsCheck, defaultKey) {
 }
 
 CountAttempts() {
-  file := "data/ATTEMPTS.txt"
+  file := overallAttemptsFile
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber := resets
@@ -26,7 +26,7 @@ CountAttempts() {
     FileDelete, %file%
   WorldNumber += resets
   FileAppend, %WorldNumber%, %file%
-  file := "data/ATTEMPTS_DAY.txt"
+  file := dailyAttemptsFile
   FileRead, WorldNumber, %file%
   if (ErrorLevel)
     WorldNumber := resets
