@@ -148,7 +148,7 @@ GetPIDFromMcDir(mcdir) {
     if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
       return pid
   }
-  return -1world
+  return -1
 }
 
 GetInstanceTotal() {
