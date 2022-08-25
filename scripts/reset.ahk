@@ -23,17 +23,18 @@ global killFile := A_Args[7]
 global resetKey := A_Args[8]
 global lpKey := A_Args[9]
 global idx := A_Args[10]
-global superHighBitMask := A_Args[11]
-global highBitMask := A_Args[12]
-global midBitMask := A_Args[13]
-global lowBitMask := A_Args[14]
-global bgLoadBitMask := A_Args[15]
+global playBitMask := A_Args[11]
+global lockBitMask := A_Args[12]
+global highBitMask := A_Args[13]
+global midBitMask := A_Args[14]
+global lowBitMask := A_Args[15]
+global bgLoadBitMask := A_Args[16]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
 
 OnMessage(MSG_RESET, "Reset")
 
@@ -103,7 +104,7 @@ ManageReset() {
           state := "idle"
           FileRead, activeInstance, data/instance.txt
           if (idx == activeInstance || !activeInstance)
-          SetTimer, ManageThisAffinity, -%previewBurstLength%
+            SetTimer, ManageThisAffinity, -%previewBurstLength%
         }
         return
       } else if (state == "preview" && InStr(A_LoopReadLine, "%")) {
@@ -131,7 +132,7 @@ ManageReset() {
 ManageThisAffinity() {
   FileRead, activeInstance, data/instance.txt
   if (idx == activeInstance) { ; this is active instance
-    SetAffinity(pid, superHighBitMask)
+    SetAffinity(pid, playBitMask)
   } else if activeInstance { ; there is another active instance
     if (state != "idle") ; if loading
       SetAffinity(pid, bgLoadBitMask)
@@ -141,7 +142,7 @@ ManageThisAffinity() {
     if (state == "idle" || previewLoaded) ; if preview gen reached or idle
       SetAffinity(pid, lowBitMask)
     else if FileExist(lockFile) ; if locked
-      SetAffinity(pid, superHighBitMask)
+      SetAffinity(pid, lockBitMask)
     else if (state == "resetting") ; if resetting
       SetAffinity(pid, highBitMask)
     else if (!previewLoaded) ; if preview gen not reached

@@ -25,7 +25,8 @@ global tinderCheckBuffer := 5 ; When all instances cant reset, how often it chec
 ; Affinity
 ; -1 == use macro math to determine thread counts
 global affinityType := "A" ; N = no affinity management, B = basic affinity management, A = advanced affinity mangement (best if used with locking+resetAll)
-global superHighThreadsOverride := 16 ; Thread count for instance you are playing or locked instances you are loading on wall
+global playThreadsOverride := 16 ; Thread count for instance you are playing
+global lockThreadsOverride := 16 ; Thread count for locked instances loading on wall
 global highThreadsOverride := 16 ; Thread count for instances on the 0% dirt screen while on wall
 global midThreadsOverride := 12 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
 global lowThreadsOverride := 6 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement and all idle instances

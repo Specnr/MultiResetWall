@@ -239,7 +239,7 @@ SetAffinities(idx:=0) {
     hold := mcdir . "hold.tmp"
     preview := mcdir . "preview.tmp"
     if (idx == i) { ; this is active instance
-      SetAffinity(pid, superHighBitMask)
+      SetAffinity(pid, playBitMask)
     } else if (idx > 0) { ; there is another active instance
       if !FileExist(idle)
         SetAffinity(pid, bgLoadBitMask)
@@ -249,7 +249,7 @@ SetAffinities(idx:=0) {
       if FileExist(idle)
         SetAffinity(pid, lowBitMask)
       else if locked[i]
-        SetAffinity(pid, superHighBitMask)
+        SetAffinity(pid, lockBitMask)
       else if FileExist(hold)
         SetAffinity(pid, highBitMask)
       else if FileExist(preview)
