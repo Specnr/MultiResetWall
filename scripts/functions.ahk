@@ -291,9 +291,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if !locked[idx]
       LockInstance(idx, False, False)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (CheckOptionsForValue(McDirectories[idx] . "config\standardoptions.txt", "f1:", "false") == "true") {
+    if (f1States[idx] == 2)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    }
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
@@ -648,7 +647,7 @@ VerifyInstance(mcdir, pid, idx) {
       SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, optionsFile), A_TickCount)
       fsKeys[idx] := fsKey
     }
-    f1States[idx] := false
+    f1States[idx] := 0
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
@@ -669,11 +668,11 @@ VerifyInstance(mcdir, pid, idx) {
       FileAppend, %ssettings%, %standardSettingsFile%
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile), A_TickCount)
     }
-    if (RegExMatch(ssettings, "f1:.+")) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 reset found in file {2}, can be used to fix ghost pie", idx, standardSettingsFile), A_TickCount)
-      f1States[idx] := true
+    if (RegExMatch(ssettings, "f1:.+", regexVar)) {
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found in file {3}, will be used for ghost pie and instance join", idx, regexVar["value"], standardSettingsFile), A_TickCount)
+      f1States[idx] := regexVar == "f1:true" ? 2 : 1
     } else {
-      f1States[idx] := false
+      f1States[idx] := 0
     }
     Loop, 1 {
       if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
