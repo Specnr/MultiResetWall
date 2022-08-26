@@ -291,9 +291,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if !locked[idx]
       LockInstance(idx, False, False)
     ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2) {
+    if (f1States[idx] == 2)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    }
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
