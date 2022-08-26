@@ -16,8 +16,7 @@ global tinder := False ; Set to True if you want to use tinder-style bg resettin
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
-global fullScreenDelay := 100 ; increse if fullscreening issues
-global obsDelay := 100 ; increase if not changing scenes in obs
+global fullScreenDelay := 100 ; increase if fullscreening issues
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
 ; Super advanced settings (Read about these settings on the README before changing)
@@ -40,6 +39,7 @@ global obsCustomKeyArray := [] ; Must be used with advanced key array control ty
 global obsResetMediaKey := "" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
 global obsLockMediaKey := "" ; Key pressed on any lock instance with sound (used for playing lock media file in obs for recordable/streamable lock sounds and requires addition setup to work)
 global obsUnlockMediaKey := "" ; Key pressed on any unlock instance with sound (used for playing unlock media file in obs for recordable/streamable unlock sounds and requires addition setup to work)
+global obsDelay := 100 ; increase if not changing scenes in obs
 
 ; Reset Management
 global beforePauseDelay := 0 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
