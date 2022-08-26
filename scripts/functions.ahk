@@ -3,12 +3,12 @@
 SendLog(lvlText, msg, tickCount) {
   file := FileOpen("data/log.log", "a -rw")
     if (!IsObject(file)) {
-      logQueue := Func("SendLog").Bind(tickCount, lvlText, msg)
-      SetTimer, %logQueue%, -200
+      logQueue := Func("SendLog").Bind(lvlText, msg, tickCount)
+      SetTimer, %logQueue%, -10
       return
     }
+  file.Close()
   FileAppend, [%tickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
-  file.FileClose()
 }
 
 CheckOptionsForHotkey(file, optionsCheck, defaultKey) {
