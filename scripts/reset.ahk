@@ -34,13 +34,13 @@ global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask), A_TickCount)
 
 OnMessage(MSG_RESET, "Reset")
 
 Reset() {
   if ((state == "resetting" && mode != "C") || state == "kill" || FileExist(killFile)) {
-    SendLog(LOG_LEVEL_INFO, Format("Instance {1} discarding reset management, state: {2}", idx, state))
+    SendLog(LOG_LEVEL_INFO, Format("Instance {1} discarding reset management, state: {2}", idx, state), A_TickCount)
     return
   }
   state := "kill"
@@ -64,10 +64,10 @@ ManageReset() {
   start := A_TickCount
   state := "resetting"
   ManageThisAffinity()
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx))
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} starting reset management", idx), A_TickCount)
   while (True) {
     if (state == "kill" || FileExist(killFile)) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} killing reset management from loop", idx))
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} killing reset management from loop", idx), A_TickCount)
       FileDelete, %killFile%
       return
     }
@@ -83,7 +83,7 @@ ManageReset() {
         FileDelete, %holdFile%
         FileDelete, %previewFile%
         FileAppend, %A_TickCount%, %previewFile%
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index), A_TickCount)
         SetTimer, ManageThisAffinity, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
       } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
@@ -95,12 +95,12 @@ ManageReset() {
         FileDelete, %idleFile%
         FileAppend, %A_TickCount%, %idleFile%
         if (state == "resetting" && doubleCheckUnexpectedLoads) {
-          SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine))
-          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting right as world loads/lag)", idx))
+          SendLog(LOG_LEVEL_INFO, Format("Instance {1} line dump: {2}", idx, A_LoopReadLine), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} found save while looking for preview, restarting reset management. (No World Preview/resetting right as world loads/lag)", idx), A_TickCount)
           state := "unknown"
           SetTimer, ManageReset, -%resetManagementLoopDelay%
         } else {
-          SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
+          SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index), A_TickCount)
           state := "idle"
           FileRead, activeInstance, data/instance.txt
           if (idx == activeInstance || !activeInstance)
@@ -114,11 +114,11 @@ ManageReset() {
           ManageThisAffinity()
         }
         lastImportantLine := GetLineCount(logFile)
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent))
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent), A_TickCount)
       }
     }
     if (resetManagementTimeout > 0 && A_TickCount - start > resetManagementTimeout) {
-      SendLog(LOG_LEVEL_ERROR, Format("Instance {1} {2} millisecond timeout reached, ending reset management. May have left instance unpaused. (Lag/world load took too long/something else went wrong)", idx, resetManagementTimeout))
+      SendLog(LOG_LEVEL_ERROR, Format("Instance {1} {2} millisecond timeout reached, ending reset management. May have left instance unpaused. (Lag/world load took too long/something else went wrong)", idx, resetManagementTimeout), A_TickCount)
       state := "unknown"
       lastImportantLine := GetLineCount(logFile)
       FileDelete, %holdFile%

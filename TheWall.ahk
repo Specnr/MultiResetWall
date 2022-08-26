@@ -58,7 +58,7 @@ global hasMcDirCache := FileExist("data/mcdirs.txt")
 FileDelete, data/log.log
 FileDelete, %dailyAttemptsFile%
 
-SendLog(LOG_LEVEL_INFO, "Wall launched")
+SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
 
 SetTheme(theme)
 GetAllPIDs()
@@ -75,7 +75,7 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask), A_TickCount)
   Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %playBitMask% %lockBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
@@ -100,7 +100,7 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
 }
 
 for i, tmppid in PIDs {
@@ -124,13 +124,13 @@ if IsProcessElevated(obsPid)
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
   Menu, Tray, Add, Delete Worlds, WorldBop
 else
-  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray")
+  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray", A_TickCount)
 
 Menu, Tray, Add, Close Instances, CloseInstances
 
 ToWall(0)
 
-SendLog(LOG_LEVEL_INFO, "Wall setup done")
+SendLog(LOG_LEVEL_INFO, "Wall setup done", A_TickCount)
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
@@ -161,7 +161,7 @@ CheckScripts:
   if (tinder && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg), A_TickCount)
       needBgCheck := False
       currBg := newBg
     }
