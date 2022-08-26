@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.8
+; v1.0
 
 #NoEnv
 #SingleInstance Force
@@ -24,17 +24,20 @@ global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
 global fsKeys := []
+global commandkeys := []
 global f1States := []
 global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global superHighThreads := superHighThreadsOverride > 0 ? superHighThreadsOverride : threadCount ; total threads unless override
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
-global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
+global playThreads    := playThreadsOverride    > 0 ? playThreadsOverride    : threadCount ; total threads unless override
+global lockThreads    := lockThreadsOverride    > 0 ? lockThreadsOverride    : threadCount ; total threads unless override
+global highThreads    := highThreadsOverride    > 0 ? highThreadsOverride    : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads     := midThreadsOverride     > 0 ? midThreadsOverride     : affinityType == "A" ? Ceil(threadCount * 0.8)  : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads     := lowThreadsOverride     > 0 ? lowThreadsOverride     : affinityType != "N" ? Ceil(threadCount * 0.7)  : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads  := bgLoadThreadsOverride  > 0 ? bgLoadThreadsOverride  : affinityType != "N" ? Ceil(threadCount * 0.4)  : threadCount ; 40% unless override or none
 
-global superHighBitMask := GetBitMask(superHighThreads)
+global playBitMask := GetBitMask(playThreads)
+global lockBitMask := GetBitMask(lockThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
@@ -50,14 +53,12 @@ global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
-global obsFile := A_ScriptDir . "/scripts/obs.ops"
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
-FileDelete, %obsFile%
 FileDelete, data/log.log
-FileDelete, "data/ATTEMPTS_DAY.txt"
+FileDelete, %dailyAttemptsFile%
 
-SendLog(LOG_LEVEL_INFO, "Wall launched")
+SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
 
 SetTheme(theme)
 GetAllPIDs()
@@ -74,8 +75,8 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, superHighBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask))
-  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %superHighBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask), A_TickCount)
+  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %playBitMask% %lockBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -99,7 +100,7 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
 }
 
 for i, tmppid in PIDs {
@@ -116,16 +117,20 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
+WinGet, obsPid, PID, OBS
+if IsProcessElevated(obsPid) 
+  MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
+
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
   Menu, Tray, Add, Delete Worlds, WorldBop
 else
-  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray")
+  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray", A_TickCount)
 
 Menu, Tray, Add, Close Instances, CloseInstances
 
 ToWall(0)
 
-SendLog(LOG_LEVEL_INFO, "Wall setup done")
+SendLog(LOG_LEVEL_INFO, "Wall setup done", A_TickCount)
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
@@ -156,7 +161,7 @@ CheckScripts:
   if (tinder && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg), A_TickCount)
       needBgCheck := False
       currBg := newBg
     }
