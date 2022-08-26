@@ -9,7 +9,6 @@ global windowMode := "F" ; W = windowed mode, F = fullscreen mode, B = borderles
 global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
 global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
-global obsControl := "H" ; H = hotkeys, W = obs websocket, S = single scene obs websocket
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global theme := "custom" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
@@ -35,9 +34,9 @@ global previewBurstLength := 550 ; The delay before switching from high to mid w
 global previewLoadPercent := 10 ; The percentage of world gen that must be reached before lowering to low
 
 ; OBS
-global obsSceneControlType := "F" ; N = Numpad hotkeys (up to 9 instances), F = Function hotkeys f13-f24 (up to 12 instances, setup script in utils folder), A = advanced (too many instances)
+global obsControl := "F" ; N = Numpad keys (<10 inst), F = Function keys (f13-f24, <13 inst, setup script in utils folder), ARR = advanced array (see customKeyArray), ASS = advanced scene switcher (read GitHub)
 global obsWallSceneKey := "F12" ; All obs scene control types use wallSceneKey
-global obsCustomKeyArray := [] ; Must be used with advanced key array control type. Add keys in quotes separated by commas. The index in the array corresponds to the scene
+global obsCustomKeyArray := [] ; Must be used with advanced array control type. Add keys in quotes separated by commas. The index in the array corresponds to the scene
 global obsResetMediaKey := "Numpad1" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
 global obsLockMediaKey := "Numpad2" ; Key pressed on any lock instance with sound (used for playing lock media file in obs for recordable/streamable lock sounds and requires addition setup to work)
 global obsUnlockMediaKey := "Numpad3" ; Key pressed on any unlock instance with sound (used for playing unlock media file in obs for recordable/streamable unlock sounds and requires addition setup to work)

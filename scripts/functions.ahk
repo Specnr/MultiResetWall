@@ -314,11 +314,13 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     Send {LButton} ; Make sure the window is activated
-    if (obsControl == "H") {
-      if (obsSceneControlType == "N")
+    if (obsControl != "ASS") {
+      if (obsControl == "N")
         obsKey := "Numpad" . idx
-      else if (obsSceneControlType == "F")
+      else if (obsControl == "F")
         obsKey := "F" . (idx+12)
+      else if (obsControl == "ARR")
+        obsKey := obsCustomKeyArray[idx]
       Send {%obsKey% down}
       Sleep, %obsDelay%
       Send {%obsKey% up}
@@ -406,7 +408,7 @@ ToWall(comingFrom) {
   FileAppend,0,data/bg.txt
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  if (obsControl == "H") {
+  if (obsControl != "ASS") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
     send {%obsWallSceneKey% up}
