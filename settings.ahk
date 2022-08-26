@@ -40,7 +40,7 @@ global obsCustomKeyArray := [] ; Must be used with advanced array control type. 
 global obsResetMediaKey := "Numpad1" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
 global obsLockMediaKey := "Numpad2" ; Key pressed on any lock instance with sound (used for playing lock media file in obs for recordable/streamable lock sounds and requires addition setup to work)
 global obsUnlockMediaKey := "Numpad3" ; Key pressed on any unlock instance with sound (used for playing unlock media file in obs for recordable/streamable unlock sounds and requires addition setup to work)
-global obsDelay := 50 ; increase if not changing scenes in obs
+global obsDelay := 50 ; delay between hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control
 
 ; Reset Management
 global beforePauseDelay := 20 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
