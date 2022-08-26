@@ -1,4 +1,4 @@
-; v0.8
+; v1.0
 ; General settings
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene

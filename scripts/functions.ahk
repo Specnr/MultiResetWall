@@ -1,4 +1,4 @@
-; v0.8
+; v1.0
 
 SendLog(lvlText, msg, tickCount) {
   file := FileOpen("data/log.log", "a -rw")
