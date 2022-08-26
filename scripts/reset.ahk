@@ -109,12 +109,13 @@ ManageReset() {
         return
       } else if (state == "preview" && InStr(A_LoopReadLine, "%")) {
         loadPercent := StrSplit(StrSplit(A_LoopReadLine, ": ")[3], "%")[1]
-        if (loadPercent > previewLoadPercent && !FileExist(lockFile)) {
+        if (loadPercent > previewLoadPercent && !FileExist(lockFile) && !previewLoaded) {
           previewLoaded := true
+          SendLog(LOG_LEVEL_INFO, Format("Instance {1} {2}% loading finished", idx, previewLoadPercent), A_TickCount)
           ManageThisAffinity()
-        }
+        } else if !previewLoaded
+          SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent), A_TickCount)
         lastImportantLine := GetLineCount(logFile)
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent), A_TickCount)
       }
     }
     if (resetManagementTimeout > 0 && A_TickCount - start > resetManagementTimeout) {
