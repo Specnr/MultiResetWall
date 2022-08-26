@@ -8,4 +8,4 @@ test.ahk
 *.ops
 *.txt
 /data/*.json
-/media/*.*
+/media/*
