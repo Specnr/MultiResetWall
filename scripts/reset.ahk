@@ -40,6 +40,7 @@ OnMessage(MSG_RESET, "Reset")
 
 Reset() {
   if ((state == "resetting" && mode != "C") || state == "kill" || FileExist(killFile)) {
+    FileDelete, %holdFile%
     SendLog(LOG_LEVEL_INFO, Format("Instance {1} discarding reset management, state: {2}", idx, state), A_TickCount)
     return
   }

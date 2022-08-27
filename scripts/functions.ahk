@@ -380,6 +380,7 @@ ResetInstance(idx, bypassLock:=true) {
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
   if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
+    FileAppend,, %holdFile%
     SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx), A_TickCount)
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
