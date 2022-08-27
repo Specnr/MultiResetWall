@@ -76,7 +76,8 @@ These settings can be useful for optimizing performance, testing code, configuri
 Affinity is by far the most advanced section but can be used to fine tune performance of resetting and with good tuning can maybe increase instance count
 
 - affinityType: What kind of general affinity management do you want, this does not affect any override settings except -1. Options: No affinity management (N), Basic affinity management, resetting background instances have lower priority (B), Advanced affinity mangement, advanced priority system for wall resetting. Use with locking (A)
-- superHighThreadsOverride: Threads used for the instance you are currently playing or instances that are locked while fullscreen projector is focused. Default by macro math: total threads unless override is set
+- playThreadsOverride: Threads used for the instance you are currently playing. Default by macro math: total threads unless override is set
+- lockThreadsOverride: Threads used for instances that are locked while fullscreen projector is focused. Default by macro math: total threads unless override is set
 - highThreadsOverride: Threads used for instances loading the "dirt screen" while fullscreen projector is focused. Default by macro math: 95% of threads or total threads minus 2, whichever is higher unless override is set
 - midThreadsOverride: Threads used for instances loading a preview (previewBurstLength) after detecting it. Default by macro math: 80% of threads if advanced mode otherwise same as high unless override is set
 - lowThreadsOverride: Threads used for instances that have reached (previewLoadPercent) requirement or for any idle instances. Default by macro math: 70% of threads if advanced mode otherwise high unless override is set
@@ -88,12 +89,13 @@ Affinity is by far the most advanced section but can be used to fine tune perfor
 
 These are the OBS hotkey settings. If you want to use more than 9 instances or change the hotkeys that are used for OBS you can change these.
 
-- obsSceneControlType: What kind of hotkeys should the macro use for OBS scene control. Options: Numpad hotkeys 1-9 (N), Function hotkeys f13-f24, setup script in utils folder (F), Advanced key array, any keys you want, use the obsCustomKeyArray variable (A)
+- obsControl: What system the macro use for OBS scene control. Options: Numpad hotkeys 1-9 (N), Function hotkeys f13-f24, setup script in utils folder (F), Advanced key array, any keys you want, use the obsCustomKeyArray variable (ARR), Advanced scene switcher OBS plugin, requires extra setup but removes need for all scene switching hotkeys (ASS)
 - obsWallSceneKey: The key that is pressed when switching to the wall. All obs scene control types use wallSceneKey. Default: 'F12'
 - obsCustomKeyArray: Used with advanced key array setting. Add keys inside the brackets in quotes and separated by commas. The index of the key in the array corresponds to the scene that it will be used for. Default: empty
 - obsResetMediaKey: The key pressed when any instance is reset with sound. This can be used to play media sources in OBS. Default: none
 - obsLockMediaKey: The key pressed when any instance is locked with sound. This can be used to play media sources in OBS. Default: none
 - obsUnlockMediaKey: The key pressed when any instance is unlocked with sound. This can be used to play media sources in OBS. Default: none
+- obsDelay: The delay between a hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control. Default: 100
 
 ### Reset Management
 
@@ -104,6 +106,13 @@ These are values used by the reset manager scripts. They can have minor performa
 - manageResetAfter: Delay before starting reset management log reading loop. Too low might create delayed resets or previews that are not f3+esc paused. Default: 300
 - resetManagementLoopDelay: Buffer time for the loop that reads Minecraft logs to check for previews and loads. Lower might decrease pause latencies but increase cpu usage. Default: 70
 - doubleCheckUnexpectedLoads: If you plan to use the wall without World Preview mod you should disable this. If you reset right when an instance finishes loading it will detect the load and need to double check that there was just a reset. Default: True
+
+### Attempts
+
+The paths of the files used for counting attempts. This can make updating attempts through macro versions.
+
+- overallAttemptsFile: File path for overall attempt count. Default: "data/ATTEMPTS.txt"
+- dailyAttemptsFile: File path for session attempt count. Default: "data/ATTEMPTS_DAY.txt"
 
 ## Credit
 
