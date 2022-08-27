@@ -6,8 +6,6 @@ return
 #If WinActive("Minecraft") && (WinActive("ahk_exe javaw.exe") || WinActive("ahk_exe java.exe"))
   {
     *F5:: ExitWorld() ; Reset
-
-    ; *+^P:: NewCreativeWorld()
   }
 return
 
