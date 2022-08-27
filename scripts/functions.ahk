@@ -104,19 +104,22 @@ RunHide(Command)
 
 GetMcDir(pid)
 {
-  SendLog(LOG_LEVEL_INFO, Format("Getting mcdir from pid: {1}", pid), A_TickCount)
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
   if (InStr(rawOut, "--gameDir")) {
     strStart := RegExMatch(rawOut, "P)--gameDir (?:""(.+?)""|([^\s]+))", strLen, 1)
-    return SubStr(rawOut, strStart+10, strLen-10) . "\"
+    mcdir := SubStr(rawOut, strStart+10, strLen-10) . "\"
+    SendLog(LOG_LEVEL_INFO, Format("Got {1} from pid: {2}", mcdir, pid), A_TickCount)
+    return mcdir
   } else {
     strStart := RegExMatch(rawOut, "P)(?:-Djava\.library\.path=(.+?) )|(?:\""-Djava\.library.path=(.+?)\"")", strLen, 1)
     if (SubStr(rawOut, strStart+20, 1) == "=") {
       strLen -= 1
       strStart += 1
     }
-    return StrReplace(SubStr(rawOut, strStart+20, strLen-28) . ".minecraft\", "/", "\")
+    mcdir := StrReplace(SubStr(rawOut, strStart+20, strLen-28) . ".minecraft\", "/", "\")
+    SendLog(LOG_LEVEL_INFO, Format("Got {1} from pid: {2}", mcdir, pid), A_TickCount)
+    return mcdir
   }
 }
 
@@ -132,21 +135,24 @@ CheckOnePIDFromMcDir(proc, mcdir) {
 }
 
 GetPIDFromMcDir(mcdir) {
-  SendLog(LOG_LEVEL_INFO, Format("Getting PID from mcdir: {1}", mcdir), A_TickCount)
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
-    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
+    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1) {
+      SendLog(LOG_LEVEL_INFO, Format("Got PID: {1} from {2}", pid, mcdir), A_TickCount)
       return pid
+    }
   }
   ; Broader search if some people use java.exe or some other edge cases
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%java%""") {
-    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
+    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1) {
+      SendLog(LOG_LEVEL_INFO, Format("Got PID: {1} using boarder search from {2}", pid, mcdir), A_TickCount)
       return pid
+    }
   }
+  SendLog(LOG_LEVEL_ERROR, Format("Failed to get PID from {1}", mcdir), A_TickCount)
   return -1
 }
 
 GetInstanceTotal() {
-  SendLog(LOG_LEVEL_INFO, "Getting instance total", A_TickCount)
   idx := 1
   WinGet, all, list
   Loop, %all%
@@ -162,7 +168,6 @@ GetInstanceTotal() {
 }
 
 GetInstanceNumberFromMcDir(mcdir) {
-  SendLog(LOG_LEVEL_INFO, Format("Getting instance number from mcdir: {1}", mcdir), A_TickCount)
   numFile := mcdir . "instanceNumber.txt"
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
@@ -182,20 +187,21 @@ GetInstanceNumberFromMcDir(mcdir) {
       SendLog(LOG_LEVEL_WARNING, Format("Instance {1} instanceNumber.txt contained either a number too high or nothing but was corrected by user", num), A_TickCount)
     }
   }
+  SendLog(LOG_LEVEL_INFO, Format("Got instance number {1} from: {2}", num, mcdir), A_TickCount)
   return num
 }
 
 GetMcDirFromFile(idx) {
-  SendLog(LOG_LEVEL_INFO, Format("Getting mcdir from cache for {1}", idx), A_TickCount)
   Loop, Read, data/mcdirs.txt
   {
     split := StrSplit(A_LoopReadLine,"~")
     if (idx == split[1]) {
       mcdir := split[2]
       StringReplace,mcdir,mcdir,`n,,A
-      if FileExist(mcdir)
+      if FileExist(mcdir) {
+        SendLog(LOG_LEVEL_INFO, Format("Got {1} from cache for instance {2}", mcdir, idx), A_TickCount)
         return mcdir
-      else {
+      } else {
         FileDelete, data/mcdirs.txt
         Reload
       }
@@ -205,14 +211,14 @@ GetMcDirFromFile(idx) {
 
 GetAllPIDs()
 {
-  SendLog(LOG_LEVEL_INFO, "Getting all PIDs", A_TickCount)
+  SendLog(LOG_LEVEL_INFO, "Getting all Minecraft directory and PID data", A_TickCount)
   instances := GetInstanceTotal()
   if !instances {
     MsgBox, No open instances detected.
     SendLog(LOG_LEVEL_WARNING, "No open instances detected", A_TickCount)
     Return
   }
-  SendLog(LOG_LEVEL_INFO, Format("Instance total is {1}", instances), A_TickCount)
+  SendLog(LOG_LEVEL_INFO, Format("{1} Instances detected", instances), A_TickCount)
   ; If there are more/less instances than usual, rebuild cache
   if hasMcDirCache && GetLineCount("data/mcdirs.txt") != instances {
     FileDelete,data/mcdirs.txt
@@ -298,7 +304,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
-    if (windowMode == "F") {
+    if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
@@ -351,7 +357,7 @@ ExitWorld()
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
     if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
+      ControlSend,, {Blind}{Esc}{F1}{Esc}{F1}, ahk_pid %pid%
     else
       ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
     nextInst := -1
@@ -374,6 +380,7 @@ ResetInstance(idx, bypassLock:=true) {
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
   if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
+    FileAppend,, %holdFile%
     SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx), A_TickCount)
     pid := PIDs[idx]
     rmpid := RM_PIDs[idx]
@@ -453,7 +460,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   }
   if affinityChange {
     pid := PIDs[idx]
-    SetAffinity(pid, superHighBitMask)
+    SetAffinity(pid, lockBitMask)
   }
 }
 
@@ -601,23 +608,23 @@ VerifyInstance(mcdir, pid, idx) {
       srigt := true
   }
   if !atum {
-    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases", moddir), A_TickCount)
-    MsgBox, Directory %moddir% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases
+    SendLog(LOG_LEVEL_ERROR, Format("Instance {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases. (In directory: {2})", idx, moddir), A_TickCount)
+    MsgBox, Instance %idx% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases.`n(In directory: %moddir%)
   }
   if !wp {
-    SendLog(LOG_LEVEL_ERROR, Format("Directory {1} missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases", moddir), A_TickCount)
-    MsgBox, Directory %moddir% missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases
+    SendLog(LOG_LEVEL_ERROR, Format("Instance {1} missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases. (In directory: {2})", idx, moddir), A_TickCount)
+    MsgBox, Instance %idx% missing recommended mod: World Preview. Macro will likely not work. Download: https://github.com/VoidXWalker/WorldPreview/releases.`n(In directory: %moddir%)
   }
   if !standardSettings {
-    SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases", moddir), A_TickCount)
-    MsgBox, Directory %moddir% missing highly recommended mod: standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases
+    SendLog(LOG_LEVEL_WARNING, Format("Instance {1} missing highly recommended mod standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases. (In directory: {2})", idx, moddir), A_TickCount)
+    MsgBox, Instance %idx% missing highly recommended mod: standardsettings. Download: https://github.com/KingContaria/StandardSettings/releases.`n(In directory: %moddir%)
     if InStr(settings, "pauseOnLostFocus:true") {
       MsgBox, Instance %idx% has required disabled setting pauseOnLostFocus enabled. Please disable it with f3+p and THEN press OK to continue
-      SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. User was informed", optionsFile), A_TickCount)
+      SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had pauseOnLostFocus set true, macro requires it false. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
     }
     if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
       MsgBox, Instance %idx% missing required hotkey: Create New World. Please set it in your hotkeys and THEN press OK to continue
-      SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile), A_TickCount)
+      SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
       resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")
       SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile), A_TickCount)
     } else if (atum) {
@@ -627,7 +634,7 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
       MsgBox, Instance %idx% missing highly recommended hotkey: Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-      SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set. User was informed", optionsFile), A_TickCount)
+      SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
       lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")
       SendLog(LOG_LEVEL_INFO, Format("Found leave preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile), A_TickCount)
       lpkeys[idx] := lpKey
@@ -638,7 +645,7 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
       MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Fullscreen key set. User was informed", optionsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
       fsKey := CheckOptionsForValue(optionsFile, "key_key.fullscreen", "F11")
       SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, optionsFile), A_TickCount)
       fsKeys[idx] := fsKey
@@ -660,16 +667,16 @@ VerifyInstance(mcdir, pid, idx) {
       ssettings := StrReplace(ssettings, "fullscreen:true", "fullscreen:false")
       FileDelete, %standardSettingsFile%
       FileAppend, %ssettings%, %standardSettingsFile%
-      SendLog(LOG_LEVEL_WARNING, Format("File {1} had fullscreen set true, macro requires it false. Automatically fixed", standardSettingsFile), A_TickCount)
+      SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had fullscreen set true, macro requires it false. Automatically fixed. (In file: {2})", idx, standardSettingsFile), A_TickCount)
     }
     if InStr(ssettings, "pauseOnLostFocus:true") {
       ssettings := StrReplace(ssettings, "pauseOnLostFocus:true", "pauseOnLostFocus:false")
       FileDelete, %standardSettingsFile%
       FileAppend, %ssettings%, %standardSettingsFile%
-      SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile), A_TickCount)
+      SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed. (In file: {2})", idx, standardSettingsFile), A_TickCount)
     }
     if (RegExMatch(ssettings, "f1:.+", regexVar)) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found in file {3}, will be used for ghost pie and instance join", idx, regexVar["value"], standardSettingsFile), A_TickCount)
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found. This will be used for ghost pie and instance join. (In file: {3})", idx, regexVar, standardSettingsFile), A_TickCount)
       f1States[idx] := regexVar == "f1:true" ? 2 : 1
     } else {
       f1States[idx] := 0
@@ -677,17 +684,17 @@ VerifyInstance(mcdir, pid, idx) {
     Loop, 1 {
       if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
         Loop, 1 {
-          MsgBox, 4, Create New World Key, File %standardSettingsFile% has no Create New World hotkey set. Would you like to set this back to default (F6)?
+          MsgBox, 4, Create New World Key, Instance %idx% has no Create New World hotkey set. Would you like to set this back to default (F6)?`n(In file: %standardSettingsFile%)
           IfMsgBox No
             break
           ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
           resetKeys[idx] := "F6"
-          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Create New World key set and chose to let it be automatically set to f6", standardSettingsFile), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Create New World key set and chose to let it be automatically set to f6. (In file: {2})", idx, standardSettingsFile), A_TickCount)
           break 2
         }
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", standardSettingsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no Create New World key set. (In file: {2})", idx, standardSettingsFile), A_TickCount)
       } else if (InStr(ssettings, "key_Create New World:") && atum) {
         resetKey := CheckOptionsForValue(standardSettingsFile, "key_Create New World", "F6")
         if resetKey {
@@ -695,14 +702,14 @@ VerifyInstance(mcdir, pid, idx) {
           resetKeys[idx] := resetKey
           break
         } else {
-          SendLog(LOG_LEVEL_WARNING, Format("Failed to read reset key from {1} instance {2}, trying to read from options.txt", standardSettingsFile, idx), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Failed to read reset key for instance {1}, trying to read from {2} instead of {3}", idx, optionsFile, standardSettingsFile), A_TickCount)
           resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")
           if resetKey {
             SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile), A_TickCount)
             resetKeys[idx] := resetKey
             break
           } else {
-            SendLog(LOG_LEVEL_ERROR, Format("Failed to find reset key in {1} and {2}, falling back to 'F6'", standardSettingsFile, optionsFile), A_TickCount)
+            SendLog(LOG_LEVEL_ERROR, Format("Failed to find reset key in instance {1}, falling back to 'F6'. (Checked files: {2} and {3})", idx, standardSettingsFile, optionsFile), A_TickCount)
             resetKeys[idx] := "F6"
             break
           }
@@ -710,13 +717,13 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
         Loop, 1 {
           MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Create New World key set. User was informed", optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
           resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")
           SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile), A_TickCount)
           resetKeys[idx] := resetKey
           break 2
         }
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Create New World key set", optionsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no Create New World key set. (In file: {2})", idx, optionsFile), A_TickCount)
       } else if (InStr(settings, "key_Create New World:") && atum) {
         resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")
         if resetKey {
@@ -724,12 +731,12 @@ VerifyInstance(mcdir, pid, idx) {
           resetKeys[idx] := resetKey
           break
         } else {
-          SendLog(LOG_LEVEL_ERROR, Format("Failed to find reset key in {1}, falling back to 'F6'", optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Failed to find reset key in instance {1}, falling back to 'F6'. (In file: {2})", idx, optionsFile), A_TickCount)
           resetKeys[idx] := "F6"
           break
         }
       } else if (atum) {
-        MsgBox, No Create New World hotkey found even though you have the mod, you likely have an outdated version. Please update to version 1.1.0+
+        MsgBox, No Create New World hotkey found even though you have the mod, you likely have an outdated version. Please update to the latest version.
         SendLog(LOG_LEVEL_ERROR, Format("No Create New World hotkey found for instance {1} even though mod is installed. Using 'f6' to avoid reset manager errors", idx), A_TickCount)
         resetKeys[idx] := "F6"
         break
@@ -742,17 +749,17 @@ VerifyInstance(mcdir, pid, idx) {
     Loop, 1 {
       if (InStr(ssettings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         Loop, 1 {
-          MsgBox, 4, Leave Preview Key, File %standardSettingsFile% has no Leave Preview hotkey set. Would you like to set this back to default (h)?
+          MsgBox, 4, Leave Preview Key, Instance %idx% has no Leave Preview hotkey set. Would you like to set this back to default (h)?`n(In file: %standardSettingsFile%)
           IfMsgBox No
           break
           ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
           lpKeys[idx] := "h"
-          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Leave Preview key set and chose to let it be automatically set to 'h'", standardSettingsFile), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Leave Preview key set and chose to let it be automatically set to 'h'. (In file: {2})", idx, standardSettingsFile), A_TickCount)
           break 2
         }
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Leave Preview key set", standardSettingsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no Leave Preview key set. (In file: {2})", idx, standardSettingsFile), A_TickCount)
       } else if (InStr(ssettings, "key_Leave Preview:") && wp) {
         lpKey := CheckOptionsForValue(standardSettingsFile, "key_Leave Preview", "h")
         if lpKey {
@@ -760,14 +767,14 @@ VerifyInstance(mcdir, pid, idx) {
           lpKeys[idx] := lpKey
           break
         } else {
-          SendLog(LOG_LEVEL_WARNING, Format("Failed to read Leave Preview key from {1} instance {2}, trying to read from options.txt", standardSettingsFile, idx), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Failed to read Leave Preview key for instance {1}, trying to read from {2} instead of {3}", idx, optionsFile, standardSettingsFile), A_TickCount)
           lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")
           if lpKey {
             SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile), A_TickCount)
             lpKeys[idx] := lpKey
             break
           } else {
-            SendLog(LOG_LEVEL_ERROR, Format("Failed to find Leave Preview key in {1} and {2}, falling back to 'h'", standardSettingsFile, optionsFile), A_TickCount)
+            SendLog(LOG_LEVEL_ERROR, Format("Failed to find Leave Preview key in instance {1}, falling back to 'h'. (Checked files: {2} and {3})", idx, standardSettingsFile, optionsFile), A_TickCount)
             lpKeys[idx] := "h"
             break
           }
@@ -775,13 +782,13 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         Loop, 1 {
           MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("File {1} had no Leave Preview key set. User was informed", optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
           lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")
           SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile), A_TickCount)
           lpKeys[idx] := lpKey
           break 2
         }
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Leave Preview key set", optionsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no Leave Preview key set. (In file: {2})", idx, optionsFile), A_TickCount)
       } else if (InStr(settings, "key_Leave Preview:") && wp) {
         lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")
         if lpKey {
@@ -789,7 +796,7 @@ VerifyInstance(mcdir, pid, idx) {
           lpKeys[idx] := lpKey
           break
         } else {
-          SendLog(LOG_LEVEL_ERROR, Format("Failed to find Leave Preview key in {1}, falling back to 'h'", optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Failed to find Leave Preview key in instance {1}, falling back to 'h'. (In file: {2})", idx, optionsFile), A_TickCount)
           lpKeys[idx] := "h"
           break
         }
@@ -807,17 +814,17 @@ VerifyInstance(mcdir, pid, idx) {
     Loop, 1 {
       if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
         Loop, 1 {
-          MsgBox, 4, Fullscreen Key, File %standardSettingsFile% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?
+          MsgBox, 4, Fullscreen Key, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?`n(In file: %standardSettingsFile%)
           IfMsgBox No
             break
           ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
           fsKeys[idx] := "F11"
-          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'", standardSettingsFile), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'. (In file: {2})", idx, standardSettingsFile), A_TickCount)
           break 2
         }
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no Fullscreen key set", standardSettingsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no Fullscreen key set. (In file: {2})", idx, standardSettingsFile), A_TickCount)
       } else {
         fsKey := CheckOptionsForValue(standardSettingsFile, "key_key.fullscreen", "F11")
         SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, standardSettingsFile), A_TickCount)
@@ -828,17 +835,17 @@ VerifyInstance(mcdir, pid, idx) {
     Loop, 1 {
       if (InStr(ssettings, "key_key.command:key.keyboard.unknown")) {
         Loop, 1 {
-          MsgBox, 4, Command Key, File %standardSettingsFile% missing recommended command hotkey. Would you like to set this back to default (/)?
+          MsgBox, 4, Command Key, Instance %idx% missing recommended command hotkey. Would you like to set this back to default (/)?`n(In file: %standardSettingsFile%)
           IfMsgBox No
             break
           ssettings := StrReplace(ssettings, "key_key.command:key.keyboard.unknown", "key_key.command:key.keyboard.slash")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
           commandkeys[idx] := "/"
-          SendLog(LOG_LEVEL_WARNING, Format("File {1} had no command key set and chose to let it be automatically set to '/'", standardSettingsFile), A_TickCount)
+          SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no command key set and chose to let it be automatically set to '/'. (In file: {2})", idx, standardSettingsFile), A_TickCount)
           break 2
         }
-        SendLog(LOG_LEVEL_ERROR, Format("File {1} has no command key set", standardSettingsFile), A_TickCount)
+        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no command key set. (In file: {2})", idx, standardSettingsFile), A_TickCount)
       } else {
         commandkey := CheckOptionsForValue(standardSettingsFile, "key_key.command", "/")
         SendLog(LOG_LEVEL_INFO, Format("Found Command key: {1} for instance {2} from {3}", commandkey, idx, standardSettingsFile), A_TickCount)

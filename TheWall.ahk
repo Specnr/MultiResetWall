@@ -103,6 +103,8 @@ for i, mcdir in McDirectories {
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
 }
 
+SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i), A_TickCount)
+
 for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
 }
@@ -118,8 +120,10 @@ if audioGui {
 }
 
 WinGet, obsPid, PID, OBS
-if IsProcessElevated(obsPid) 
+if IsProcessElevated(obsPid) {
   MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
+  SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
+}
 
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
   Menu, Tray, Add, Delete Worlds, WorldBop
@@ -150,7 +154,7 @@ ExitSub:
       WinWaitClose, ahk_pid %pid%
     }
     for i, tmppid in PIDs {
-      SetAffinity(tmppid, superHighBitMask)
+      SetAffinity(tmppid, playBitMask)
     }
     DetectHiddenWindows, Off
   }
