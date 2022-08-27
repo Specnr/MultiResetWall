@@ -10,13 +10,13 @@ global widthMultiplier := 2.5 ; How wide your instances go to maximize visibilit
 global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
+global tinder := False ; Set to True if you want to use tinder-style bg resetting
 global theme := "custom" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 500 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
 global fullScreenDelay := 100 ; increse if fullscreening issues
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
-global tinder := False ; Set to True if you want to use tinder-style bg resetting
 
 
 ; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
