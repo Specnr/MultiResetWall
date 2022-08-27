@@ -100,8 +100,9 @@ for i, mcdir in McDirectories {
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
 }
+
+SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i), A_TickCount)
 
 for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
