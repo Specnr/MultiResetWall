@@ -150,7 +150,7 @@ ExitSub:
       WinWaitClose, ahk_pid %pid%
     }
     for i, tmppid in PIDs {
-      SetAffinity(tmppid, superHighBitMask)
+      SetAffinity(tmppid, playBitMask)
     }
     DetectHiddenWindows, Off
   }

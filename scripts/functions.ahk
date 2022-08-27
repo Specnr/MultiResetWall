@@ -453,7 +453,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   }
   if affinityChange {
     pid := PIDs[idx]
-    SetAffinity(pid, superHighBitMask)
+    SetAffinity(pid, lockBitMask)
   }
 }
 
