@@ -9,3 +9,4 @@ test.ahk
 *.txt
 /data/*.json
 /media/*
+settings.ahk
