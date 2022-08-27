@@ -118,8 +118,10 @@ if audioGui {
 }
 
 WinGet, obsPid, PID, OBS
-if IsProcessElevated(obsPid) 
+if IsProcessElevated(obsPid) {
   MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
+  SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
+}
 
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
   Menu, Tray, Add, Delete Worlds, WorldBop

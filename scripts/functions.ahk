@@ -104,19 +104,22 @@ RunHide(Command)
 
 GetMcDir(pid)
 {
-  SendLog(LOG_LEVEL_INFO, Format("Getting mcdir from pid: {1}", pid), A_TickCount)
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
   if (InStr(rawOut, "--gameDir")) {
     strStart := RegExMatch(rawOut, "P)--gameDir (?:""(.+?)""|([^\s]+))", strLen, 1)
-    return SubStr(rawOut, strStart+10, strLen-10) . "\"
+    mcdir := SubStr(rawOut, strStart+10, strLen-10) . "\"
+    SendLog(LOG_LEVEL_INFO, Format("Got {1} from pid: {2}", mcdir, pid), A_TickCount)
+    return mcdir
   } else {
     strStart := RegExMatch(rawOut, "P)(?:-Djava\.library\.path=(.+?) )|(?:\""-Djava\.library.path=(.+?)\"")", strLen, 1)
     if (SubStr(rawOut, strStart+20, 1) == "=") {
       strLen -= 1
       strStart += 1
     }
-    return StrReplace(SubStr(rawOut, strStart+20, strLen-28) . ".minecraft\", "/", "\")
+    mcdir := StrReplace(SubStr(rawOut, strStart+20, strLen-28) . ".minecraft\", "/", "\")
+    SendLog(LOG_LEVEL_INFO, Format("Got {1} from pid: {2}", mcdir, pid), A_TickCount)
+    return mcdir
   }
 }
 
@@ -132,21 +135,25 @@ CheckOnePIDFromMcDir(proc, mcdir) {
 }
 
 GetPIDFromMcDir(mcdir) {
-  SendLog(LOG_LEVEL_INFO, Format("Getting PID from mcdir: {1}", mcdir), A_TickCount)
+  SendLog(LOG_LEVEL_INFO, Format("Got PID: {1} from {2}", pid, mcdir), A_TickCount)
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%jdk%javaw.exe%""") {
-    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
+    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1) {
+      SendLog(LOG_LEVEL_INFO, Format("Got PID: {1} from {2}", pid, mcdir), A_TickCount)
       return pid
+    }
   }
   ; Broader search if some people use java.exe or some other edge cases
   for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ExecutablePath like ""%java%""") {
-    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1)
+    if ((pid := CheckOnePIDFromMcDir(proc, mcdir)) != -1) {
+      SendLog(LOG_LEVEL_INFO, Format("Got PID: {1} from {2} using broader search", pid, mcdir), A_TickCount)
       return pid
+    }
   }
+  SendLog(LOG_LEVEL_ERROR, Format("Failed to get PID from {1}", mcdir), A_TickCount)
   return -1
 }
 
 GetInstanceTotal() {
-  SendLog(LOG_LEVEL_INFO, "Getting instance total", A_TickCount)
   idx := 1
   WinGet, all, list
   Loop, %all%
@@ -162,7 +169,6 @@ GetInstanceTotal() {
 }
 
 GetInstanceNumberFromMcDir(mcdir) {
-  SendLog(LOG_LEVEL_INFO, Format("Getting instance number from mcdir: {1}", mcdir), A_TickCount)
   numFile := mcdir . "instanceNumber.txt"
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
@@ -182,20 +188,21 @@ GetInstanceNumberFromMcDir(mcdir) {
       SendLog(LOG_LEVEL_WARNING, Format("Instance {1} instanceNumber.txt contained either a number too high or nothing but was corrected by user", num), A_TickCount)
     }
   }
+  SendLog(LOG_LEVEL_INFO, Format("Got instance number {1} from: {2}", num, mcdir), A_TickCount)
   return num
 }
 
 GetMcDirFromFile(idx) {
-  SendLog(LOG_LEVEL_INFO, Format("Getting mcdir from cache for {1}", idx), A_TickCount)
   Loop, Read, data/mcdirs.txt
   {
     split := StrSplit(A_LoopReadLine,"~")
     if (idx == split[1]) {
       mcdir := split[2]
       StringReplace,mcdir,mcdir,`n,,A
-      if FileExist(mcdir)
+      if FileExist(mcdir) {
+        SendLog(LOG_LEVEL_INFO, Format("Got {1} from cache for instance {2}", mcdir, idx), A_TickCount)
         return mcdir
-      else {
+      } else {
         FileDelete, data/mcdirs.txt
         Reload
       }
@@ -669,7 +676,7 @@ VerifyInstance(mcdir, pid, idx) {
       SendLog(LOG_LEVEL_WARNING, Format("File {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed", standardSettingsFile), A_TickCount)
     }
     if (RegExMatch(ssettings, "f1:.+", regexVar)) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found in file {3}, will be used for ghost pie and instance join", idx, regexVar["value"], standardSettingsFile), A_TickCount)
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found in file {3}, will be used for ghost pie and instance join", idx, regexVar, standardSettingsFile), A_TickCount)
       f1States[idx] := regexVar == "f1:true" ? 2 : 1
     } else {
       f1States[idx] := 0
