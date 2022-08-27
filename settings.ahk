@@ -30,7 +30,7 @@ global highThreadsOverride := 16 ; Thread count for instances on the 0% dirt scr
 global midThreadsOverride := 14 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
 global lowThreadsOverride := 6 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement and all idle instances
 global bgLoadThreadsOverride := 6 ; Thread count for loading instances, and locked instances in bg
-global previewBurstLength := 550 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
+global previewBurstLength := 600 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
 global previewLoadPercent := 10 ; The percentage of world gen that must be reached before lowering to low
 
 ; OBS
