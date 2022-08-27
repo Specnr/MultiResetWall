@@ -90,6 +90,8 @@ for i, mcdir in McDirectories {
     FileDelete, %kill%
   if FileExist(preview)
     FileDelete, %preview%
+  ControlClick, x0 y0, ahk_pid %pid%,, RIGHT
+  WinRestore, ahk_pid %pid%
   if (windowMode == "B") {
     WinSet, Style, -0xC40000, ahk_pid %pid%
     WinSet, ExStyle, -0x00000200, ahk_pid %pid%
