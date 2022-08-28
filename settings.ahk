@@ -10,13 +10,13 @@ global widthMultiplier := 2.5 ; How wide your instances go to maximize visibilit
 global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
+global tinder := False ; Set to True if you want to use tinder-style bg resetting
 global theme := "custom" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 500 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
 global fullScreenDelay := 100 ; increse if fullscreening issues
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
-global tinder := False ; Set to True if you want to use tinder-style bg resetting
 
 
 ; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
@@ -43,7 +43,7 @@ global obsUnlockMediaKey := "Numpad3" ; Key pressed on any unlock instance with 
 global obsDelay := 50 ; delay between hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control
 
 ; Reset Management
-global beforePauseDelay := 20 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
+global beforePauseDelay := 10 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
 global resetManagementTimeout := -1 ; Milliseconds that can pass before reset manager gives up. Too low might leave instances unpaused. Default (-1, don't timeout)
 global manageResetAfter := 300 ; Delay before starting reset management log reading loop. Default (300) likely fine
 global resetManagementLoopDelay := 70 ; Buffer time between log lines check in reset management loop. Lowering will decrease possible pause latencies but increase cpu usage of reset managers. Default (70) likely fine
