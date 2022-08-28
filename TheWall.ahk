@@ -62,7 +62,6 @@ SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
 
 SetTheme(theme)
 GetAllPIDs()
-SetTitles()
 
 for i, mcdir in McDirectories {
   pid := PIDs[i]
@@ -108,6 +107,8 @@ for i, mcdir in McDirectories {
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
 }
+
+SetTitles()
 
 SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i), A_TickCount)
 

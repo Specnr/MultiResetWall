@@ -19,7 +19,7 @@ global fullScreenDelay := 100 ; increse if fullscreening issues
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
 
-; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
+; Super advanced settings (Read about these settings on the README before changing)
 
 ; Affinity
 ; -1 == use macro math to determine thread counts
