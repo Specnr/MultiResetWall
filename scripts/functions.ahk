@@ -357,7 +357,7 @@ ExitWorld()
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
     if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{Esc}{F1}{Esc}{F1}, ahk_pid %pid%
+      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
     else
       ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
     nextInst := -1
