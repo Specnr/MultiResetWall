@@ -17,7 +17,8 @@
    "push-to-talk":false,
    "push-to-talk-delay":0,
    "settings":{
-      "window":"CHANGE"
+      "window":"CHANGE",
+      "priority":2
    },
    "sync":0,
    "versioned_id":"CHANGE",
