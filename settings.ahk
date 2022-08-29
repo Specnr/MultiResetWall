@@ -15,7 +15,7 @@ global theme := "default" ; the name of the folder you wish to use as your macro
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
-global fullScreenDelay := 100 ; increase if fullscreening issues
+global fullScreenDelay := 100 ; increse if fullscreening issues
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
 
@@ -40,7 +40,7 @@ global obsCustomKeyArray := [] ; Must be used with advanced array control type. 
 global obsResetMediaKey := "" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
 global obsLockMediaKey := "" ; Key pressed on any lock instance with sound (used for playing lock media file in obs for recordable/streamable lock sounds and requires addition setup to work)
 global obsUnlockMediaKey := "" ; Key pressed on any unlock instance with sound (used for playing unlock media file in obs for recordable/streamable unlock sounds and requires addition setup to work)
-global obsDelay := 100 ; delay between hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control
+global obsDelay := 50 ; delay between hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control
 
 ; Reset Management
 global beforePauseDelay := 0 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
