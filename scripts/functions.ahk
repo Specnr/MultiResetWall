@@ -301,9 +301,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
+    WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    WinMinimize, Fullscreen Projector
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -360,6 +360,7 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
+    WinRestore, ahk_pid %pid%
     nextInst := -1
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
@@ -375,11 +376,12 @@ ExitWorld()
   }
 }
 
-ResetInstance(idx, bypassLock:=true) {
+ResetInstance(idx, bypassLock:=true, extraProt:=0) {
   holdFile := McDirectories[idx] . "hold.tmp"
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
-  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProtection + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
+  spawnProt := spawnProtection + extraProt
+  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProt + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
     FileAppend,, %holdFile%
     SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx), A_TickCount)
     pid := PIDs[idx]
@@ -423,7 +425,7 @@ FocusReset(focusInstance, bypassLock:=false) {
   loop, %instances% {
     if (A_Index = focusInstance || locked[A_Index])
       Continue
-    ResetInstance(A_Index)
+    ResetInstance(A_Index,, spawnProtection)
   }
   if !locked[focusInstance]
     LockInstance(focusInstance, false)
