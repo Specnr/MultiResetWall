@@ -301,9 +301,9 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
+    WinMinimize, Fullscreen Projector
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    WinMinimize, Fullscreen Projector
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -360,6 +360,7 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
+    WinRestore, ahk_pid %pid%
     nextInst := -1
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
