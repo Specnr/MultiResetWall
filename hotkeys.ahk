@@ -20,7 +20,7 @@ return
 }
 return
 
-#IfWinActive, Fullscreen Projector
+#IfWinActive, Full-screen Projector
   {
     *E::ResetInstance(MousePosToInstNumber())
     *R::SwitchInstance(MousePosToInstNumber())
