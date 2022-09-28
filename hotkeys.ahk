@@ -20,73 +20,73 @@ return
 }
 return
 
-#IfWinActive, Fullscreen Projector
-  {
-    *E Up::ResetInstance(MousePosToInstNumber())
-    *E::ResetInstance(MousePosToInstNumber(), false) ; drag reset to ignore locked instances
-    *R::SwitchInstance(MousePosToInstNumber())
-    *F::FocusReset(MousePosToInstNumber())
-    *T::ResetAll()
-    +LButton::LockInstance(MousePosToInstNumber()) ; lock an instance so the above "blanket reset" functions don't reset it
+#If WinActive("Fullscreen Projector") || WinActive("Full-screen Projector")
+{
+  *E Up::ResetInstance(MousePosToInstNumber())
+  *E::ResetInstance(MousePosToInstNumber(), false) ; drag reset to ignore locked instances
+  *R::SwitchInstance(MousePosToInstNumber())
+  *F::FocusReset(MousePosToInstNumber())
+  *T::ResetAll()
+  +LButton::LockInstance(MousePosToInstNumber()) ; lock an instance so the above "blanket reset" functions don't reset it
 
-    ; Optional (Remove semicolon ';' and set a hotkey)
-    ; ::PlayNextLock()
+  ; Optional (Remove semicolon ';' and set a hotkey)
+  ; ::PlayNextLock()
 
-    ; Reset keys (1-9)
-    *1::
-      ResetInstance(1)
-    return
-    *2::
-      ResetInstance(2)
-    return
-    *3::
-      ResetInstance(3)
-    return
-    *4::
-      ResetInstance(4)
-    return
-    *5::
-      ResetInstance(5)
-    return
-    *6::
-      ResetInstance(6)
-    return
-    *7::
-      ResetInstance(7)
-    return
-    *8::
-      ResetInstance(8)
-    return
-    *9::
-      ResetInstance(9)
-    return
+  ; Reset keys (1-9)
+*1::
+  ResetInstance(1)
+return
+*2::
+  ResetInstance(2)
+return
+*3::
+  ResetInstance(3)
+return
+*4::
+  ResetInstance(4)
+return
+*5::
+  ResetInstance(5)
+return
+*6::
+  ResetInstance(6)
+return
+*7::
+  ResetInstance(7)
+return
+*8::
+  ResetInstance(8)
+return
+*9::
+  ResetInstance(9)
+return
 
-    ; Switch to instance keys (Shift + 1-9)
-    *+1::
-      SwitchInstance(1)
-    return
-    *+2::
-      SwitchInstance(2)
-    return
-    *+3::
-      SwitchInstance(3)
-    return
-    *+4::
-      SwitchInstance(4)
-    return
-    *+5::
-      SwitchInstance(5)
-    return
-    *+6::
-      SwitchInstance(6)
-    return
-    *+7::
-      SwitchInstance(7)
-    return
-    *+8::
-      SwitchInstance(8)
-    return
-    *+9::
-      SwitchInstance(9)
-    return
-  }
+; Switch to instance keys (Shift + 1-9)
+*+1::
+  SwitchInstance(1)
+return
+*+2::
+  SwitchInstance(2)
+return
+*+3::
+  SwitchInstance(3)
+return
+*+4::
+  SwitchInstance(4)
+return
+*+5::
+  SwitchInstance(5)
+return
+*+6::
+  SwitchInstance(6)
+return
+*+7::
+  SwitchInstance(7)
+return
+*+8::
+  SwitchInstance(8)
+return
+*+9::
+  SwitchInstance(9)
+return
+}
