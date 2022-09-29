@@ -446,12 +446,30 @@ ResetAll(bypassLock:=false) {
   }
 }
 
+GetRandomLockNumber() {
+  if (themeLockCount == -1) {
+    themeLockCount := 0
+    Loop, Files, %A_ScriptDir%\media\lock*.png
+    {
+      themeLockCount += 1
+    }
+  }
+  SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", themeLockCount), A_TickCount)
+  Random, randLock, 1, %themeLockCount%
+  return randLock
+}
+
 LockInstance(idx, sound:=true, affinityChange:=true) {
   if (!idx || (idx > rows * cols))
     return
   locked[idx] := true
   lockDest := McDirectories[idx] . "lock.png"
-  FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
+  randLock := GetRandomLockNumber()
+  SendLog(LOG_LEVEL_INFO, Format("Randomly picked lock{1}.png to send as lock", randLock), A_TickCount)
+  source := A_ScriptDir . "\media\lock" . randLock . ".png"
+  If !FileExist(source)
+    source := A_ScriptDir . "\media\lock.png"
+  FileCopy, %source%, %lockDest%, 1
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
