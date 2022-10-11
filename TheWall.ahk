@@ -5,7 +5,7 @@
 #NoEnv
 #SingleInstance Force
 #Include %A_ScriptDir%\scripts\functions.ahk
-#Include settings.ahk
+#Include settings-Mach.ahk
 
 SetKeyDelay, 0
 SetWinDelay, 1
@@ -109,7 +109,6 @@ for i, mcdir in McDirectories {
   }
   if (widthMultiplier) {
     pid := PIDs[i]
-    WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   } else {
     WinMaximize, ahk_pid %pid%
@@ -192,4 +191,4 @@ CheckScripts:
     CountAttempts()
 return
 
-#Include hotkeys.ahk
+#Include hotkeys-Mach.ahk

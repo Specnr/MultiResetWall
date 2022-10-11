@@ -296,24 +296,24 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     SetAffinities(idx)
     if !locked[idx]
       LockInstance(idx, False, False)
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
     WinMinimize, Full-screen Projector
+    if unpauseOnSwitch
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
-    WinMinimize, Fullscreen Projector
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+    Send {RButton} ; Make sure the window is activated
+    if (f1States[idx] == 2)
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-    Send {LButton} ; Make sure the window is activated
     if (obsControl != "ASS") {
       if (obsControl == "N")
         obsKey := "Numpad" . idx

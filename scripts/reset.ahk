@@ -2,7 +2,7 @@
 
 #NoEnv
 #NoTrayIcon
-#Include settings.ahk
+#Include settings-Mach.ahk
 #Include %A_ScriptDir%\functions.ahk
 #SingleInstance, off
 
