@@ -29,12 +29,12 @@ global f1States := []
 global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global playThreads    := playThreadsOverride    > 0 ? playThreadsOverride    : threadCount ; total threads unless override
-global lockThreads    := lockThreadsOverride    > 0 ? lockThreadsOverride    : threadCount ; total threads unless override
-global highThreads    := highThreadsOverride    > 0 ? highThreadsOverride    : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
-global midThreads     := midThreadsOverride     > 0 ? midThreadsOverride     : affinityType == "A" ? Ceil(threadCount * 0.8)  : highThreads ; 80% if advanced otherwise high unless override
-global lowThreads     := lowThreadsOverride     > 0 ? lowThreadsOverride     : affinityType != "N" ? Ceil(threadCount * 0.7)  : threadCount ; 70% if advanced otherwise high unless override
-global bgLoadThreads  := bgLoadThreadsOverride  > 0 ? bgLoadThreadsOverride  : affinityType != "N" ? Ceil(threadCount * 0.4)  : threadCount ; 40% unless override or none
+global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
+global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : threadCount ; total threads unless override
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
 
 global playBitMask := GetBitMask(playThreads)
 global lockBitMask := GetBitMask(lockThreads)
@@ -54,11 +54,17 @@ global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 global hasMcDirCache := FileExist("data/mcdirs.txt")
+global themeLockCount := -1
 
 FileDelete, data/log.log
 FileDelete, %dailyAttemptsFile%
 
 SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
+
+Loop, Files, %A_ScriptDir%\media\lock*.png
+{
+  FileDelete, %A_LoopFileFullPath%
+}
 
 SetTheme(theme)
 GetAllPIDs()
@@ -90,19 +96,22 @@ for i, mcdir in McDirectories {
   if FileExist(preview)
     FileDelete, %preview%
   WinGetTitle, winTitle, ahk_pid %pid%
-  if (widthMultiplier) {
-    pid := PIDs[i]
+  if !InStr(winTitle, " - ") {
+    ControlClick, x0 y0, ahk_pid %pid%,, RIGHT
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    WinMinimize, ahk_pid %pid%
     WinRestore, ahk_pid %pid%
-    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   }
   if (windowMode == "B") {
     WinSet, Style, -0xC40000, ahk_pid %pid%
-    WinSet, ExStyle, -0x00000200, ahk_pid %pid%
+  } else {
+    WinSet, Style, +0xC40000, ahk_pid %pid%
   }
-  if !InStr(winTitle, " - ") {
-    ControlClick, x0 y0, ahk_pid %pid%,, Right
-    WinMinimize, ahk_pid %pid%
-    WinRestore, ahk_pid %pid%
+  if (widthMultiplier) {
+    pid := PIDs[i]
+    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+  } else {
+    WinMaximize, ahk_pid %pid%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
@@ -129,7 +138,7 @@ if audioGui {
 WinGet, obsPid, PID, OBS
 if IsProcessElevated(obsPid) {
   MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
-  SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
+    SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
 }
 
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")

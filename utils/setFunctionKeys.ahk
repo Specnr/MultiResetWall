@@ -14,9 +14,9 @@ Loop, %all%
     instances++
 }
 
-MsgBox, 4, Instance Count, The script detected %instances% instances, if this is wrong press no and double check all your instances are open
+MsgBox, 4, Instance Count, The script detected %instances% instances. If this is wrong press no and double check all your instances are open
 IfMsgBox No
-  ExitApp
+  InputBox, instances, How many instances, How many instances will you be running?
 MsgBox, After pressing OK scroll through your OBS hotkeys and in order from 1 to %instances% select the Switch to scene hotkey box and press 'f' for all of them.
 
 SendNextKey() {

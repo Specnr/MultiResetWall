@@ -2,11 +2,11 @@
 
 SendLog(lvlText, msg, tickCount) {
   file := FileOpen("data/log.log", "a -rw")
-    if (!IsObject(file)) {
-      logQueue := Func("SendLog").Bind(lvlText, msg, tickCount)
-      SetTimer, %logQueue%, -10
-      return
-    }
+  if (!IsObject(file)) {
+    logQueue := Func("SendLog").Bind(lvlText, msg, tickCount)
+    SetTimer, %logQueue%, -10
+    return
+  }
   file.Close()
   FileAppend, [%tickCount%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
 }
@@ -296,22 +296,24 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     SetAffinities(idx)
     if !locked[idx]
       LockInstance(idx, False, False)
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
+    WinMinimize, Fullscreen Projector
+    WinMinimize, Full-screen Projector
+    if unpauseOnSwitch
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
-    WinMinimize, Fullscreen Projector
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+    Send {RButton} ; Make sure the window is activated
+    if (f1States[idx] == 2)
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-    Send {LButton} ; Make sure the window is activated
     if (obsControl != "ASS") {
       if (obsControl == "N")
         obsKey := "Numpad" . idx
@@ -323,6 +325,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       Sleep, %obsDelay%
       Send {%obsKey% up}
     }
+  } else if smartSwitch {
+    nextInst := FindBypassInstance()
+    if (nextInst > 0)
+      SwitchInstance(nextInst, false)
   } else {
     if !locked[idx]
       LockInstance(idx, False)
@@ -338,7 +344,7 @@ GetActiveInstanceNum() {
   return -1
 }
 
-ExitWorld()
+ExitWorld(nextInst:=-1)
 {
   idx := GetActiveInstanceNum()
   if (idx > 0) {
@@ -356,14 +362,10 @@ ExitWorld()
     killFile := McDirectories[idx] . "kill.tmp"
     FileDelete,%holdFile%
     FileDelete, %killFile%
-    if (widthMultiplier) {
-      WinRestore, ahk_pid %pid%
-      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-    }
-    nextInst := -1
-    if (mode == "C") {
+    WinRestore, ahk_pid %pid%
+    if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
-    } else if (mode == "B" || mode == "M")
+    else if ((mode == "B" || mode == "M") && nextInst == -1)
       nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
@@ -371,6 +373,8 @@ ExitWorld()
       ToWall(idx)
     SetAffinities(nextInst)
     ResetInstance(idx)
+    if (widthMultiplier)
+      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     isWide := False
   }
 }
@@ -410,6 +414,8 @@ ToWall(comingFrom) {
   FileAppend,0,data/bg.txt
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
+  WinMaximize, Full-screen Projector
+  WinActivate, Full-screen Projector
   if (obsControl != "ASS") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
@@ -442,12 +448,30 @@ ResetAll(bypassLock:=false) {
   }
 }
 
+GetRandomLockNumber() {
+  if (themeLockCount == -1) {
+    themeLockCount := 0
+    Loop, Files, %A_ScriptDir%\media\lock*.png
+    {
+      themeLockCount += 1
+    }
+  }
+  SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", themeLockCount), A_TickCount)
+  Random, randLock, 1, %themeLockCount%
+  return randLock
+}
+
 LockInstance(idx, sound:=true, affinityChange:=true) {
   if (!idx || (idx > rows * cols))
     return
   locked[idx] := true
   lockDest := McDirectories[idx] . "lock.png"
-  FileCopy, A_ScriptDir\..\media\lock.png, %lockDest%, 1
+  randLock := GetRandomLockNumber()
+  SendLog(LOG_LEVEL_INFO, Format("Randomly picked lock{1}.png to send as lock", randLock), A_TickCount)
+  source := A_ScriptDir . "\media\lock" . randLock . ".png"
+  If !FileExist(source)
+    source := A_ScriptDir . "\media\lock.png"
+  FileCopy, %source%, %lockDest%, 1
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
@@ -513,15 +537,13 @@ UnlockAll(sound:=true) {
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
-  loop, %instances% {
-    if (locked[A_Index] && FileExist(McDirectories[A_Index] . "idle.tmp")) {
-      if focusReset
-        FocusReset(A_Index, bypassLock)
-      else
-        SwitchInstance(A_Index)
-      return
-    }
-  }
+  if (GetActiveInstanceNum() > 0)
+    ExitWorld(FindBypassInstance())
+  else
+    if focusReset
+      FocusReset(FindBypassInstance(), bypassLock)
+    else
+      SwitchInstance(FindBypassInstance())
 }
 
 WorldBop() {
@@ -689,7 +711,7 @@ VerifyInstance(mcdir, pid, idx) {
         Loop, 1 {
           MsgBox, 4, Create New World Key, Instance %idx% has no Create New World hotkey set. Would you like to set this back to default (F6)?`n(In file: %standardSettingsFile%)
           IfMsgBox No
-            break
+          break
           ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
@@ -720,7 +742,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
         Loop, 1 {
           MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+            SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
           resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")
           SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile), A_TickCount)
           resetKeys[idx] := resetKey
@@ -785,7 +807,7 @@ VerifyInstance(mcdir, pid, idx) {
       } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         Loop, 1 {
           MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+            SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
           lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")
           SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile), A_TickCount)
           lpKeys[idx] := lpKey
@@ -818,8 +840,8 @@ VerifyInstance(mcdir, pid, idx) {
       if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
         Loop, 1 {
           MsgBox, 4, Fullscreen Key, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?`n(In file: %standardSettingsFile%)
-          IfMsgBox No
-            break
+            IfMsgBox No
+          break
           ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
@@ -840,7 +862,7 @@ VerifyInstance(mcdir, pid, idx) {
         Loop, 1 {
           MsgBox, 4, Command Key, Instance %idx% missing recommended command hotkey. Would you like to set this back to default (/)?`n(In file: %standardSettingsFile%)
           IfMsgBox No
-            break
+          break
           ssettings := StrReplace(ssettings, "key_key.command:key.keyboard.unknown", "key_key.command:key.keyboard.slash")
           FileDelete, %standardSettingsFile%
           FileAppend, %ssettings%, %standardSettingsFile%
@@ -1077,9 +1099,9 @@ CheckOptionsForValue(file, optionsCheck, defaultValue) {
       split := StrSplit(A_LoopReadLine, ":")
       if (split.MaxIndex() == 2)
         if keyArray[split[2]]
-          return keyArray[split[2]]
-        else
-          return split[2]
+        return keyArray[split[2]]
+      else
+        return split[2]
       SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly, defaulting to '{1}'. Line: {2}", defaultKey, A_LoopReadLine), A_TickCount)
       return defaultValue
     }
