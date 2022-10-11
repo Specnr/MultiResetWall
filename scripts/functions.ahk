@@ -296,24 +296,24 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     SetAffinities(idx)
     if !locked[idx]
       LockInstance(idx, False, False)
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
     WinMinimize, Full-screen Projector
+    if unpauseOnSwitch
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
-    WinMinimize, Fullscreen Projector
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+    Send {RButton} ; Make sure the window is activated
+    if (f1States[idx] == 2)
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-    Send {LButton} ; Make sure the window is activated
     if (obsControl != "ASS") {
       if (obsControl == "N")
         obsKey := "Numpad" . idx
@@ -325,6 +325,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       Sleep, %obsDelay%
       Send {%obsKey% up}
     }
+  } else if smartSwitch {
+    nextInst := FindBypassInstance()
+    if (nextInst > 0)
+      SwitchInstance(nextInst, false)
   } else {
     if !locked[idx]
       LockInstance(idx, False)
@@ -340,7 +344,7 @@ GetActiveInstanceNum() {
   return -1
 }
 
-ExitWorld()
+ExitWorld(nextInst:=-1)
 {
   idx := GetActiveInstanceNum()
   if (idx > 0) {
@@ -358,21 +362,19 @@ ExitWorld()
     killFile := McDirectories[idx] . "kill.tmp"
     FileDelete,%holdFile%
     FileDelete, %killFile%
-    if (widthMultiplier) {
-      WinRestore, ahk_pid %pid%
-      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-    }
-    nextInst := -1
-    if (mode == "C") {
+    WinRestore, ahk_pid %pid%
+    if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
-    } else if (mode == "B" || mode == "M")
-    nextInst := FindBypassInstance()
+    else if ((mode == "B" || mode == "M") && nextInst == -1)
+      nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
     SetAffinities(nextInst)
     ResetInstance(idx)
+    if (widthMultiplier)
+      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     isWide := False
   }
 }
@@ -535,15 +537,13 @@ UnlockAll(sound:=true) {
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
-  loop, %instances% {
-    if (locked[A_Index] && FileExist(McDirectories[A_Index] . "idle.tmp")) {
-      if focusReset
-        FocusReset(A_Index, bypassLock)
-      else
-        SwitchInstance(A_Index)
-      return
-    }
-  }
+  if (GetActiveInstanceNum() > 0)
+    ExitWorld(FindBypassInstance())
+  else
+    if focusReset
+      FocusReset(FindBypassInstance(), bypassLock)
+    else
+      SwitchInstance(FindBypassInstance())
 }
 
 WorldBop() {
