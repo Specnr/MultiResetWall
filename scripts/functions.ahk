@@ -358,10 +358,7 @@ ExitWorld()
     killFile := McDirectories[idx] . "kill.tmp"
     FileDelete,%holdFile%
     FileDelete, %killFile%
-    if (widthMultiplier) {
-      WinRestore, ahk_pid %pid%
-      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-    }
+    WinRestore, ahk_pid %pid%
     nextInst := -1
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
@@ -373,6 +370,8 @@ ExitWorld()
       ToWall(idx)
     SetAffinities(nextInst)
     ResetInstance(idx)
+    if (widthMultiplier)
+      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     isWide := False
   }
 }
