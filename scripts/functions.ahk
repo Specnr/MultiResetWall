@@ -340,7 +340,7 @@ GetActiveInstanceNum() {
   return -1
 }
 
-ExitWorld()
+ExitWorld(nextInst:=-1)
 {
   idx := GetActiveInstanceNum()
   if (idx > 0) {
@@ -359,11 +359,10 @@ ExitWorld()
     FileDelete,%holdFile%
     FileDelete, %killFile%
     WinRestore, ahk_pid %pid%
-    nextInst := -1
-    if (mode == "C") {
+    if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
-    } else if (mode == "B" || mode == "M")
-    nextInst := FindBypassInstance()
+    else if ((mode == "B" || mode == "M") && nextInst == -1)
+      nextInst := FindBypassInstance()
     if (nextInst > 0)
       SwitchInstance(nextInst, false, idx)
     else
@@ -534,15 +533,13 @@ UnlockAll(sound:=true) {
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
-  loop, %instances% {
-    if (locked[A_Index] && FileExist(McDirectories[A_Index] . "idle.tmp")) {
-      if focusReset
-        FocusReset(A_Index, bypassLock)
-      else
-        SwitchInstance(A_Index)
-      return
-    }
-  }
+  if (GetActiveInstanceNum() > 0)
+    ExitWorld(FindBypassInstance())
+  else
+    if focusReset
+      FocusReset(FindBypassInstance(), bypassLock)
+    else
+      SwitchInstance(FindBypassInstance())
 }
 
 WorldBop() {
