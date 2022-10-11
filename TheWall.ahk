@@ -90,19 +90,23 @@ for i, mcdir in McDirectories {
   if FileExist(preview)
     FileDelete, %preview%
   WinGetTitle, winTitle, ahk_pid %pid%
+  if !InStr(winTitle, " - ") {
+    ControlClick, x0 y0, ahk_pid %pid%,, RIGHT
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    WinMinimize, ahk_pid %pid%
+    WinRestore, ahk_pid %pid%
+  }
+  if (windowMode == "B") {
+    WinSet, Style, -0xC40000, ahk_pid %pid%
+  } else {
+    WinSet, Style, +0xC40000, ahk_pid %pid%
+  }
   if (widthMultiplier) {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-  }
-  if (windowMode == "B") {
-    WinSet, Style, -0xC40000, ahk_pid %pid%
-    WinSet, ExStyle, -0x00000200, ahk_pid %pid%
-  }
-  if !InStr(winTitle, " - ") {
-    ControlClick, x0 y0, ahk_pid %pid%,, Right
-    WinMinimize, ahk_pid %pid%
-    WinRestore, ahk_pid %pid%
+  } else {
+    WinMaximize, ahk_pid %pid%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
