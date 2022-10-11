@@ -5,7 +5,7 @@
 #NoEnv
 #SingleInstance Force
 #Include %A_ScriptDir%\scripts\functions.ahk
-#Include settings-Mach.ahk
+#Include settings.ahk
 
 SetKeyDelay, 0
 SetWinDelay, 1
@@ -191,4 +191,4 @@ CheckScripts:
     CountAttempts()
 return
 
-#Include hotkeys-Mach.ahk
+#Include hotkeys.ahk
