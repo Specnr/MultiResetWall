@@ -325,6 +325,10 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       Sleep, %obsDelay%
       Send {%obsKey% up}
     }
+  } else if smartSwitch {
+    nextInst := FindBypassInstance()
+    if (nextInst > 0)
+      SwitchInstance(nextInst, false)
   } else {
     if !locked[idx]
       LockInstance(idx, False)
