@@ -310,6 +310,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
+    WinMinimize, Fullscreen Projector
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     Send {LButton} ; Make sure the window is activated
@@ -361,7 +362,6 @@ ExitWorld()
       WinRestore, ahk_pid %pid%
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     }
-    WinRestore, ahk_pid %pid%
     nextInst := -1
     if (mode == "C") {
       nextInst := Mod(idx, instances) + 1
