@@ -1,4 +1,4 @@
-; v0.8
+; v1.0
 ; General settings
 global rows := 3 ; Number of row on the wall scene
 global cols := 3 ; Number of columns on the wall scene
@@ -6,47 +6,50 @@ global mode := "W" ; W = Normal wall, B = Wall bypass (skip to next locked), M =
 global windowMode := "W" ; W = windowed mode, F = fullscreen mode, B = borderless windowed
 
 ; Extra features
-global disableTTS := False
 global widthMultiplier := 2.5 ; How wide your instances go to maximize visibility :) (set to 0 for no width change)
-global resetSounds := True ; Make a sound when you reset an instance
-global lockSounds := True ; Make a sound when you lock an instance
 global coop := False ; Automatically opens to LAN when you load in a world
-global useObsWebsocket := False ; Allows for > 9 instances (Additional setup required)
-global useSingleSceneOBS := False ; Allows for simple OBS setup & Tinder. (Additional setup required)
+global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
-global doF1 := False ; Toggle the f1 GUI hiding button on world join and reset
+global tinder := False ; Set to True if you want to use tinder-style bg resetting
+global unpauseOnSwitch := True ; Unpause instance right after switching to it
+global smartSwitch := True ; Find an instance to switch to if current one is unloaded
+global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
-global spawnProtection := 100 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
+global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
 global fullScreenDelay := 100 ; increse if fullscreening issues
-global obsDelay := 100 ; increase if not changing scenes in obs
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
-; Super advanced settings (Do not change unless you know exactly absolutely what you are doing
+
+; Super advanced settings (Read about these settings on the README before changing)
 
 ; Affinity
 ; -1 == use macro math to determine thread counts
 global affinityType := "B" ; N = no affinity management, B = basic affinity management, A = advanced affinity mangement (best if used with locking+resetAll)
-global playThreadsOverride := -1 ; Thread count dedicated to the instance you are playing
-global lockThreadsOverride := -1 ; Thread count dedicated to locked instances while on wall
-global highThreadsOverride := -1 ; Thread count dedicated to instances that have just been reset but not previewing
-global midThreadsOverride := -1 ; Thread count dedicated to loading preview instances on wall
-global lowThreadsOverride := -1 ; Thread count dedicated to loading bg instances and idle wall instances
-global superLowThreadsOverride := -1 ; Thread count dedicated to idle bg instances
-global loadBurstLength := 400 ; How many milliseconds the prior thread count stays dedicated to an instance before switching to the next stage while ACTIVELY LOADING INSTANCES (less important for basic affinity)
+global playThreadsOverride := -1 ; Thread count for instance you are playing
+global lockThreadsOverride := -1 ; Thread count for locked instances loading on wall
+global highThreadsOverride := -1 ; Thread count for instances on the 0% dirt screen while on wall
+global midThreadsOverride := -1 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
+global lowThreadsOverride := -1 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement and all idle instances
+global bgLoadThreadsOverride := -1 ; Thread count for loading instances, and locked instances in bg
+global previewBurstLength := 500 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
+global previewLoadPercent := 15 ; The percentage of world gen that must be reached before lowering to low
 
 ; OBS
-global obsSceneControlType := "N" ; N = Numpad hotkeys (up to 9 instances), F = Function hotkeys f13-f24 (up to 12 instances), A = advanced key array (too many instances)
+global obsControl := "N" ; N = Numpad keys (<10 inst), F = Function keys (f13-f24, <13 inst, setup script in utils folder), ARR = advanced array (see customKeyArray), ASS = advanced scene switcher (read GitHub)
 global obsWallSceneKey := "F12" ; All obs scene control types use wallSceneKey
-global obsCustomKeyArray := [] ; Must be used with advanced key array control type. Add keys in quotes separated by commas. The index in the array corresponds to the scene
+global obsCustomKeyArray := [] ; Must be used with advanced array control type. Add keys in quotes separated by commas. The index in the array corresponds to the scene
 global obsResetMediaKey := "" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
 global obsLockMediaKey := "" ; Key pressed on any lock instance with sound (used for playing lock media file in obs for recordable/streamable lock sounds and requires addition setup to work)
 global obsUnlockMediaKey := "" ; Key pressed on any unlock instance with sound (used for playing unlock media file in obs for recordable/streamable unlock sounds and requires addition setup to work)
+global obsDelay := 50 ; delay between hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control
 
 ; Reset Management
-global resetManagementTimeout := 20000 ; Milliseconds that pass before reset manager gives up. Too high may leave unresetable instances, too low will leave instances unpaused. Default (20000) likely fine
-global manageResetAfter := 200 ; Delay before starting reset management log reading loop. Default (200) likely fine
+global beforePauseDelay := 0 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
+global resetManagementTimeout := -1 ; Milliseconds that can pass before reset manager gives up. Too low might leave instances unpaused. Default (-1, don't timeout)
+global manageResetAfter := 300 ; Delay before starting reset management log reading loop. Default (300) likely fine
 global resetManagementLoopDelay := 70 ; Buffer time between log lines check in reset management loop. Lowering will decrease possible pause latencies but increase cpu usage of reset managers. Default (70) likely fine
+global doubleCheckUnexpectedLoads := True ; If you plan to use the wall without World Preview mod you should disable this. Default (True)
 
 ; Attempts
 global overallAttemptsFile := "data/ATTEMPTS.txt" ; File to write overall attempt count to
