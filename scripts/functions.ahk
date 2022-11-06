@@ -296,22 +296,22 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     SetAffinities(idx)
     if !locked[idx]
       LockInstance(idx, False, False)
-    if (widthMultiplier)
-      WinMaximize, ahk_pid %pid%
-    WinMinimize, Fullscreen Projector
-    WinMinimize, Full-screen Projector
     if unpauseOnSwitch
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    if (f1States[idx] == 2)
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
+    if (widthMultiplier)
+      WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
+    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+    WinMinimize, Fullscreen Projector
+    WinMinimize, Full-screen Projector
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullScreenDelay%
     }
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     Send {RButton} ; Make sure the window is activated
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     if (obsControl != "ASS") {
@@ -349,10 +349,6 @@ ExitWorld(nextInst:=-1)
   idx := GetActiveInstanceNum()
   if (idx > 0) {
     pid := PIDs[idx]
-    if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
-    else
-      ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
     if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -362,6 +358,10 @@ ExitWorld(nextInst:=-1)
     killFile := McDirectories[idx] . "kill.tmp"
     FileDelete,%holdFile%
     FileDelete, %killFile%
+    SetAffinities(nextInst)
+    ResetInstance(idx)
+    if (widthMultiplier)
+      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
     if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
@@ -371,10 +371,10 @@ ExitWorld(nextInst:=-1)
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    SetAffinities(nextInst)
-    ResetInstance(idx)
-    if (widthMultiplier)
-      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+    if f1States[idx] ; goofy ghost pie removal
+      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
     isWide := False
   }
 }
