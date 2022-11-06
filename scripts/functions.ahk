@@ -359,7 +359,10 @@ ExitWorld(nextInst:=-1)
     FileDelete,%holdFile%
     FileDelete, %killFile%
     SetAffinities(nextInst)
-    ResetInstance(idx)
+    if f1States[idx] ; goofy ghost pie removal
+      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
     if (widthMultiplier)
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
@@ -371,10 +374,7 @@ ExitWorld(nextInst:=-1)
       SwitchInstance(nextInst, false, idx)
     else
       ToWall(idx)
-    if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
-    else
-      ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
+    ResetInstance(idx)
     isWide := False
   }
 }
