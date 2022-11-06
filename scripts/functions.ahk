@@ -916,10 +916,11 @@ OpenToLAN() {
   Send, {Enter}{Tab}{Enter}
   Send, {%commandkey%}
   Sleep, 100
-  Send, gamemode
-  Send, {Space}
-  Send, creative
-  Send, {Enter}
+  Send, {Text}gamemode creative
+  Send, {Enter}{%commandkey%}
+  Send, {Text}gamerule doImmediateRespawn true
+	Send, {Enter}
+
 }
 
 GoToNether() {
@@ -927,9 +928,7 @@ GoToNether() {
   commandkey := commandkeys[idx]
   Send, {%commandkey%}
   Sleep, 100
-  Send, setblock
-  Send, {Space}{~}{Space}{~}{Space}{~}{Space}
-  Send, minecraft:nether_portal
+  Send, {Text}setblock ~ ~ ~ minecraft:nether_portal
   Send, {Enter}
 }
 
@@ -944,20 +943,9 @@ CheckFor(struct, x := "", z := "") {
   Send, {%commandkey%}
   Sleep, 100
   if (z != "" && x != "") {
-    Send, execute
-    Send, {Space}
-    Send, positioned
-    Send, {Space}
-    Send, %x%
-    Send, {Space}{0}{Space}
-    Send, %z%
-    Send, {Space}
-    Send, run
-    Send, {Space}
+    Send, {Text}execute positioned %x% 0 %z% run%A_Space% ; %A_Space% is only required at the end because a literal space would be trimmed
   }
-  Send, locate
-  Send, {Space}
-  Send, %struct%
+  Send, {Text}locate %struct%
   Send, {Enter}
 }
 
