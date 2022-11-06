@@ -1,6 +1,6 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v0.8
+; v1.0
 
 #NoEnv
 #SingleInstance Force
@@ -24,22 +24,24 @@ global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
 global fsKeys := []
+global commandkeys := []
+global f1States := []
 global resets := 0
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
-global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; playThreads = threadCount unless override
-global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Max(Floor(threadCount * 0.9), threadCount - 4) : threadCount ; highThreads = 90% threadCount unless N or override
-global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : highThreads ; lockThreads = highThreads unless override
-global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.7) : highThreads ; midThreads = 70% threadCount if advanced, otherwise highThreads unless override
-global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.5) : threadCount ; lowThreads = 50% threadCount unless N or override
-global superLowThreads := superLowThreadsOverride > 0 ? superLowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.2) : threadCount ; superLowThreads = 20% threadCount unless N or override
+global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
+global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : threadCount ; total threads unless override
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
 
 global playBitMask := GetBitMask(playThreads)
 global lockBitMask := GetBitMask(lockThreads)
 global highBitMask := GetBitMask(highThreads)
 global midBitMask := GetBitMask(midThreads)
 global lowBitMask := GetBitMask(lowThreads)
-global superLowBitMask := GetBitMask(superLowThreads)
+global bgLoadBitMask := GetBitMask(bgLoadThreads)
 
 global instWidth := Floor(A_ScreenWidth / cols)
 global instHeight := Floor(A_ScreenHeight / rows)
@@ -51,20 +53,21 @@ global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
-global obsFile := A_ScriptDir . "/scripts/obs.ops"
-
-if !FileExist("data")
-  FileCreateDir, data
 global hasMcDirCache := FileExist("data/mcdirs.txt")
+global themeLockCount := -1
 
-FileDelete, %obsFile%
 FileDelete, data/log.log
 FileDelete, %dailyAttemptsFile%
 
-SendLog(LOG_LEVEL_INFO, "Wall launched")
+SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
 
+Loop, Files, %A_ScriptDir%\media\lock*.png
+{
+  FileDelete, %A_LoopFileFullPath%
+}
+
+SetTheme(theme)
 GetAllPIDs()
-SetTitles()
 
 for i, mcdir in McDirectories {
   pid := PIDs[i]
@@ -77,7 +80,8 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %highBitMask% %midBitMask% %lowBitMask% %superLowBitMask% %lockBitMask%, %A_ScriptDir%,, rmpid
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask), A_TickCount)
+  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %playBitMask% %lockBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -91,22 +95,39 @@ for i, mcdir in McDirectories {
     FileDelete, %kill%
   if FileExist(preview)
     FileDelete, %preview%
+  WinGetTitle, winTitle, ahk_pid %pid%
+  if !InStr(winTitle, " - ") {
+    ControlClick, x0 y0, ahk_pid %pid%,, RIGHT
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    WinMinimize, ahk_pid %pid%
+    WinRestore, ahk_pid %pid%
+  }
   if (windowMode == "B") {
-    WinSet, Style, -0xC00000, ahk_pid %pid%
-    WinSet, Style, -0x40000, ahk_pid %pid%
-    WinSet, ExStyle, -0x00000200, ahk_pid %pid%
+    WinSet, Style, -0xC40000, ahk_pid %pid%
+  } else {
+    WinSet, Style, +0xC40000, ahk_pid %pid%
   }
   if (widthMultiplier) {
     pid := PIDs[i]
-    WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+  } else {
+    WinMaximize, ahk_pid %pid%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
 }
+
+SetTitles()
+
+SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i), A_TickCount)
 
 for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
+}
+
+if tinder {
+  FileDelete,data/bg.txt
+  FileAppend,0,data/bg.txt
 }
 
 if audioGui {
@@ -114,30 +135,22 @@ if audioGui {
   Gui, Show,, The Wall Audio
 }
 
-if (useObsWebsocket) {
-  WinWait, OBS
-  if (useSingleSceneOBS) {
-    lastInst := -1
-    if FileExist("data/instance.txt")
-      FileRead, lastInst, data/instance.txt
-    SendOBSCmd("ss-tw" . " " .lastInst)
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "True"
-  }
-  else {
-    SendOBSCmd("tw")
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\obsListener.py"" " . instances . " " . "False"
-  }
-  Run, %cmd%,, Hide
+WinGet, obsPid, PID, OBS
+if IsProcessElevated(obsPid) {
+  MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
+    SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
 }
 
 if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
   Menu, Tray, Add, Delete Worlds, WorldBop
 else
-  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray")
+  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray", A_TickCount)
 
 Menu, Tray, Add, Close Instances, CloseInstances
 
-SendLog(LOG_LEVEL_INFO, "Wall setup done")
+ToWall(0)
+
+SendLog(LOG_LEVEL_INFO, "Wall setup done", A_TickCount)
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 
@@ -149,12 +162,15 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
-    SendOBSCmd("xx")
     DetectHiddenWindows, On
-    rms := RM_PIDs.MaxIndex()
-    loop, %rms% {
+    loop, %instances% {
+      kill := McDirectories[A_Index] . "kill.tmp"
       pid := RM_PIDs[A_Index]
       WinClose, ahk_pid %pid%
+      WinWaitClose, ahk_pid %pid%
+    }
+    for i, tmppid in PIDs {
+      SetAffinity(tmppid, playBitMask)
     }
     DetectHiddenWindows, Off
   }
@@ -162,11 +178,10 @@ ExitApp
 
 CheckScripts:
   Critical
-  if (useSingleSceneOBS && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
+  if (tinder && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
     newBg := GetFirstBgInstance()
     if (newBg != -1) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg))
-      SendOBSCmd("tm -1" . " " . newBg)
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg), A_TickCount)
       needBgCheck := False
       currBg := newBg
     }

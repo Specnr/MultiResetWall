@@ -3,7 +3,7 @@ import glob
 import os
 
 folders = []
-with open(f"{os.getcwd()}\data\mcdirs.txt", "r") as dirf:
+with open(f"{os.getcwd()}\..\data\mcdirs.txt", "r") as dirf:
     for mcdir in dirf:
         folders.append(mcdir.strip().split("~")[1])
 
