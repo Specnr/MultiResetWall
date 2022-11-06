@@ -761,7 +761,9 @@ OpenToLAN() {
   Send, {%commandkey%}
   Sleep, 100
   Send, {Text}gamemode creative
-  Send, {Enter}
+  Send, {Enter}{%commandkey%}
+  Send, {Text}gamerule doImmediateRespawn true
+	Send, {Enter}
 
 }
 
