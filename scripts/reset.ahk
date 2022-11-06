@@ -87,7 +87,7 @@ ManageReset() {
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index), A_TickCount)
         SetTimer, ManageThisAffinity, -%previewBurstLength% ; turn down previewBurstLength after preview detected
         Continue 2
-      } else if (state != "idle" && InStr(A_LoopReadLine, "advancements")) {
+      } else if (state != "idle" && InStr(A_LoopReadLine, "advancements") && !InStr(A_LoopReadLine, "927 advancements")) {
         SetTimer, Pause, -%beforePauseDelay%
         lastImportantLine := GetLineCount(logFile)
         FileDelete, %holdFile%
