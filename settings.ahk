@@ -10,6 +10,8 @@ global widthMultiplier := 2.5 ; How wide your instances go to maximize visibilit
 global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
+global unpauseOnSwitch := True ; Unpause instance right after switching to it
+global smartSwitch := True ; Find an instance to switch to if current one is unloade
 global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
@@ -27,7 +29,7 @@ global highThreadsOverride := -1 ; Thread count for instances on the 0% dirt scr
 global midThreadsOverride := -1 ; Thread count for instances loading a preview (previewBurstLength) after detecting it
 global lowThreadsOverride := -1 ; Thread count for instances loading a preview that has reached (previewLoadPercent) requirement and all idle instances
 global bgLoadThreadsOverride := -1 ; Thread count for loading instances, and locked instances in bg
-global previewBurstLength := 400 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
+global previewBurstLength := 500 ; The delay before switching from high to mid while on wall or from bgLoad to low while in bg
 global previewLoadPercent := 15 ; The percentage of world gen that must be reached before lowering to low
 
 ; OBS
