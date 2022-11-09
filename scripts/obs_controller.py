@@ -7,14 +7,15 @@
 # cmd[0]: "Lock" shows or hides lock, cmd[1] specifies which lock, cmd[2] specifies to show or hide (1 = show, 0 = hide)
 
 import obspython as S
+import importlib
 import logging
 import shutil
 import csv
 import os
 
-wall_scene_name = "Test Verification"
-instance_scene_format = "Game *"
-lock_source_format = "lock*"
+wall_scene_name = "The Wall"
+instance_scene_format = "Instance *"
+lock_format = "lock *"
 
 
 logging.basicConfig(
@@ -62,11 +63,11 @@ def execute_cmd(cmd):
             S.obs_frontend_set_current_scene(instance_scene)
         elif (cmd[0] == "Lock"):
             lock_num = cmd[1]
-            render = True if int(cmd[2]) else False
+            render = cmd[2] == "1"
             wall_scene = S.obs_scene_get_source(
                 S.obs_get_scene_by_name(wall_scene_name))
-            lock_source = S.obs_scene_find_source(S.obs_scene_from_source(
-                wall_scene), settings.lock_layer_format.replace("*", str(lock_num)))
+            lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
+                wall_scene), lock_format.replace("*", str(lock_num)))
             S.obs_sceneitem_set_visible(lock_source, render)
     except Exception as e:
         print(f"Error: {e}")
@@ -86,7 +87,7 @@ def execute_latest():
 
 
 def script_description():
-    return f"(slightly modified for specnr wall testing by Boyenn) Ravalle's OBS Script for <a href=https://github.com/joe-ldp/rawalle/releases/tag/{version}>Rawalle {version}</a></h3>"
+    return f"MultiResetWall OBS Script. Altered from <a href=https://github.com/joe-ldp/rawalle/releases/tag/{version}>Rawalle {version}</a></h3>"
 
 
 def script_unload():
@@ -98,7 +99,7 @@ def script_properties():  # ui
     p = S.obs_properties_add_list(
         props,
         "scene",
-        "Scene",
+        "The Wall Scene",
         S.OBS_COMBO_TYPE_EDITABLE,
         S.OBS_COMBO_FORMAT_STRING,
     )
@@ -107,13 +108,19 @@ def script_properties():  # ui
     for scene in scenes:
         name = S.obs_source_get_name(scene)
         S.obs_property_list_add_string(p, name, name)
-        S.source_list_release(scenes)
-        S.obs_properties_add_text(
-            props,
-            "instance_scene_format",
-            "Instance Scene ( NOT SOURCE ) Format.\nUse * for numbers.\nExample: Game *",
-            S.OBS_TEXT_DEFAULT
-        )
+    S.source_list_release(scenes)
+    S.obs_properties_add_text(
+        props,
+        "instance_scene_format",
+        "Instance Scene Format.\nUse * for numbers.\nExample: Game *",
+        S.OBS_TEXT_DEFAULT
+    )
+    S.obs_properties_add_text(
+        props,
+        "lock_format",
+        "Lock Source Format.\nUse * for numbers.\nExample: lock *",
+        S.OBS_TEXT_DEFAULT
+    )
 
     return props
 
@@ -122,12 +129,12 @@ def script_update(settings):
     global cmdsPath
     global wall_scene_name
     global instance_scene_format
-    global lock_source_format
+    global lock_format
     wall_scene_name = S.obs_data_get_string(settings, "scene")
     instance_scene_format = S.obs_data_get_string(
         settings, "instance_scene_format")
-    lock_source_format = S.obs_data_get_string(
-        settings, "lock_source_format")
+    lock_format = S.obs_data_get_string(
+        settings, "lock_format")
 
     try:
         execute_cmd(["ToWall"])

@@ -291,7 +291,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       Sleep, %obsDelay%
       Send {%obsKey% up}
     } else {
-      SendOBSCmd("Play", idx)
+      SendOBSCmd("Play," . idx)
     }
   } else {
     if !locked[idx]
@@ -403,7 +403,6 @@ FocusReset(focusInstance, bypassLock:=false) {
   }
   if !locked[focusInstance]
     LockInstance(focusInstance, false)
-  needBgCheck := true
 }
 
 ; Reset all instances
@@ -464,13 +463,15 @@ UnlockInstance(idx, sound:=true) {
   if (!idx || (idx > rows * cols))
     return
   locked[idx] := false
-  lockDest := McDirectories[idx] . "lock.png"
-  FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
-  FileSetTime,,%lockDest%,M
   if (obsControl == "C")
     SendOBSCmd(Format("Lock,{1},0", idx))
-  lockDest := McDirectories[idx] . "lock.tmp"
-  FileDelete, %lockDest%
+  else {
+    lockDest := McDirectories[idx] . "lock.png"
+    FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
+    FileSetTime,,%lockDest%,M
+    lockDest := McDirectories[idx] . "lock.tmp"
+    FileDelete, %lockDest%
+  }
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
     if obsUnlockMediaKey {
