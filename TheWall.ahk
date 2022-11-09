@@ -18,9 +18,6 @@ global rawPIDs := []
 global PIDs := []
 global RM_PIDs := []
 global locked := []
-global needBgCheck := False
-global currBg := GetFirstBgInstance()
-global lastChecked := A_NowUTC
 global resetKeys := []
 global lpKeys := []
 global fsKeys := []
@@ -125,11 +122,6 @@ for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
 }
 
-if tinder {
-  FileDelete,data/bg.txt
-  FileAppend,0,data/bg.txt
-}
-
 if audioGui {
   Gui, New
   Gui, Show,, The Wall Audio
@@ -178,15 +170,6 @@ ExitApp
 
 CheckScripts:
   Critical
-  if (tinder && needBgCheck && A_NowUTC - lastChecked > tinderCheckBuffer) {
-    newBg := GetFirstBgInstance()
-    if (newBg != -1) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} was found and will be used with tinder", newBg), A_TickCount)
-      needBgCheck := False
-      currBg := newBg
-    }
-    lastChecked := A_NowUTC
-  }
   if resets
     CountAttempts()
 return

@@ -48,37 +48,6 @@ FindBypassInstance() {
   return -1
 }
 
-TinderMotion(swipeLeft) {
-  ; left = reset, right = keep
-  if !tinder
-    return
-  if swipeLeft
-    ResetInstance(currBg)
-  else
-    LockInstance(currBg)
-  newBg := GetFirstBgInstance(currBg)
-  SendLog(LOG_LEVEL_INFO, Format("Tinder motion occurred with old instance {1} and new instance {2}", currBg, newBg), A_TickCount)
-  currBg := newBg
-}
-
-GetFirstBgInstance(toSkip := -1, skip := false) {
-  if !tinder
-    return 0
-  if skip
-    return -1
-  activeNum := GetActiveInstanceNum()
-  for i, mcdir in McDirectories {
-    hold := mcdir . "hold.tmp"
-    if (i != activeNum && i != toSkip && !FileExist(hold) && !locked[i]) {
-      FileDelete,data/bg.txt
-      FileAppend,%i%,data/bg.txt
-      return i
-    }
-  }
-  needBgCheck := true
-  return -1
-}
-
 MousePosToInstNumber() {
   MouseGetPos, mX, mY
   return (Floor(mY / instHeight) * cols) + Floor(mX / instWidth) + 1
@@ -290,8 +259,6 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
     FileAppend,,%killFile%
     FileDelete,data/instance.txt
     FileAppend,%idx%,data/instance.txt
-    if tinder
-      currBg := GetFirstBgInstance(idx, skipBg)
     pid := PIDs[idx]
     SetAffinities(idx)
     if !locked[idx]
@@ -314,7 +281,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-    if (obsControl != "ASS") {
+    Send {LButton} ; Make sure the window is activated
+    if (obsControl != "C") {
       if (obsControl == "N")
         obsKey := "Numpad" . idx
       else if (obsControl == "F")
@@ -324,6 +292,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       Send {%obsKey% down}
       Sleep, %obsDelay%
       Send {%obsKey% up}
+    } else {
+      SendOBSCmd("Play," . idx)
     }
   } else if smartSwitch {
     nextInst := FindBypassInstance()
@@ -416,10 +386,12 @@ ToWall(comingFrom) {
   WinActivate, Fullscreen Projector
   WinMaximize, Full-screen Projector
   WinActivate, Full-screen Projector
-  if (obsControl != "ASS") {
+  if (obsControl != "C") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
     send {%obsWallSceneKey% up}
+  } else {
+    SendOBSCmd(Format("ToWall"))
   }
 }
 
@@ -434,7 +406,6 @@ FocusReset(focusInstance, bypassLock:=false) {
   }
   if !locked[focusInstance]
     LockInstance(focusInstance, false)
-  needBgCheck := true
 }
 
 ; Reset all instances
@@ -473,6 +444,8 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
     source := A_ScriptDir . "\media\lock.png"
   FileCopy, %source%, %lockDest%, 1
   FileSetTime,,%lockDest%,M
+  if (obsControl == "C")
+    SendOBSCmd(Format("Lock,{1},1", idx))
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
@@ -493,11 +466,15 @@ UnlockInstance(idx, sound:=true) {
   if (!idx || (idx > rows * cols))
     return
   locked[idx] := false
-  lockDest := McDirectories[idx] . "lock.png"
-  FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
-  FileSetTime,,%lockDest%,M
-  lockDest := McDirectories[idx] . "lock.tmp"
-  FileDelete, %lockDest%
+  if (obsControl == "C")
+    SendOBSCmd(Format("Lock,{1},0", idx))
+  else {
+    lockDest := McDirectories[idx] . "lock.png"
+    FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
+    FileSetTime,,%lockDest%,M
+    lockDest := McDirectories[idx] . "lock.tmp"
+    FileDelete, %lockDest%
+  }
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
     if obsUnlockMediaKey {
@@ -541,9 +518,9 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
     ExitWorld(FindBypassInstance())
   else
     if focusReset
-      FocusReset(FindBypassInstance(), bypassLock)
-    else
-      SwitchInstance(FindBypassInstance())
+    FocusReset(FindBypassInstance(), bypassLock)
+  else
+    SwitchInstance(FindBypassInstance())
 }
 
 WorldBop() {
@@ -599,6 +576,13 @@ IsProcessElevated(ProcessID) {
   if !(DllCall("advapi32\GetTokenInformation", "ptr", hToken, "int", 20, "uint*", IsElevated, "uint", 4, "uint*", size))
     throw Exception("GetTokenInformation failed", -1), DllCall("CloseHandle", "ptr", hToken) && DllCall("CloseHandle", "ptr", hProcess)
   return IsElevated, DllCall("CloseHandle", "ptr", hToken) && DllCall("CloseHandle", "ptr", hProcess)
+}
+
+SendOBSCmd(cmd) {
+  static cmdNum := 1
+  static cmdDir := % "data/pycmds/" . A_TickCount
+  FileAppend, %cmd%, %cmdDir%%cmdNum%.txt
+  cmdNum++
 }
 
 VerifyInstance(mcdir, pid, idx) {
@@ -919,7 +903,7 @@ OpenToLAN() {
   Send, {Text}gamemode creative
   Send, {Enter}{%commandkey%}
   Send, {Text}gamerule doImmediateRespawn true
-	Send, {Enter}
+  Send, {Enter}
 
 }
 
