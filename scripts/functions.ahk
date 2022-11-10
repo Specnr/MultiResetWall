@@ -304,8 +304,8 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    WinMinimize, Fullscreen Projector
-    WinMinimize, Full-screen Projector
+    ; WinMinimize, Fullscreen Projector
+    ; WinMinimize, Full-screen Projector
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -412,9 +412,9 @@ ToWall(comingFrom) {
   FileAppend,0,data/instance.txt
   FileDelete,data/bg.txt
   FileAppend,0,data/bg.txt
-  WinMaximize, Fullscreen Projector
+  ; WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
-  WinMaximize, Full-screen Projector
+  ; WinMaximize, Full-screen Projector
   WinActivate, Full-screen Projector
   if (obsControl != "ASS") {
     send {%obsWallSceneKey% down}
