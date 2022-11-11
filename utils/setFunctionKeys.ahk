@@ -1,4 +1,3 @@
-#Include, %A_ScriptDir%\..\scripts\functions.ahk
 #SingleInstance, Force
 #NoEnv
 
