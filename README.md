@@ -49,23 +49,10 @@ This script will simply close all your instances for you. This is also an option
 ### setFunctionKeys.ahk
 This script is used for setting function hotkeys f13-f24 in your OBS hotkeys if you choose to use "F" or "A" for obsSceneControlType which allows for more than 9 instances.
 
-### Setup-OBS.exe
-This is a program that generates a scene collection for you which you can import in OBS, which also includes settings for the Advanced Scene Switcher (see below for info) to eliminate OBS setup time. All files are generated into the data folder.
-
 ### Startup.ahk
 This script will startup your instances for you, however it will only work after your first session.
 
 If you want, you can create a names.txt file in the /data folder with one name per line, and one line per instance to launch your instances in offline mode with custom names.
-
-## Advanced Scene Switching
-
-This is a much better OBS Websocket alternative which allows us to control all OBS actions without any hotkeys, including Tinder-style background resetting.
-
-Setting this up is simple:
-- Make sure to run the macro at least once with all instances open
-- Download the [Advanced Scene Switcher](https://obsproject.com/forum/resources/advanced-scene-switcher.395/) plugin and install it
-- Run the Setup-OBS.exe in the utils folder. This will generate a file in your data folder called `sceneCollection.json`.
-- Hit `Import` under the `Scene Collection` tab in OBS, and select this file.
 
 ## Super Advanced Settings
 
@@ -82,8 +69,8 @@ Affinity is by far the most advanced section but can be used to fine tune perfor
 - midThreadsOverride: Threads used for instances loading a preview (previewBurstLength) after detecting it. Default by macro math: 80% of threads if advanced mode otherwise same as high unless override is set
 - lowThreadsOverride: Threads used for instances that have reached (previewLoadPercent) requirement or for any idle instances. Default by macro math: 70% of threads if advanced mode otherwise high unless override is set
 - bgLoadThreadsOverride: Threads used for loading background instances. Default by macro math: 40% of threads unless override is set
-- previewBurstLength: The length of time in ms that instances spend on highThreads before switching to midThreads after a preview has been detected while fullscreen projector is focused. Default: 300
-- previewLoadPercent: The percentage of world gen that must be reached after a preview is detected before lowering to lowThreads. Default: 10
+- previewBurstLength: The length of time in ms that instances spend on highThreads before switching to midThreads after a preview has been detected while fullscreen projector is focused. Default: 400
+- previewLoadPercent: The percentage of world gen that must be reached after a preview is detected before lowering to lowThreads. Default: 15
 
 ### OBS
 
@@ -119,7 +106,7 @@ The paths of the files used for counting attempts. This can make updating attemp
 - Me
 - Mach for efficient reset managers & for affinity management
 - Ravalle for a lot of great ideas and code
-- Boyenn for the better lock indication idea
+- Boyenn for the better lock indication idea and general optimizations
 - The collaborators listed for minor enhancements
 - PodX12 for some minor enhancements
 - Sam Dao (real)
