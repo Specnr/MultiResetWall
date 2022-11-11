@@ -17,6 +17,7 @@ global instances := 0
 global rawPIDs := []
 global PIDs := []
 global RM_PIDs := []
+global hwnds := []
 global locked := []
 global needBgCheck := False
 global currBg := GetFirstBgInstance()
@@ -86,6 +87,7 @@ for i, mcdir in McDirectories {
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
   RM_PIDs[i] := rmpid
+  hwnds[i] := getHwndForPid(pid)
   UnlockInstance(i, False)
   if (!FileExist(idle))
     FileAppend, %A_TickCount%, %idle%
