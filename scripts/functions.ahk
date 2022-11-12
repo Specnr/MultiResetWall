@@ -363,7 +363,6 @@ ExitWorld(nextInst:=-1)
     if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
-      sleep, %fullScreenDelay%
     }
     holdFile := McDirectories[idx] . "hold.tmp"
     killFile := McDirectories[idx] . "kill.tmp"
