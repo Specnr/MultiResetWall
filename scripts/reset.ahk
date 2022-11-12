@@ -78,7 +78,7 @@ ManageReset() {
       if (A_Index <= lastImportantLine)
         Continue
       if (state == "resetting" && InStr(A_LoopReadLine, "Starting Preview")) {
-        ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
+        SetTimer, Pause, -%beforePauseDelay%
         state := "preview"
         lastImportantLine := GetLineCount(logFile)
         FileDelete, %holdFile%

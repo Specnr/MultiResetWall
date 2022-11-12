@@ -11,7 +11,7 @@ global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global unpauseOnSwitch := True ; Unpause instance right after switching to it
-global smartSwitch := True ; Find an instance to switch to if current one is unloade
+global smartSwitch := True ; Find an instance to switch to if current one is unloaded
 global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
