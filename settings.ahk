@@ -10,15 +10,12 @@ global widthMultiplier := 2.5 ; How wide your instances go to maximize visibilit
 global coop := False ; Automatically opens to LAN when you load in a world
 global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tts, L = only locks, N = no sounds
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
-global tinder := False ; Set to True if you want to use tinder-style bg resetting
 global unpauseOnSwitch := True ; Unpause instance right after switching to it
-global smartSwitch := True ; Find an instance to switch to if current one is unloaded
+global smartSwitch := True ; Find an instance to switch to if current one is unloade
 global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
-global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
-
 
 ; Super advanced settings (Read about these settings on the README before changing)
 
@@ -35,7 +32,7 @@ global previewBurstLength := 500 ; The delay before switching from high to mid w
 global previewLoadPercent := 15 ; The percentage of world gen that must be reached before lowering to low
 
 ; OBS
-global obsControl := "N" ; N = Numpad keys (<10 inst), F = Function keys (f13-f24, <13 inst, setup script in utils folder), ARR = advanced array (see customKeyArray), ASS = advanced scene switcher (read GitHub)
+global obsControl := "C" ; C = Controller, N = Numpad keys (<10 inst), F = Function keys (f13-f24), ARR = advanced array (see customKeyArray)
 global obsWallSceneKey := "F12" ; All obs scene control types use wallSceneKey
 global obsCustomKeyArray := [] ; Must be used with advanced array control type. Add keys in quotes separated by commas. The index in the array corresponds to the scene
 global obsResetMediaKey := "" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
