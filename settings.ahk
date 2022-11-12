@@ -17,7 +17,6 @@ global theme := "default" ; the name of the folder you wish to use as your macro
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
-global fullScreenDelay := 100 ; increse if fullscreening issues
 global tinderCheckBuffer := 5 ; When all instances cant reset, how often it checks for an instance in seconds
 
 
