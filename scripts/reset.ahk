@@ -108,9 +108,9 @@ ManageReset() {
             SetTimer, ManageThisAffinity, -%previewBurstLength%
         }
         return
-      } else if (state == "preview" && InStr(A_LoopReadLine, "%")) {
+      } else if (InStr(A_LoopReadLine, "%")) {
         loadPercent := StrSplit(StrSplit(A_LoopReadLine, ": ")[3], "%")[1]
-        if (loadPercent > previewLoadPercent && !FileExist(lockFile) && !previewLoaded) {
+        if (loadPercent > previewLoadPercent && !previewLoaded) {
           previewLoaded := true
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} {2}% loading finished", idx, previewLoadPercent), A_TickCount)
           ManageThisAffinity()
@@ -141,14 +141,16 @@ ManageThisAffinity() {
     else
       SetAffinity(pid, lowBitMask)
   } else { ; there is no active instance
-    if (state == "idle" || previewLoaded) ; if preview gen reached or idle
-      SetAffinity(pid, lowBitMask)
-    else if FileExist(lockFile) ; if locked
+    if FileExist(lockFile) ; if locked
       SetAffinity(pid, lockBitMask)
     else if (state == "resetting") ; if resetting
       SetAffinity(pid, highBitMask)
-    else if (!previewLoaded) ; if preview gen not reached
+    else if (state == "preview" && !previewLoaded) ; if preview gen not reached
       SetAffinity(pid, midBitMask)
+    else if (state == "preview" && previewLoaded) ; if preview gen reached
+      SetAffinity(pid, lowBitMask)
+    else if (state == "idle") ; if idle
+      SetAffinity(pid, lowBitMask)
     else
       SetAffinity(pid, highBitMask)
   }
