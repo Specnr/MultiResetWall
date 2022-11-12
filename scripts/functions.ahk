@@ -255,7 +255,7 @@ GetBitMask(threads) {
   return ((2 ** threads) - 1)
 }
 
-SwitchInstance(idx, skipBg:=false, from:=-1)
+SwitchInstance(idx)
 {
   if (!locked[idx])
     LockInstance(idx, False, False)
@@ -308,7 +308,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
   } else if smartSwitch {
     nextInst := FindBypassInstance()
     if (nextInst > 0)
-      SwitchInstance(nextInst, false)
+      SwitchInstance(nextInst)
   }
 }
 
@@ -333,7 +333,6 @@ ExitWorld(nextInst:=-1)
     if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
-      sleep, %fullScreenDelay%
     }
     holdFile := McDirectories[idx] . "hold.tmp"
     killFile := McDirectories[idx] . "kill.tmp"
@@ -347,7 +346,7 @@ ExitWorld(nextInst:=-1)
     else if ((mode == "B" || mode == "M") && nextInst == -1)
       nextInst := FindBypassInstance()
     if (nextInst > 0)
-      SwitchInstance(nextInst, false, idx)
+      SwitchInstance(nextInst)
     else
       ToWall(idx)
     if (widthMultiplier)
@@ -388,8 +387,6 @@ SetTitles() {
 ToWall(comingFrom) {
   FileDelete,data/instance.txt
   FileAppend,0,data/instance.txt
-  FileDelete,data/bg.txt
-  FileAppend,0,data/bg.txt
   WinMaximize, Fullscreen Projector
   WinActivate, Fullscreen Projector
   WinMaximize, Full-screen Projector
@@ -406,7 +403,7 @@ ToWall(comingFrom) {
 FocusReset(focusInstance, bypassLock:=false) {
   if bypassLock
     UnlockAll(false)
-  SwitchInstance(focusInstance, true)
+  SwitchInstance(focusInstance)
   loop, %instances% {
     if (A_Index = focusInstance || locked[A_Index])
       Continue
