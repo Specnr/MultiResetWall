@@ -29,12 +29,13 @@ global highBitMask := A_Args[13]
 global midBitMask := A_Args[14]
 global lowBitMask := A_Args[15]
 global bgLoadBitMask := A_Args[16]
+global doubleCheckUnexpectedLoads := A_Args[17]
 
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask), A_TickCount)
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads), A_TickCount)
 
 OnMessage(MSG_RESET, "Reset")
 
