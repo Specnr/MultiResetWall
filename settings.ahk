@@ -33,7 +33,7 @@ global previewLoadPercent := 15 ; The percentage of world gen that must be reach
 
 ; OBS
 global obsControl := "C" ; C = Controller, N = Numpad keys (<10 inst), F = Function keys (f13-f24), ARR = advanced array (see customKeyArray)
-global obsWallSceneKey := "F12" ; All obs scene control types use wallSceneKey
+global obsWallSceneKey := "F12" ; Wall hotkey used for all obsControl types except Controller
 global obsCustomKeyArray := [] ; Must be used with advanced array control type. Add keys in quotes separated by commas. The index in the array corresponds to the scene
 global obsResetMediaKey := "" ; Key pressed on any instance reset with sound (used for playing reset media file in obs for recordable/streamable resets and requires addition setup to work)
 global obsLockMediaKey := "" ; Key pressed on any lock instance with sound (used for playing lock media file in obs for recordable/streamable lock sounds and requires addition setup to work)
