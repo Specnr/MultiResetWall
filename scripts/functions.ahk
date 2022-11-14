@@ -303,6 +303,7 @@ SwitchInstance(idx, skipBg:=false, from:=-1)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
+    WinMinimize, Fullscreen Projector
     WinMinimize, Full-screen Projector
     if (widthMultiplier)
       WinMaximize, ahk_pid %pid%
@@ -403,6 +404,8 @@ SetTitles() {
 }
 
 ToWall(comingFrom) {
+  WinMaximize, Fullscreen Projector
+  WinActivate, Fullscreen Projector
   WinMaximize, Full-screen Projector
   WinActivate, Full-screen Projector
   if (useObsWebsocket) {
