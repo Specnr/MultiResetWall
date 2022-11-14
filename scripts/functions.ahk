@@ -255,7 +255,7 @@ GetBitMask(threads) {
   return ((2 ** threads) - 1)
 }
 
-SwitchInstance(idx)
+SwitchInstance(idx, special:=False)
 {
   if (!locked[idx])
     LockInstance(idx, False, False)
@@ -274,7 +274,7 @@ SwitchInstance(idx)
     WinMinimize, Full-screen Projector
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
-      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
+      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%\
     }
     foreGroundWindow := DllCall("GetForegroundWindow")
     windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint",foreGroundWindow,"uint",0)
@@ -291,7 +291,8 @@ SwitchInstance(idx)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-    Send {LButton} ; Make sure the window is activated
+    if (special)
+      OnJoinSettingsChange(pid)
     if (obsControl != "C") {
       if (obsControl == "N")
         obsKey := "Numpad" . idx
@@ -436,7 +437,7 @@ GetRandomLockNumber() {
 }
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
-  if (idx > instances || !idx)
+  if (idx > instances || idx <= 0)
     return
   locked[idx] := true
   lockDest := McDirectories[idx] . "lock.png"
@@ -466,7 +467,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
 }
 
 UnlockInstance(idx, sound:=true) {
-  if (!idx || (idx > rows * cols))
+  if (idx > instances || idx <= 0)
     return
   locked[idx] := false
   if (obsControl == "C")
@@ -530,8 +531,14 @@ WorldBop() {
   MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
   IfMsgBox No
   Return
-  cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
-  RunWait,%cmd%, %A_ScriptDir%\scripts ,Hide
+  if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
+    cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
+    SendLog(LOG_LEVEL_INFO, "Running worldBopper9000x.py to clear worlds", A_TickCount)
+    RunWait,%cmd%, %A_ScriptDir%\scripts ,Hide
+  } else {
+    SendLog(LOG_LEVEL_INFO, "Running slowBopper2000,ahk to clear worlds", A_TickCount)
+    RunWait, "%A_ScriptDir%\scripts\slowBopper2000.ahk", %A_ScriptDir%
+  }
   MsgBox, Completed World Bopping!
 }
 
@@ -547,6 +554,13 @@ CloseInstances() {
     WinClose, ahk_pid %rmpid%
   }
   DetectHiddenWindows, Off
+}
+
+LaunchInstances() {
+  MsgBox, 4, Launch Instances?, Launch all of your instances?
+  IfMsgBox No
+  Return
+  Run, "%A_ScriptDir%\utils\startup.ahk", %A_ScriptDir%
 }
 
 GetLineCount(file) {
@@ -586,6 +600,23 @@ SendOBSCmd(cmd) {
   static cmdDir := % "data/pycmds/" . A_TickCount
   FileAppend, %cmd%, %cmdDir%%cmdNum%.txt
   cmdNum++
+}
+
+OnJoinSettingsChange(pid) {
+  rdPresses := renderDistance - 2
+  ControlSend,, {Blind}{Shift down}{F3 down}{f 30}{Shift up}{f %rdPresses%}{F3 up}, ahk_pid %pid%
+  if (toggleChunkBorders)
+    ControlSend,, {Blind}{F3 down}{g}{F3 up}, ahk_pid %pid%
+  if (toggleHitBoxes)
+    ControlSend,, {Blind}{F3 down}{b}{F3 up}, ahk_pid %pid%
+  FOVPresses := ceil((110-fov)*1.7875)
+  entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
+  ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
+  if (blockEntityPie) {
+    ControlSend,, {Blind}{Shift down}{F3}{Shift up}, ahk_pid %pid%
+    sleep, %pieDelay%
+    ControlSend,, {Blind}000004113{F3}, ahk_pid %pid%
+  }
 }
 
 VerifyInstance(mcdir, pid, idx) {
