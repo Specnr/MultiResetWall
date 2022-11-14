@@ -328,9 +328,9 @@ ExitWorld(nextInst:=-1)
   if (idx > 0) {
     pid := PIDs[idx]
     if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
+      ControlSend,, {Blind}{F1}{F3}{Esc}{F1}, ahk_pid %pid%
     else
-      ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
+      ControlSend,, {Blind}{F3}{Esc}{F3}, ahk_pid %pid%
     if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
