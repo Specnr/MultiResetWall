@@ -423,17 +423,19 @@ ResetAll(bypassLock:=false) {
   }
 }
 
-GetRandomLockNumber() {
-  if (themeLockCount == -1) {
-    themeLockCount := 0
-    Loop, Files, %A_ScriptDir%\media\lock*.png
-    {
-      themeLockCount += 1
+GetLockFile() {
+  if (useRandomLocks > 1) {
+    Random, randLock, 1, %useRandomLocks%
+    source := A_ScriptDir . "\media\lock" . randLock . ".png"
+    SendLog(LOG_LEVEL_INFO, Format("Randomly picked lock{1}.png to send as lock", randLock), A_TickCount)
+    if !FileExist(source) {
+      source := A_ScriptDir . "\media\lock.png"
+      SendLog(LOG_LEVEL_ERROR, Format("lock{1}.png did not exist, defaulting to lock.png", randLock), A_TickCount)
     }
+  } else {
+    source := A_ScriptDir . "\media\lock.png"
   }
-  SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", themeLockCount), A_TickCount)
-  Random, randLock, 1, %themeLockCount%
-  return randLock
+  return source
 }
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
@@ -441,12 +443,8 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
     return
   locked[idx] := true
   lockDest := McDirectories[idx] . "lock.png"
-  randLock := GetRandomLockNumber()
-  SendLog(LOG_LEVEL_INFO, Format("Randomly picked lock{1}.png to send as lock", randLock), A_TickCount)
-  source := A_ScriptDir . "\media\lock" . randLock . ".png"
-  If !FileExist(source)
-    source := A_ScriptDir . "\media\lock.png"
-  FileCopy, %source%, %lockDest%, 1
+  lockSource := GetLockFile()
+  FileCopy, %lockSource%, %lockDest%, 1
   FileSetTime,,%lockDest%,M
   if (obsControl == "C")
     SendOBSCmd(Format("Lock,{1},1", idx))
@@ -579,6 +577,11 @@ SetTheme(theme) {
     FileSetTime,,%fileDest%,M
     SendLog(LOG_LEVEL_INFO, Format("Copying file {1} to {2}", A_LoopFileFullPath, fileDest), A_TickCount)
   }
+  Loop, Files, %A_ScriptDir%\media\lock*.png
+  {
+    useRandomLocks += 1
+  }
+  SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", useRandomLocks), A_TickCount)
 }
 
 IsProcessElevated(ProcessID) {

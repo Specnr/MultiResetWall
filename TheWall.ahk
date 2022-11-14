@@ -26,6 +26,8 @@ global commandkeys := []
 global f1States := []
 global resets := 0
 global doubleCheckUnexpectedLoads := True
+global useRandomLocks := -1
+global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
@@ -52,18 +54,11 @@ global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
-global hasMcDirCache := FileExist("data/mcdirs.txt")
-global themeLockCount := -1
 
 FileDelete, data/log.log
 FileDelete, %dailyAttemptsFile%
 
 SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
-
-Loop, Files, %A_ScriptDir%\media\lock*.png
-{
-  FileDelete, %A_LoopFileFullPath%
-}
 
 SetTheme(theme)
 GetAllPIDs()

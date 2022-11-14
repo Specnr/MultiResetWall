@@ -115,8 +115,10 @@ ManageReset() {
           previewLoaded := true
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} {2}% loading finished", idx, previewLoadPercent), A_TickCount)
           ManageThisAffinity()
-        } else if !previewLoaded
+        } else if (!previewLoaded && state == "preview") {
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent), A_TickCount)
+          lastImportantLine := GetLineCount(logFile)
+        }
       }
     }
     if (resetManagementTimeout > 0 && A_TickCount - start > resetManagementTimeout) {
