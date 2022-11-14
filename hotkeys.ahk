@@ -20,7 +20,7 @@ return
 }
 return
 
-#IfWinActive, Full-screen Projector
+#If WinActive("Fullscreen Projector") || WinActive("Full-screen Projector")
   {
     *E::ResetInstance(MousePosToInstNumber())
     *R::SwitchInstance(MousePosToInstNumber())
