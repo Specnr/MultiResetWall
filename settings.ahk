@@ -40,6 +40,16 @@ global obsLockMediaKey := "" ; Key pressed on any lock instance with sound (used
 global obsUnlockMediaKey := "" ; Key pressed on any unlock instance with sound (used for playing unlock media file in obs for recordable/streamable unlock sounds and requires addition setup to work)
 global obsDelay := 50 ; delay between hotkey press and release, increase if not changing scenes in obs and using a hotkey form of control
 
+; Special on join settings
+; Optional alternate settings to use when joining an instance. Set this function as a hotkey with 'SwitchInstance(MousePosToInstNumber(), True)'
+global renderDistance := 18
+global entityDistance := 500
+global fov := 110
+global blockEntityPie := True ; Attempt to switch pie chart directory to root.tick.level.entities.blockEntites
+global toggleChunkBorders := True
+global toggleHitBoxes := False
+global pieDelay := 400 ; Delay needed between opening pie chart and attempting to switch directory
+
 ; Reset Management
 global beforePauseDelay := 0 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
 global resetManagementTimeout := -1 ; Milliseconds that can pass before reset manager gives up. Too low might leave instances unpaused. Default (-1, don't timeout)
