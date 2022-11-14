@@ -26,7 +26,7 @@ global commandkeys := []
 global f1States := []
 global resets := 0
 global doubleCheckUnexpectedLoads := True
-global useRandomLocks := -1
+global useRandomLocks := 0
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS

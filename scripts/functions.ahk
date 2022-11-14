@@ -570,6 +570,10 @@ GetLineCount(file) {
 
 SetTheme(theme) {
   SendLog(LOG_LEVEL_INFO, Format("Setting macro theme to {1}", theme), A_TickCount)
+  Loop, Files, %A_ScriptDir%\media\*
+  {
+    FileDelete, %A_LoopFileFullPath%
+  }
   Loop, Files, %A_ScriptDir%\themes\%theme%\*
   {
     fileDest := A_ScriptDir . "\media\" . A_LoopFileName
