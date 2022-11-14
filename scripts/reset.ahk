@@ -116,7 +116,6 @@ ManageReset() {
           ManageThisAffinity()
         } else if !previewLoaded
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} loaded {2}% out of {3}%", idx, loadPercent, previewLoadPercent), A_TickCount)
-        lastImportantLine := GetLineCount(logFile)
       }
     }
     if (resetManagementTimeout > 0 && A_TickCount - start > resetManagementTimeout) {
