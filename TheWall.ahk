@@ -151,12 +151,11 @@ if IsProcessElevated(obsPid) {
     SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
 }
 
-if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
-  Menu, Tray, Add, Delete Worlds, WorldBop
-else
-  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray", A_TickCount)
+Menu, Tray, Add, Delete Worlds, WorldBop
 
 Menu, Tray, Add, Close Instances, CloseInstances
+
+Menu, Tray, Add, Launch Instances, LaunchInstances
 
 ToWall(0)
 
