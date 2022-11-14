@@ -612,11 +612,6 @@ OnJoinSettingsChange(pid) {
   FOVPresses := ceil((110-fov)*1.7875)
   entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
   ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, ahk_pid %pid%
-  if (blockEntityPie) {
-    ControlSend,, {Blind}{Shift down}{F3}{Shift up}, ahk_pid %pid%
-    sleep, %pieDelay%
-    ControlSend,, {Blind}000004113{F3}, ahk_pid %pid%
-  }
 }
 
 VerifyInstance(mcdir, pid, idx) {

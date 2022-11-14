@@ -45,10 +45,8 @@ global obsDelay := 50 ; delay between hotkey press and release, increase if not 
 global renderDistance := 18
 global entityDistance := 500
 global fov := 110
-global blockEntityPie := True ; Attempt to switch pie chart directory to root.tick.level.entities.blockEntites
 global toggleChunkBorders := True
 global toggleHitBoxes := False
-global pieDelay := 400 ; Delay needed between opening pie chart and attempting to switch directory
 
 ; Reset Management
 global beforePauseDelay := 0 ; extra delay before the final pause for a loading instance. May be needed for very laggy loading. Default (0) should be fine
