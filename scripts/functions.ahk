@@ -570,6 +570,8 @@ GetLineCount(file) {
 
 SetTheme(theme) {
   SendLog(LOG_LEVEL_INFO, Format("Setting macro theme to {1}", theme), A_TickCount)
+  if !FileExist(A_ScriptDir . "\media\")
+    FileAppend, %A_ScriptDir%\media\
   Loop, Files, %A_ScriptDir%\media\*
   {
     FileDelete, %A_LoopFileFullPath%
