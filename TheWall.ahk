@@ -57,6 +57,8 @@ global LOG_LEVEL_ERROR = "ERR"
 
 FileDelete, data/log.log
 FileDelete, %dailyAttemptsFile%
+if !FileExist("data")
+  FileCreateDir, data/
 
 SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
 
