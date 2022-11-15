@@ -274,7 +274,7 @@ SwitchInstance(idx, special:=False)
     WinMinimize, Full-screen Projector
     if (windowMode == "F") {
       fsKey := fsKeys[idx]
-      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%\
+      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
     }
     foreGroundWindow := DllCall("GetForegroundWindow")
     windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint",foreGroundWindow,"uint",0)
