@@ -704,8 +704,8 @@ VerifyInstance(mcdir, pid, idx) {
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
-    if (RegExMatch(ssettings, "[A-Z]\w{0}:(\/|\\).+.txt")) {
-      standardSettingsFile := ssettings
+    if (RegExMatch(ssettings, "[A-Z]\w{0}:(\/|\\).+.txt", globalPath)) {
+      standardSettingsFile := globalPath
       SendLog(LOG_LEVEL_INFO, Format("Global standard options file detected, rereading standard options from {1}", standardSettingsFile), A_TickCount)
       FileRead, ssettings, %standardSettingsFile%
     }
@@ -717,9 +717,9 @@ VerifyInstance(mcdir, pid, idx) {
       ssettings := StrReplace(ssettings, "pauseOnLostFocus:true", "pauseOnLostFocus:false")
       SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had pauseOnLostFocus set true, macro requires it false. Automatically fixed. (In file: {2})", idx, standardSettingsFile), A_TickCount)
     }
-    if (RegExMatch(ssettings, "f1:.+", regexVar)) {
-      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found. This will be used for ghost pie and instance join. (In file: {3})", idx, regexVar, standardSettingsFile), A_TickCount)
-      f1States[idx] := regexVar == "f1:true" ? 2 : 1
+    if (RegExMatch(ssettings, "f1:.+", f1Match)) {
+      SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found. This will be used for ghost pie and instance join. (In file: {3})", idx, f1Match, standardSettingsFile), A_TickCount)
+      f1States[idx] := f1Match == "f1:true" ? 2 : 1
     }
     Loop, 1 {
       if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
@@ -1072,8 +1072,8 @@ CheckOptionsForValue(file, optionsCheck, defaultValue) {
   ,"key.mouse.4", "XButton1"
   ,"key.mouse.5", "XButton2")
   FileRead, fileData, %file%
-  if (RegExMatch(fileData, "[A-Z]\w{0}:(\/|\\).+.txt")) {
-    file := fileData
+  if (RegExMatch(fileData, "[A-Z]\w{0}:(\/|\\).+.txt", globalPath)) {
+    file := globalPath
   }
   Loop, Read, %file%
   {
