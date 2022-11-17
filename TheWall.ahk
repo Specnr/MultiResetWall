@@ -122,6 +122,7 @@ for i, mcdir in McDirectories {
   }
   if (widthMultiplier) {
     pid := PIDs[i]
+    WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   } else {
     WinMaximize, ahk_pid %pid%
