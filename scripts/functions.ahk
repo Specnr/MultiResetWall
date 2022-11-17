@@ -604,6 +604,8 @@ IsProcessElevated(ProcessID) {
 SendOBSCmd(cmd) {
   static cmdNum := 1
   static cmdDir := % "data/pycmds/" . A_TickCount
+  if !FileExist("data/pycmds")
+    FileCreateDir, data/pycmds/
   FileAppend, %cmd%, %cmdDir%%cmdNum%.txt
   cmdNum++
 }
