@@ -16,6 +16,7 @@ global theme := "default" ; the name of the folder you wish to use as your macro
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
+global fullscreenDelay := 100 ; Increase if fullscreening issues
 
 ; Super advanced settings (Read about these settings on the README before changing)
 
