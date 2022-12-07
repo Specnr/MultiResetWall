@@ -23,7 +23,6 @@ global resetKeys := []
 global lpKeys := []
 global fsKeys := []
 global commandkeys := []
-global f1States := []
 global resets := 0
 global doubleCheckUnexpectedLoads := True
 global useRandomLocks := 0

@@ -272,9 +272,7 @@ SwitchInstance(idx, special:=False)
     SetAffinities(idx)
     if unpauseOnSwitch
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    if (widthMultiplier)
+    if widthMultiplier
       WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
@@ -334,11 +332,7 @@ ExitWorld(nextInst:=-1)
     FileDelete,%holdFile%
     FileDelete, %killFile%
     SetAffinities(nextInst)
-    if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{F1}{F3}{Esc}{F1}{Esc}, ahk_pid %pid%
-    else
-      ControlSend,, {Blind}{F3}{Esc}{F3}{Esc}, ahk_pid %pid%
-    if (widthMultiplier)
+    if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
     ResetInstance(idx)
@@ -632,7 +626,6 @@ VerifyInstance(mcdir, pid, idx) {
   sleepBg := false
   sodium := false
   srigt := false
-  f1States[idx] := 0
   SendLog(LOG_LEVEL_INFO, Format("Starting instance verification for directory: {1}", mcdir), A_TickCount)
   ; Check for mod dependencies
   Loop, Files, %moddir%*.jar
@@ -694,7 +687,7 @@ VerifyInstance(mcdir, pid, idx) {
     if (windowMode == "F") {
       if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown")) {
         MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
       }
       fsKey := CheckOptionsForValue(optionsFile, "key_key.fullscreen", "F11")
       fsKeys[idx] := fsKey
@@ -718,7 +711,6 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (RegExMatch(ssettings, "f1:.+", f1Match)) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found. This will be used for ghost pie and instance join. (In file: {3})", idx, f1Match, standardSettingsFile), A_TickCount)
-      f1States[idx] := f1Match == "f1:true" ? 2 : 1
     }
     Loop, 1 {
       if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
@@ -749,7 +741,7 @@ VerifyInstance(mcdir, pid, idx) {
         resetKeys[idx] := "F6"
       } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
         MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
         if (resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")) {
           resetKeys[idx] := resetKey
           SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile), A_TickCount)
@@ -804,7 +796,7 @@ VerifyInstance(mcdir, pid, idx) {
         lpKeys[idx] := "h"
       } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
         if (lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")) {
           resetKeys[idx] := resetKey
           SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile), A_TickCount)
@@ -826,7 +818,7 @@ VerifyInstance(mcdir, pid, idx) {
         lpKeys[idx] := "h"
       } else {
         SendLog(LOG_LEVEL_ERROR, Format("No recommended World Preview mod in instance {1}. Using 'h' to avoid reset manager errors", idx), A_TickCount)
-          lpKeys[idx] := "h"
+        lpKeys[idx] := "h"
       }
       break
     }
