@@ -11,9 +11,7 @@ If further help is needed, feel free to open a ticket in my [Discord server](htt
 
 To use the macro, run TheWall.ahk and wait for it to say ready. Start up OBS, then start up a [Fullscreen projector](https://youtu.be/9YqZ6Ogv3rk).
 
-On the Fullscreen projector, you have a few default hotkeys (You may customize these hotkeys in the hotkeys.ahk file): 
-- (1-9): Will reset the instance with the corresponding number
-- Shift + (1-9): Will play the instance with the corresponding number
+On the Fullscreen projector, you have a few default hotkeys (You may customize these hotkeys in the hotkeys.ahk file):
 - E: Will reset the instance which your mouse is hovering over
 - R: Will play the instance which your mouse is hovering over
 - F: Will play the instance which your mouse is hovering over, and reset all of the other ones
@@ -30,14 +28,11 @@ Other optional hotkey functions include (to use, put the quoted text after a hot
 
 Use [this world deletion program](https://gist.github.com/Specnr/8a572ac5c5cfdb54eb0dc7d1eb2906a3) to delete worlds, or use the Delete Worlds option in the system tray (Requires Python).
 
-## OBS Locked Instance Indicators
+## Themes
 
-Adds the media/lock.png on screen whenever you lock an instance (does NOT require OBS Websocket)
+This macro supports different themes for lock images and sounds, there are a few ones prebuilt into the `/themes` folder for you to choose, or you can make a custom theme by adding your own `lock.png` and `lock.wav` to the `/themes/custom` folder. To change themes just change the theme setting to be the folder name of whichever theme you want to use.
 
-1) Start the macro, then lock all instances
-2) This will create an image in each of your instance's .minecraft folder named lock.png, add an Image source to OBS for each corresponding instance and use the lock image created in that specific instance's .minecraft folder.
-
-Make sure you AREN'T adding the lock.png file that is included in the media folder. You may customize your lock images by simply replacing the png files in your wall media folder. Changing the files in your .minecraft folders won't do anything.
+You can also have the macro pick a random lock image by naming the images `lock1.png`, `lock2.png`, ... etc
 
 ## Utility Functions
 
@@ -45,9 +40,6 @@ In the /utils folder, you'll find some helpful scripts which we will add to over
 
 ### CloseInstances.ahk
 This script will simply close all your instances for you. This is also an option in TheWall.ahk tray options
-
-### setFunctionKeys.ahk
-This script is used for setting function hotkeys f13-f24 in your OBS hotkeys if you choose to use "F" or "A" for obsSceneControlType which allows for more than 9 instances.
 
 ### Startup.ahk
 This script will startup your instances for you, however it will only work after your first session.
@@ -76,7 +68,7 @@ Affinity is by far the most advanced section but can be used to fine tune perfor
 
 These are the OBS hotkey settings. If you want to use more than 9 instances or change the hotkeys that are used for OBS you can change these.
 
-- obsControl: What system the macro use for OBS scene control. Options: Numpad hotkeys 1-9 (N), Function hotkeys f13-f24, setup script in utils folder (F), Advanced key array, any keys you want, use the obsCustomKeyArray variable (ARR), Advanced scene switcher OBS plugin, requires extra setup but removes need for all scene switching hotkeys (ASS)
+- obsControl: What system the macro use for OBS scene control. The default and reccomended is OBS Controller (C), and all other control types are legacy. The others are: Numpad hotkeys 1-9 (N), Function hotkeys f13-f24, setup script in utils folder (F), Advanced key array, any keys you want, use the obsCustomKeyArray variable (ARR)
 - obsWallSceneKey: The key that is pressed when switching to the wall. All obs scene control types use wallSceneKey. Default: 'F12'
 - obsCustomKeyArray: Used with advanced key array setting. Add keys inside the brackets in quotes and separated by commas. The index of the key in the array corresponds to the scene that it will be used for. Default: empty
 - obsResetMediaKey: The key pressed when any instance is reset with sound. This can be used to play media sources in OBS. Default: none
@@ -92,7 +84,6 @@ These are values used by the reset manager scripts. They can have minor performa
 - resetManagementTimeout: Max Time in ms that can pass before reset manager gives up looking for a preview or load line in logs. May be needed if instances become unresetable often, too low can leave instances unpaused. Default: -1 (do not timeout)
 - manageResetAfter: Delay before starting reset management log reading loop. Too low might create delayed resets or previews that are not f3+esc paused. Default: 300
 - resetManagementLoopDelay: Buffer time for the loop that reads Minecraft logs to check for previews and loads. Lower might decrease pause latencies but increase cpu usage. Default: 70
-- doubleCheckUnexpectedLoads: If you plan to use the wall without World Preview mod you should disable this. If you reset right when an instance finishes loading it will detect the load and need to double check that there was just a reset. Default: True
 
 ### Attempts
 
