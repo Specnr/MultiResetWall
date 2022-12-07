@@ -650,6 +650,17 @@ VerifyInstance(mcdir, pid, idx) {
   if !atum {
     SendLog(LOG_LEVEL_ERROR, Format("Instance {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases. (In directory: {2})", idx, moddir), A_TickCount)
     MsgBox, Instance %idx% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases.`n(In directory: %moddir%)
+  } else if unpauseOnSwitch {
+    config := mcdir . "config\atum\atum.properties"
+    ; Read the atum.properties and set unpauseOnSwitch to false if a seed is set
+    Loop, Read, %config%
+    {
+      if (InStr(A_LoopReadLine, "seed=") && StrLen(A_LoopReadLine) > 5) {
+        SendLog(LOG_LEVEL_INFO, "Found a set seed, setting 'unpauseOnSwitch' to False", A_TickCount)
+        unpauseOnSwitch := False
+        break
+      }
+    }
   }
   if !wp {
     SendLog(LOG_LEVEL_WARNING, Format("Instance {1} missing recommended mod: World Preview. Macro attempted to adapt. Download: https://github.com/VoidXWalker/WorldPreview/releases. (In directory: {2})", idx, moddir), A_TickCount)
