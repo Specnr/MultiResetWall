@@ -25,6 +25,9 @@ global fsKeys := []
 global commandkeys := []
 global f1States := []
 global resets := 0
+global doubleCheckUnexpectedLoads := True
+global useRandomLocks := 0
+global hasMcDirCache := FileExist("data/mcdirs.txt")
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
@@ -51,18 +54,13 @@ global MSG_RESET := 0x04E20
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
-global hasMcDirCache := FileExist("data/mcdirs.txt")
-global themeLockCount := -1
 
 FileDelete, data/log.log
 FileDelete, %dailyAttemptsFile%
+if !FileExist("data")
+  FileCreateDir, data/
 
 SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
-
-Loop, Files, %A_ScriptDir%\media\lock*.png
-{
-  FileDelete, %A_LoopFileFullPath%
-}
 
 SetTheme(theme)
 GetAllPIDs()
@@ -94,8 +92,8 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask), A_TickCount)
-  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %playBitMask% %lockBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask%, %A_ScriptDir%,, rmpid
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads), A_TickCount)
+  Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %playBitMask% %lockBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask% %doubleCheckUnexpectedLoads%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
   DetectHiddenWindows, Off
@@ -124,6 +122,7 @@ for i, mcdir in McDirectories {
   }
   if (widthMultiplier) {
     pid := PIDs[i]
+    WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   } else {
     WinMaximize, ahk_pid %pid%
@@ -151,12 +150,11 @@ if IsProcessElevated(obsPid) {
     SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
 }
 
-if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python")
-  Menu, Tray, Add, Delete Worlds, WorldBop
-else
-  SendLog(LOG_LEVEL_WARNING, "Missing Python installation. No Delete Worlds option added to tray", A_TickCount)
+Menu, Tray, Add, Delete Worlds, WorldBop
 
 Menu, Tray, Add, Close Instances, CloseInstances
+
+Menu, Tray, Add, Launch Instances, LaunchInstances
 
 ToWall(0)
 
