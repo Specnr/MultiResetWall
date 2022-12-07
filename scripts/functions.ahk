@@ -664,7 +664,6 @@ VerifyInstance(mcdir, pid, idx) {
   }
   if !wp {
     SendLog(LOG_LEVEL_WARNING, Format("Instance {1} missing recommended mod: World Preview. Macro attempted to adapt. Download: https://github.com/VoidXWalker/WorldPreview/releases. (In directory: {2})", idx, moddir), A_TickCount)
-    MsgBox, Instance %idx% missing recommended mod: World Preview. Macro attempted to adapt. Download: https://github.com/VoidXWalker/WorldPreview/releases.`n(In directory: %moddir%)
     doubleCheckUnexpectedLoads := False
   } else {
     doubleCheckUnexpectedLoads := True
