@@ -326,6 +326,10 @@ ExitWorld(nextInst:=-1)
   idx := GetActiveInstanceNum()
   if (idx > 0) {
     pid := PIDs[idx]
+    if f1States[idx] ; goofy ghost pie removal
+      ControlSend,, {Blind}{Esc}{F1}{F3}{Esc}{F1}{F3}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{Esc}{F3}{Esc}{F3}, ahk_pid %pid%
     if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -336,10 +340,6 @@ ExitWorld(nextInst:=-1)
     FileDelete,%holdFile%
     FileDelete, %killFile%
     SetAffinities(nextInst)
-    if f1States[idx]
-      ControlSend,, {Blind}{F1}{F3}{Esc 3}, ahk_pid %pid%
-    else
-      ControlSend,, {Blind}{F3}{Esc 3}, ahk_pid %pid%
     if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
