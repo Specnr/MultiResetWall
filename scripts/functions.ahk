@@ -272,6 +272,10 @@ SwitchInstance(idx, special:=False)
     SetAffinities(idx)
     if unpauseOnSwitch
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
+    if (f1States[idx] == 2)
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if widthMultiplier
       WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
@@ -332,6 +336,10 @@ ExitWorld(nextInst:=-1)
     FileDelete,%holdFile%
     FileDelete, %killFile%
     SetAffinities(nextInst)
+    if f1States[idx]
+      ControlSend,, {Blind}{F1}{F3}{Esc 3}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{F3}{Esc 3}, ahk_pid %pid%
     if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
@@ -626,6 +634,7 @@ VerifyInstance(mcdir, pid, idx) {
   sleepBg := false
   sodium := false
   srigt := false
+  f1States[idx] := 0
   SendLog(LOG_LEVEL_INFO, Format("Starting instance verification for directory: {1}", mcdir), A_TickCount)
   ; Check for mod dependencies
   Loop, Files, %moddir%*.jar
@@ -721,6 +730,7 @@ VerifyInstance(mcdir, pid, idx) {
     }
     if (RegExMatch(ssettings, "f1:.+", f1Match)) {
       SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found. This will be used for ghost pie and instance join. (In file: {3})", idx, f1Match, standardSettingsFile), A_TickCount)
+      f1States[idx] := f1Match == "f1:true" ? 2 : 1
     }
     Loop, 1 {
       if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
