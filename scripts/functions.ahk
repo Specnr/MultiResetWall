@@ -282,7 +282,7 @@ SwitchInstance(idx, special:=False)
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
     WinMinimize, Full-screen Projector
-    if (windowMode == "F") {
+    if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullscreenDelay%
