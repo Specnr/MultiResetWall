@@ -272,15 +272,17 @@ SwitchInstance(idx, special:=False)
     SetAffinities(idx)
     if unpauseOnSwitch
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
     if (f1States[idx] == 2)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    if (widthMultiplier)
+    if widthMultiplier
       WinMaximize, ahk_pid %pid%
     WinSet, AlwaysOnTop, On, ahk_pid %pid%
     WinSet, AlwaysOnTop, Off, ahk_pid %pid%
     WinMinimize, Fullscreen Projector
     WinMinimize, Full-screen Projector
-    if (windowMode == "F") {
+    if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullscreenDelay%
@@ -324,6 +326,10 @@ ExitWorld(nextInst:=-1)
   idx := GetActiveInstanceNum()
   if (idx > 0) {
     pid := PIDs[idx]
+    if f1States[idx]
+      ControlSend,, {Blind}{F1}{F3}{Esc 3}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{F3}{Esc 3}, ahk_pid %pid%
     if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -334,11 +340,7 @@ ExitWorld(nextInst:=-1)
     FileDelete,%holdFile%
     FileDelete, %killFile%
     SetAffinities(nextInst)
-    if f1States[idx] ; goofy ghost pie removal
-      ControlSend,, {Blind}{F1}{F3}{Esc}{F1}{Esc}, ahk_pid %pid%
-    else
-      ControlSend,, {Blind}{F3}{Esc}{F3}{Esc}, ahk_pid %pid%
-    if (widthMultiplier)
+    if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
     ResetInstance(idx)
@@ -657,10 +659,20 @@ VerifyInstance(mcdir, pid, idx) {
   if !atum {
     SendLog(LOG_LEVEL_ERROR, Format("Instance {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases. (In directory: {2})", idx, moddir), A_TickCount)
     MsgBox, Instance %idx% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases.`n(In directory: %moddir%)
+  } else if unpauseOnSwitch {
+    config := mcdir . "config\atum\atum.properties"
+    ; Read the atum.properties and set unpauseOnSwitch to false if a seed is set
+    Loop, Read, %config%
+    {
+      if (InStr(A_LoopReadLine, "seed=") && StrLen(A_LoopReadLine) > 5) {
+        SendLog(LOG_LEVEL_INFO, "Found a set seed, setting 'unpauseOnSwitch' to False", A_TickCount)
+        unpauseOnSwitch := False
+        break
+      }
+    }
   }
   if !wp {
     SendLog(LOG_LEVEL_WARNING, Format("Instance {1} missing recommended mod: World Preview. Macro attempted to adapt. Download: https://github.com/VoidXWalker/WorldPreview/releases. (In directory: {2})", idx, moddir), A_TickCount)
-    MsgBox, Instance %idx% missing recommended mod: World Preview. Macro attempted to adapt. Download: https://github.com/VoidXWalker/WorldPreview/releases.`n(In directory: %moddir%)
     doubleCheckUnexpectedLoads := False
   } else {
     doubleCheckUnexpectedLoads := True
@@ -694,7 +706,7 @@ VerifyInstance(mcdir, pid, idx) {
     if (windowMode == "F") {
       if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown")) {
         MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
       }
       fsKey := CheckOptionsForValue(optionsFile, "key_key.fullscreen", "F11")
       fsKeys[idx] := fsKey
@@ -749,7 +761,7 @@ VerifyInstance(mcdir, pid, idx) {
         resetKeys[idx] := "F6"
       } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
         MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
         if (resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")) {
           resetKeys[idx] := resetKey
           SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile), A_TickCount)
@@ -804,7 +816,7 @@ VerifyInstance(mcdir, pid, idx) {
         lpKeys[idx] := "h"
       } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
         MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
+          SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile), A_TickCount)
         if (lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")) {
           resetKeys[idx] := resetKey
           SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile), A_TickCount)
@@ -826,7 +838,7 @@ VerifyInstance(mcdir, pid, idx) {
         lpKeys[idx] := "h"
       } else {
         SendLog(LOG_LEVEL_ERROR, Format("No recommended World Preview mod in instance {1}. Using 'h' to avoid reset manager errors", idx), A_TickCount)
-          lpKeys[idx] := "h"
+        lpKeys[idx] := "h"
       }
       break
     }

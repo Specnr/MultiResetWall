@@ -26,6 +26,7 @@ global commandkeys := []
 global f1States := []
 global resets := 0
 global doubleCheckUnexpectedLoads := True
+global unpauseOnSwitch := True
 global useRandomLocks := 0
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 
