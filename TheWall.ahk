@@ -100,6 +100,10 @@ for i, mcdir in McDirectories {
   DetectHiddenWindows, Off
   RM_PIDs[i] := rmpid
   hwnds[i] := getHwndForPid(pid)
+  lockDest := mcdir . "lock.png"
+  if (!FileExist(lockDest)) {
+    FileCopy, %A_ScriptDir%\media\unlock.png, %lockDest%, 1
+  }
   UnlockInstance(i, False)
   if (!FileExist(idle))
     FileAppend, %A_TickCount%, %idle%
