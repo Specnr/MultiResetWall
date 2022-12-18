@@ -473,9 +473,9 @@ UnlockInstance(idx, sound:=true) {
     lockDest := McDirectories[idx] . "lock.png"
     FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
     FileSetTime,,%lockDest%,M
-    lockDest := McDirectories[idx] . "lock.tmp"
-    FileDelete, %lockDest%
   }
+  lockDest := McDirectories[idx] . "lock.tmp"
+  FileDelete, %lockDest%
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
     if obsUnlockMediaKey {
