@@ -3,7 +3,7 @@
 
 ## Instructions
 
-Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw)
+Watch the [BRAND NEW Wall Tutorial](https://youtu.be/pVnNEBKC4aU)
 
 If further help is needed, feel free to open a ticket in my [Discord server](https://discord.gg/tXxwrYw).
 
