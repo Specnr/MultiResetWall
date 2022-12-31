@@ -141,7 +141,9 @@ GetInstanceNumberFromMcDir(mcdir) {
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
     FileDelete, data/mcdirs.txt
-    Reload
+    SendLog(LOG_LEVEL_ERROR, Format("Issue with mcdir file in GetInstanceNumberFromMcDir. mcdir: {1}", mcdir), A_TickCount)
+    MsgBox, Something went wrong, please try again or open a ticket.
+    ExitApp
   }
   if (!FileExist(numFile)) {
     InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
@@ -172,7 +174,9 @@ GetMcDirFromFile(idx) {
         return mcdir
       } else {
         FileDelete, data/mcdirs.txt
-        Reload
+        SendLog(LOG_LEVEL_ERROR, Format("Didn't find mcdir file in GetMcDirFromFile. mcdir: {1}, idx: {2}", mcdir, idx), A_TickCount)
+        MsgBox, Something went wrong, please try again or open a ticket.
+        ExitApp
       }
     }
   }
