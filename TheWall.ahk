@@ -10,7 +10,7 @@
 SetKeyDelay, 0
 SetWinDelay, 1
 SetTitleMatchMode, 2
-SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.1.0", A_TickCount)
+SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.0.2", A_TickCount)
 
 ; Yell if wrong AHK version
 if (SubStr(A_AhkVersion, 1, 3) != "1.1") {
