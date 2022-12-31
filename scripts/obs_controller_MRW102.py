@@ -24,7 +24,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
-version = "v1.1.0"
+version = "v1.0.2"
 
 
 def get_cmd(path):
