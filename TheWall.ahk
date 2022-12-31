@@ -10,8 +10,15 @@
 SetKeyDelay, 0
 SetWinDelay, 1
 SetTitleMatchMode, 2
+SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.1.0", A_TickCount)
 
-; Don't configure these
+; Yell if wrong AHK version
+if (SubStr(A_AhkVersion, 1, 3) != "1.1") {
+  SendLog(LOG_LEVEL_INFO, "Wrong AHK version detected, exiting", A_TickCount)
+  MsgBox, Wrong AHK version, get version 1.1
+  ExitApp
+}
+
 global McDirectories := []
 global instances := 0
 global rawPIDs := []
