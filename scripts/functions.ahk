@@ -262,8 +262,22 @@ GetBitMask(threads) {
   return ((2 ** threads) - 1)
 }
 
+; Verifies that the user is using the correct projector
+VerifyProjector() {
+  WinGetTitle, projTitle, A
+  if InStr(projTitle, "(Preview)")
+    MsgBox, You're using a Preview projector, please use the Scene projector of the wall scene.
+  else
+    haveVerifiedProjector := true
+}
+
 SwitchInstance(idx, special:=False)
 {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   if (!locked[idx])
     LockInstance(idx, False, False)
   idleFile := McDirectories[idx] . "idle.tmp"
@@ -364,6 +378,11 @@ ExitWorld(nextInst:=-1)
 }
 
 ResetInstance(idx, bypassLock:=true, extraProt:=0) {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   holdFile := McDirectories[idx] . "hold.tmp"
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
@@ -408,6 +427,11 @@ ToWall(comingFrom) {
 }
 
 FocusReset(focusInstance, bypassLock:=false) {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   if bypassLock
     UnlockAll(false)
   SwitchInstance(focusInstance)
@@ -420,6 +444,11 @@ FocusReset(focusInstance, bypassLock:=false) {
 
 ; Reset all instances
 ResetAll(bypassLock:=false) {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   if bypassLock
     UnlockAll(false)
   loop, %instances% {

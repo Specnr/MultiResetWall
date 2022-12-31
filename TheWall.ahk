@@ -36,6 +36,7 @@ global doubleCheckUnexpectedLoads := True
 global unpauseOnSwitch := True
 global useRandomLocks := 0
 global hasMcDirCache := FileExist("data/mcdirs.txt")
+global haveVerifiedProjector := false
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
