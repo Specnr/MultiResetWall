@@ -207,6 +207,13 @@ GetAllPIDs()
     } else {
       PIDs[num] := GetPIDFromMcDir(mcdir)
     }
+    ; If it already exists then theres a dupe instNum
+    pastMcDir := McDirectories[num]
+    if (pastMcDir) {
+      FileDelete,data/mcdirs.txt
+      MsgBox, Instance Number %num% was found twice, correct instanceNumber.txt in %pastMcDir% or %mcdir% and relaunch
+      ExitApp
+    }
     McDirectories[num] := mcdir
   }
 }
