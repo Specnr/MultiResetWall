@@ -1,8 +1,5 @@
 ; v1.0
 RAlt::Suspend ; Pause all macros
-^LAlt:: ; Reload if macro locks up
-  Reload
-return
 #If WinActive("Minecraft") && (WinActive("ahk_exe javaw.exe") || WinActive("ahk_exe java.exe"))
 {
   *U:: ExitWorld() ; Reset

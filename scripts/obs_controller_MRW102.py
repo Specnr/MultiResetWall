@@ -24,7 +24,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
-version = "v1.3.0"
+version = "v1.0.2"
 
 
 def get_cmd(path):
@@ -87,7 +87,7 @@ def execute_latest():
 
 
 def script_description():
-    return f"MultiResetWall OBS Script. Altered from <a href=https://github.com/joe-ldp/rawalle/releases/tag/{version}>Rawalle {version}</a></h3>"
+    return f"MultiResetWall OBS Script {version}.\nInstance Scene and Lock formats have been automatically configured."
 
 
 def script_unload():
@@ -109,18 +109,6 @@ def script_properties():  # ui
         name = S.obs_source_get_name(scene)
         S.obs_property_list_add_string(p, name, name)
     S.source_list_release(scenes)
-    S.obs_properties_add_text(
-        props,
-        "instance_scene_format",
-        "Instance Scene Format.\nUse * for numbers.\nExample: Game *",
-        S.OBS_TEXT_DEFAULT
-    )
-    S.obs_properties_add_text(
-        props,
-        "lock_format",
-        "Lock Source Format.\nUse * for numbers.\nExample: lock *",
-        S.OBS_TEXT_DEFAULT
-    )
 
     return props
 
@@ -131,10 +119,6 @@ def script_update(settings):
     global instance_scene_format
     global lock_format
     wall_scene_name = S.obs_data_get_string(settings, "scene")
-    instance_scene_format = S.obs_data_get_string(
-        settings, "instance_scene_format")
-    lock_format = S.obs_data_get_string(
-        settings, "lock_format")
 
     try:
         execute_cmd(["ToWall"])

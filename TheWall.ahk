@@ -10,8 +10,15 @@
 SetKeyDelay, 0
 SetWinDelay, 1
 SetTitleMatchMode, 2
+SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.0.2", A_TickCount)
 
-; Don't configure these
+; Yell if wrong AHK version
+if (SubStr(A_AhkVersion, 1, 3) != "1.1") {
+  SendLog(LOG_LEVEL_INFO, "Wrong AHK version detected, exiting", A_TickCount)
+  MsgBox, Wrong AHK version, get version 1.1
+  ExitApp
+}
+
 global McDirectories := []
 global instances := 0
 global rawPIDs := []
@@ -29,6 +36,7 @@ global doubleCheckUnexpectedLoads := True
 global unpauseOnSwitch := True
 global useRandomLocks := 0
 global hasMcDirCache := FileExist("data/mcdirs.txt")
+global haveVerifiedProjector := false
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
