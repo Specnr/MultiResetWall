@@ -112,7 +112,7 @@ def script_properties():  # ui
     S.obs_properties_add_text(
         props,
         "instance_scene_format",
-        "Instance Scene Format.\nUse * for numbers.\nExample: Game *",
+        "Instance Scene Format.\nUse * for numbers.\nExample: Instance *",
         S.OBS_TEXT_DEFAULT
     )
     S.obs_properties_add_text(
