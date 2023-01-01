@@ -141,7 +141,9 @@ GetInstanceNumberFromMcDir(mcdir) {
   num := -1
   if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
     FileDelete, data/mcdirs.txt
-    Reload
+    SendLog(LOG_LEVEL_ERROR, Format("Issue with mcdir file in GetInstanceNumberFromMcDir. mcdir: {1}", mcdir), A_TickCount)
+    MsgBox, Something went wrong, please try again or open a ticket.
+    ExitApp
   }
   if (!FileExist(numFile)) {
     InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
@@ -172,7 +174,9 @@ GetMcDirFromFile(idx) {
         return mcdir
       } else {
         FileDelete, data/mcdirs.txt
-        Reload
+        SendLog(LOG_LEVEL_ERROR, Format("Didn't find mcdir file in GetMcDirFromFile. mcdir: {1}, idx: {2}", mcdir, idx), A_TickCount)
+        MsgBox, Something went wrong, please try again or open a ticket.
+        ExitApp
       }
     }
   }
@@ -206,6 +210,13 @@ GetAllPIDs()
       PIDs[num] := rawPIDs[A_Index]
     } else {
       PIDs[num] := GetPIDFromMcDir(mcdir)
+    }
+    ; If it already exists then theres a dupe instNum
+    pastMcDir := McDirectories[num]
+    if (pastMcDir) {
+      FileDelete,data/mcdirs.txt
+      MsgBox, Instance Number %num% was found twice, correct instanceNumber.txt in %pastMcDir% or %mcdir% and relaunch
+      ExitApp
     }
     McDirectories[num] := mcdir
   }
@@ -255,8 +266,22 @@ GetBitMask(threads) {
   return ((2 ** threads) - 1)
 }
 
+; Verifies that the user is using the correct projector
+VerifyProjector() {
+  WinGetTitle, projTitle, A
+  if InStr(projTitle, "(Preview)")
+    MsgBox, You're using a Preview projector, please use the Scene projector of the wall scene.
+  else
+    haveVerifiedProjector := true
+}
+
 SwitchInstance(idx, special:=False)
 {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   if (!locked[idx])
     LockInstance(idx, False, False)
   idleFile := McDirectories[idx] . "idle.tmp"
@@ -357,6 +382,11 @@ ExitWorld(nextInst:=-1)
 }
 
 ResetInstance(idx, bypassLock:=true, extraProt:=0) {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   holdFile := McDirectories[idx] . "hold.tmp"
   previewFile := McDirectories[idx] . "preview.tmp"
   FileRead, previewTime, %previewFile%
@@ -401,6 +431,11 @@ ToWall(comingFrom) {
 }
 
 FocusReset(focusInstance, bypassLock:=false) {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   if bypassLock
     UnlockAll(false)
   SwitchInstance(focusInstance)
@@ -413,6 +448,11 @@ FocusReset(focusInstance, bypassLock:=false) {
 
 ; Reset all instances
 ResetAll(bypassLock:=false) {
+  if (!haveVerifiedProjector) {
+    VerifyProjector()
+    if !haveVerifiedProjector
+      return
+  }
   if bypassLock
     UnlockAll(false)
   loop, %instances% {
