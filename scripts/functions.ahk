@@ -137,6 +137,8 @@ ReplacePreviewsInGrid() {
 
 MousePosToInstNumber() {
   MouseGetPos, mX, mY
+  if (mX < 0 || mY < 0 || mX > A_ScreenWidth || mY > A_ScreenHeight)
+    return -1
   if (mode != "I")
     return (Floor(mY / instHeight) * cols) + Floor(mX / instWidth) + 1
 
@@ -401,7 +403,7 @@ SwitchInstance(idx, special:=False)
   else if (mode == "I")
     NotifyMovingController()
   idleFile := McDirectories[idx] . "idle.tmp"
-  if (idx <= instances && (FileExist(idleFile))) {
+  if (idx > 0 && idx <= instances && (FileExist(idleFile)) || mode == "C") {
     holdFile := McDirectories[idx] . "hold.tmp"
     FileAppend,,%holdFile%
     killFile := McDirectories[idx] . "kill.tmp"
@@ -479,11 +481,11 @@ ExitWorld(nextInst:=-1) {
     killFile := McDirectories[idx] . "kill.tmp"
     FileDelete,%holdFile%
     FileDelete, %killFile%
-    SetAffinities(nextInst)
     if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
     ResetInstance(idx)
+    SetAffinities(nextInst)
     if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
     else if ((mode == "B" || mode == "M") && nextInst == -1)
@@ -496,7 +498,7 @@ ExitWorld(nextInst:=-1) {
   }
 }
 
-ResetInstance(idx, bypassLock:=true, extraProt:=0) {
+ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false) {
   if (!haveVerifiedProjector) {
     VerifyProjector()
     if !haveVerifiedProjector
@@ -530,7 +532,7 @@ ResetInstance(idx, bypassLock:=true, extraProt:=0) {
     DetectHiddenWindows, Off
     if locked[idx]
       UnlockInstance(idx, false)
-    if (mode == "I")
+    if (mode == "I" && !resettingAll)
       NotifyMovingController()
     resets++
   }
@@ -564,6 +566,8 @@ FocusReset(focusInstance, bypassLock:=false) {
     if !haveVerifiedProjector
       return
   }
+  if focusInstance < 0
+    return
   if bypassLock
     UnlockAll(false)
   SwitchInstance(focusInstance)
@@ -572,8 +576,9 @@ FocusReset(focusInstance, bypassLock:=false) {
     loop, %focusCount% {
       if (A_Index = focusInstance)
         Continue
-      ResetInstance(instancePosition[A_Index])
+      ResetInstance(instancePosition[A_Index],,,true)
     }
+    NotifyMovingController()
   } else {
     loop, %instances% {
       if (A_Index = focusInstance || locked[A_Index])
@@ -595,7 +600,8 @@ ResetAll(bypassLock:=false) {
   if (mode == "I") {
     focusCount := GetFocusGridInstanceCount()
     loop, %focusCount%
-      ResetInstance(instancePosition[A_Index])
+      ResetInstance(instancePosition[A_Index],,,true)
+    NotifyMovingController()
   } else {
     loop, %instances% {
       if locked[A_Index]
