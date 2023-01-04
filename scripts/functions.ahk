@@ -209,6 +209,22 @@ GetMcDir(pid)
   }
 }
 
+GetRawInstanceNumberFromMcDir(mcdir) {
+  cfg := SubStr(mcdir, 1, StrLen(mcdir) - 11) . "instance.cfg"
+  loop, Read, %cfg%
+  {
+    if (InStr(A_LoopReadLine, "name=")) {
+      total := 0
+      loop, Parse, A_LoopReadLine
+      {
+        if A_LoopField is number
+          total += A_LoopField
+      }
+    }
+  }
+  return total
+}
+
 CheckOnePIDFromMcDir(proc, mcdir) {
   cmdLine := proc.Commandline
   if (RegExMatch(cmdLine, "-Djava\.library\.path=(?P<Dir>[^\""]+?)(?:\/|\\)natives", instDir)) {
@@ -253,32 +269,6 @@ GetInstanceTotal() {
   return rawPIDs.MaxIndex()
 }
 
-GetInstanceNumberFromMcDir(mcdir) {
-  numFile := mcdir . "instanceNumber.txt"
-  num := -1
-  if (mcdir == "" || mcdir == ".minecraft" || mcdir == ".minecraft\" || mcdir == ".minecraft/") { ; Misread something
-    FileDelete, data/mcdirs.txt
-    SendLog(LOG_LEVEL_ERROR, Format("Issue with mcdir file in GetInstanceNumberFromMcDir. mcdir: {1}", mcdir))
-    MsgBox, Something went wrong, please try again or open a ticket.
-    ExitApp
-  }
-  if (!FileExist(numFile)) {
-    InputBox, num, Missing instanceNumber.txt, Missing instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
-    FileAppend, %num%, %numFile%
-    SendLog(LOG_LEVEL_WARNING, Format("Instance {1} instanceNumber.txt was missing but was corrected by user", num))
-  } else {
-    FileRead, num, %numFile%
-    if (!num || num > instances) {
-      InputBox, num, Bad instanceNumber.txt, Error in instanceNumber.txt in:`n%mcdir%`nplease type the instance number and select "OK"
-      FileDelete, %numFile%
-      FileAppend, %num%, %numFile%
-      SendLog(LOG_LEVEL_WARNING, Format("Instance {1} instanceNumber.txt contained either a number too high or nothing but was corrected by user", num))
-    }
-  }
-  SendLog(LOG_LEVEL_INFO, Format("Got instance number {1} from: {2}", num, mcdir))
-  return num
-}
-
 GetMcDirFromFile(idx) {
   Loop, Read, data/mcdirs.txt
   {
@@ -305,7 +295,7 @@ GetAllPIDs()
   instances := GetInstanceTotal()
   if !instances {
     MsgBox, No open instances detected.
-    SendLog(LOG_LEVEL_WARNING, "No open instances detected")
+    SendLog(LOG_LEVEL_WARNING, "No open instances detected, and make sure that fabric is installed.")
     Return
   }
   SendLog(LOG_LEVEL_INFO, Format("{1} Instances detected", instances))
@@ -315,27 +305,31 @@ GetAllPIDs()
     hasMcDirCache := False
   }
   ; Generate mcdir and order PIDs
-  Loop, %instances% {
-    if hasMcDirCache
+  if hasMcDirCache {
+    Loop, %instances% {
       mcdir := GetMcDirFromFile(A_Index)
-    else
+      PIDs[A_Index] := GetPIDFromMcDir(mcdir)
+      ; If it already exists then theres a dupe instNum
+      pastMcDir := McDirectories[A_Index]
+      if (pastMcDir) {
+        FileDelete,data/mcdirs.txt
+        MsgBox, Instance Number %A_Index% was found twice, rename your instances correctly and relaunch.
+        ExitApp
+      }
+      McDirectories[A_Index] := mcdir
+    }
+  } else {
+    rawNumToMcDir := {}
+    Loop, %instances% {
       mcdir := GetMcDir(rawPIDs[A_Index])
-    if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
-      ExitApp
-    if !hasMcDirCache {
-      FileAppend,%num%~%mcdir%`n,data/mcdirs.txt
-      PIDs[num] := rawPIDs[A_Index]
-    } else {
-      PIDs[num] := GetPIDFromMcDir(mcdir)
+      rawNum := GetRawInstanceNumberFromMcDir(mcdir)
+      rawNumToMcDir[rawNum] := mcdir
     }
-    ; If it already exists then theres a dupe instNum
-    pastMcDir := McDirectories[num]
-    if (pastMcDir) {
-      FileDelete,data/mcdirs.txt
-      MsgBox, Instance Number %num% was found twice, correct instanceNumber.txt in %pastMcDir% or %mcdir% and relaunch
-      ExitApp
+    for i, mcdir in rawNumToMcDir {
+      FileAppend,%A_Index%~%mcdir%`n,data/mcdirs.txt
+      PIDs[A_Index] := GetPIDFromMcDir(mcdir)
+      McDirectories[A_Index] := mcdir
     }
-    McDirectories[num] := mcdir
   }
 }
 
