@@ -22,6 +22,7 @@ global fullscreenDelay := 50 ; Increase if fullscreening issues
 global focusGridWidthPercent := 0.8 ; Horizontal % of the focus grid. Setting this to 1 hides the passive instances.
 global focusGridHeightPercent := 0.8 ; Vertical % of the focus grid. Setting this to 1 hides the locked instances.
 global maxLockedRows := 2 ; Specifies how many rows have to be reached in the locked section to start a new column.
+global pixelsBetweenInstances := 0 ; The number of pixels to be between instances (for visual effect)
 
 ; Affinity
 ; -1 == use macro math to determine thread counts

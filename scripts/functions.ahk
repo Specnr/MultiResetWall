@@ -117,6 +117,8 @@ GetOldestInstanceIndexOutsideGrid() {
 }
 
 ReplacePreviewsInGrid() {
+  if (mode != "I")
+    return
   gridUsageCount := GetFocusGridInstanceCount()
   hasSwapped := False
   loop %gridUsageCount% {
@@ -847,6 +849,10 @@ NotifyMovingController() {
     if (output != "" )
       output := output . ","
     output := output . inst
+    if (mode != "I") {
+      output := output . "W"
+      Continue
+    }
 
     if (locked[inst])
       output := output . "L"

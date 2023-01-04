@@ -173,8 +173,7 @@ Menu, Tray, Add, Close Instances, CloseInstances
 
 Menu, Tray, Add, Launch Instances, LaunchInstances
 
-if (mode == "I")
-  NotifyMovingController()
+NotifyMovingController()
 ToWall(0)
 
 SendLog(LOG_LEVEL_INFO, "Wall setup done")

@@ -86,7 +86,7 @@ def execute_latest():
 
 
 def script_description():
-    return f"MultiResetWall OBS Script {version}.\nInstance Scene and Lock formats are automatically set to the Wall Scene Maker.\nIf you're not using that make sure they match Instance * and lock * where * is the instance number."
+    return f"MultiResetWall OBS Script {version}.\nYou ONLY need to provide your Wall Scene now, don't worry about any other setting."
 
 
 def script_unload():
