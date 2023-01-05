@@ -321,6 +321,7 @@ GetAllPIDs()
     Loop, %instances% {
       mcdir := GetMcDir(rawPIDs[A_Index])
       rawNum := GetRawInstanceNumberFromMcDir(mcdir)
+      ; Putting them in an object like this sorts them by rawNum
       rawNumToMcDir[rawNum] := mcdir
     }
     for i, mcdir in rawNumToMcDir {
@@ -407,6 +408,8 @@ SwitchInstance(idx, special:=False)
     hwnd := hwnds[idx]
     pid := PIDs[idx]
     SetAffinities(idx)
+    GetProjectorID(projectorID)
+    WinMinimize, ahk_id %projectorID%
     if unpauseOnSwitch
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
     else
@@ -415,20 +418,26 @@ SwitchInstance(idx, special:=False)
       ControlSend,, {Blind}{F1}, ahk_pid %pid%
     if widthMultiplier
       WinMaximize, ahk_pid %pid%
-    WinSet, AlwaysOnTop, On, ahk_pid %pid%
-    WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-    WinMinimize, Fullscreen Projector
-    WinMinimize, Full-screen Projector
     if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
       sleep, %fullscreenDelay%
     }
+
+    foreGroundWindow := DllCall("GetForegroundWindow")
+    windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint", foreGroundWindow, "uint", 0)
+    currentThreadId := DllCall("GetCurrentThreadId")
+    DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 1)
+    if (widthMultiplier && (windowMode == "W" || windowMode == "B"))
+      DllCall("SendMessage", "uint", hwnds[idx], "uint", 0x0112, "uint", 0xF030, "int", 0) ; fast maximise
+    DllCall("SetForegroundWindow", "uint", hwnds[idx]) ; Probably only important in windowed, helps application take input without a Send Click
+    DllCall("BringWindowToTop", "uint", hwnds[idx])
+    DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
+    Send, {RButton} ; Should be able to remove this, will see
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     if (special)
       OnJoinSettingsChange(pid)
-    Send, {RButton}
     if (obsControl != "C") {
       if (obsControl == "N")
         obsKey := "Numpad" . idx
@@ -478,8 +487,8 @@ ExitWorld(nextInst:=-1) {
     if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
-    ResetInstance(idx)
     SetAffinities(nextInst)
+    ResetInstance(idx)
     if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
     else if ((mode == "B" || mode == "M") && nextInst == -1)
@@ -538,13 +547,32 @@ SetTitles() {
   }
 }
 
+HwndIsFullscreen(hwnd) { ; ahk_id or ID is HWND
+  WinGetPos,,, w, h, ahk_id %hwnd%
+  SendLog(LOG_LEVEL_INFO, Format("OBS Window {1} {2}", w, h))
+  return (w == A_ScreenWidth && h == A_ScreenHeight)
+}
+
+GetProjectorID(ByRef projID) {
+  if (WinExist("ahk_id " . projID))
+    return
+  WinGet, IDs, List, ahk_exe obs64.exe
+  Loop %IDs%
+  {
+    projID := IDs%A_Index%
+    if (HwndIsFullscreen(projID))
+      return
+  }
+  projID := -1
+  SendLog(LOG_LEVEL_WARNING, "Could not detect OBS Fullscreen Projector window. Will try again at next Wall action.")
+}
+
 ToWall(comingFrom) {
   FileDelete,data/instance.txt
   FileAppend,0,data/instance.txt
-  WinMaximize, Fullscreen Projector
-  WinActivate, Fullscreen Projector
-  WinMaximize, Full-screen Projector
-  WinActivate, Full-screen Projector
+  GetProjectorID(projectorID)
+  WinMaximize, ahk_id %projectorID%
+  WinActivate, ahk_id %projectorID%
   if (obsControl != "C") {
     send {%obsWallSceneKey% down}
     sleep, %obsDelay%
