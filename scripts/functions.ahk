@@ -214,12 +214,10 @@ GetRawInstanceNumberFromMcDir(mcdir) {
   loop, Read, %cfg%
   {
     if (InStr(A_LoopReadLine, "name=")) {
+      Pos := 1
       total := 0
-      loop, Parse, A_LoopReadLine
-      {
-        if A_LoopField is number
-          total += A_LoopField
-      }
+      While Pos := RegExMatch(A_LoopReadLine, "\d+", m, Pos + StrLen(m))
+        total += m
     }
   }
   return total
