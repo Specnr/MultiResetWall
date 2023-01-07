@@ -466,8 +466,8 @@ ExitWorld(nextInst:=-1) {
     if widthMultiplier
       WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
-    SetAffinities(nextInst)
     ResetInstance(idx)
+    SetAffinities(nextInst)
     if (mode == "C" && nextInst == -1)
       nextInst := Mod(idx, instances) + 1
     else if ((mode == "B" || mode == "M") && nextInst == -1)
