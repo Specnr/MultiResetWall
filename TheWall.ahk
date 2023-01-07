@@ -184,7 +184,6 @@ if (!disableTTS)
 #Persistent
 OnExit, ExitSub
 SetTimer, CheckScripts, 20
-SetTimer, ReplacePreviewsInGrid, 100
 return
 
 ExitSub:

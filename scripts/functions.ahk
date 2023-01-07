@@ -112,29 +112,8 @@ GetOldestInstanceIndexOutsideGrid() {
   }
   ; There is no passive instances to swap with, take last of grid
   if (oldestInstanceIndex < 0)
-    return gridCount
+    return gridCount + 1
   return oldestInstanceIndex
-}
-
-ReplacePreviewsInGrid() {
-  if (mode != "I")
-    return
-  gridUsageCount := GetFocusGridInstanceCount()
-  hasSwapped := False
-  loop %gridUsageCount% {
-    preview := McDirectories[instancePosition[A_Index]] . "preview.tmp"
-    if (!FileExist(preview)) {
-      oldest := GetOldestInstanceIndexOutsideGrid()
-      oldPreview := McDirectories[instancePosition[oldest]] . "preview.tmp"
-      if (FileExist(oldPreview)) {
-        SwapPositions(A_Index, oldest)
-        hasSwapped := True
-      }
-    }
-  }
-  if (hasSwapped) {
-    NotifyMovingController()
-  }
 }
 
 MousePosToInstNumber() {
@@ -528,6 +507,8 @@ ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false) {
     rmpid := RM_PIDs[idx]
     resetKey := resetKeys[idx]
     lpKey := lpKeys[idx]
+    previewFile := McDirectories[idx] . "preview.tmp"
+    FileDelete, %previewFile%
     ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
     timeSinceReset[idx] := A_TickCount
     DetectHiddenWindows, On
