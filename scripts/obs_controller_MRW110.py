@@ -118,6 +118,11 @@ def script_update(settings):
     global instance_scene_format
     global lock_format
     wall_scene_name = S.obs_data_get_string(settings, "scene")
+    cache_path = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "..", "data", "wall-scene.txt"))
+    with open(cache_path, "w+") as f:
+        if (f.read().strip() == ""):
+            f.write(wall_scene_name)
 
     try:
         execute_cmd(["ToWall"])
