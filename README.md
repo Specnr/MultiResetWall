@@ -97,7 +97,7 @@ The paths of the files used for counting attempts. This can make updating attemp
 - Me
 - Mach for efficient reset managers & for affinity management
 - Ravalle for a lot of great ideas and code
-- Boyenn for the better lock indication idea and general optimizations
+- Boyenn for Instance Moving code & help, and general optimizations
 - The collaborators listed for minor enhancements
 - PodX12 for some minor enhancements
 - Sam Dao (real)
