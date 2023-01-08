@@ -1,6 +1,5 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
 ; By Specnr
-; v1.0
 
 #NoEnv
 #SingleInstance Force
@@ -10,11 +9,11 @@
 SetKeyDelay, 0
 SetWinDelay, 1
 SetTitleMatchMode, 2
-SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.0.2", A_TickCount)
+SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.1.0")
 
 ; Yell if wrong AHK version
 if (SubStr(A_AhkVersion, 1, 3) != "1.1") {
-  SendLog(LOG_LEVEL_INFO, "Wrong AHK version detected, exiting", A_TickCount)
+  SendLog(LOG_LEVEL_INFO, "Wrong AHK version detected, exiting")
   MsgBox, Wrong AHK version, get version 1.1
   ExitApp
 }
@@ -37,6 +36,12 @@ global unpauseOnSwitch := True
 global useRandomLocks := 0
 global hasMcDirCache := FileExist("data/mcdirs.txt")
 global haveVerifiedProjector := false
+global timeSinceReset := []
+global instancePosition := []
+global rxc := rows*cols
+global projectorID := 0
+EnvGet, vUserProfile, USERPROFILE
+global sleepBgLock := vUserProfile . "/sleepbg.lock"
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
@@ -69,7 +74,7 @@ FileDelete, %dailyAttemptsFile%
 if !FileExist("data")
   FileCreateDir, data/
 
-SendLog(LOG_LEVEL_INFO, "Wall launched", A_TickCount)
+SendLog(LOG_LEVEL_INFO, "Wall launched")
 
 SetTheme(theme)
 GetAllPIDs()
@@ -81,17 +86,19 @@ if (obsControl == "C") {
   if (!FileExist(Format("{1}\python.exe", pyDir))) {
     pyPath := RegExReplace(ComObjCreate("WScript.Shell").Exec("python -c ""import sys; print(sys.executable)""").StdOut.ReadAll(), " *(\n|\r)+","")
     if (!FileExist(pyPath)) {
-      SendLog(LOG_LEVEL_WARNING, "Couldn't find Python path", A_TickCount)
+      SendLog(LOG_LEVEL_WARNING, "Couldn't find Python path")
     } else {
       SplitPath, pyPath,, pyDir
       IniWrite, %pyDir%, %obsIni%, Python, Path64bit
-      SendLog(LOG_LEVEL_INFO, Format("Automatically set OBS Python install path to {1}", pyDir), A_TickCount)
+      SendLog(LOG_LEVEL_INFO, Format("Automatically set OBS Python install path to {1}", pyDir))
     }
   }
 }
 
 for i, mcdir in McDirectories {
   pid := PIDs[i]
+  timeSinceReset[i] := A_TickCount
+  instancePosition[i] := i
   logs := mcdir . "logs\latest.log"
   idle := mcdir . "idle.tmp"
   hold := mcdir . "hold.tmp"
@@ -101,7 +108,7 @@ for i, mcdir in McDirectories {
   VerifyInstance(mcdir, pid, i)
   resetKey := resetKeys[i]
   lpKey := lpKeys[i]
-  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads), A_TickCount)
+  SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17}", pid, logs, idle, hold, preview, lock, kill, resetKey, lpKey, i, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
   Run, "%A_ScriptDir%\scripts\reset.ahk" %pid% "%logs%" "%idle%" "%hold%" "%preview%" "%lock%" "%kill%" %resetKey% %lpKey% %i% %playBitMask% %lockBitMask% %highBitMask% %midBitMask% %lowBitMask% %bgLoadBitMask% %doubleCheckUnexpectedLoads%, %A_ScriptDir%,, rmpid
   DetectHiddenWindows, On
   WinWait, ahk_pid %rmpid%
@@ -141,12 +148,12 @@ for i, mcdir in McDirectories {
     WinMaximize, ahk_pid %pid%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i), A_TickCount)
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
 }
 
 SetTitles()
 
-SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i), A_TickCount)
+SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i))
 
 for i, tmppid in PIDs {
   SetAffinity(tmppid, highBitMask)
@@ -160,7 +167,7 @@ if audioGui {
 WinGet, obsPid, PID, OBS
 if IsProcessElevated(obsPid) {
   MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
-    SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work", A_TickCount)
+    SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work")
 }
 
 Menu, Tray, Add, Delete Worlds, WorldBop
@@ -169,9 +176,10 @@ Menu, Tray, Add, Close Instances, CloseInstances
 
 Menu, Tray, Add, Launch Instances, LaunchInstances
 
+NotifyMovingController()
 ToWall(0)
 
-SendLog(LOG_LEVEL_INFO, "Wall setup done", A_TickCount)
+SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)
   ComObjCreate("SAPI.SpVoice").Speak("Ready")
 

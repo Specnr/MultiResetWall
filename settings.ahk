@@ -1,8 +1,7 @@
-; v1.0
 ; General settings
-global rows := 3 ; Number of row on the wall scene
-global cols := 3 ; Number of columns on the wall scene
-global mode := "W" ; W = Normal wall, B = Wall bypass (skip to next locked), M = Modern multi (send to wall when none loaded), C = Classic original multi (always force to next instance)
+global rows := 3 ; Number of row on the wall scene, or focus grid if instance moving
+global cols := 3 ; Number of columns on the wall scene, or focus grid if instance moving
+global mode := "W" ; W = Normal wall, I = Instance Moving (Requires additional setup), B = Wall bypass (skip to next locked), M = Modern multi (send to wall when none loaded), C = Classic original multi (always force to next instance)
 global windowMode := "W" ; W = windowed mode, F = fullscreen mode, B = borderless windowed
 
 ; Extra features
@@ -18,6 +17,12 @@ global spawnProtection := 300 ; Prevent a new instance from being reset for this
 global fullscreenDelay := 50 ; Increase if fullscreening issues
 
 ; Super advanced settings (Read about these settings on the README before changing)
+
+; Instance Moving
+global focusGridWidthPercent := 0.8 ; Horizontal % of the focus grid. Setting this to 1 hides the passive instances.
+global focusGridHeightPercent := 0.8 ; Vertical % of the focus grid. Setting this to 1 hides the locked instances.
+global maxLockedRows := 2 ; Specifies how many rows have to be reached in the locked section to start a new column.
+global pixelsBetweenInstances := 0 ; The number of pixels to be between instances (for visual effect)
 
 ; Affinity
 ; -1 == use macro math to determine thread counts
