@@ -40,6 +40,8 @@ global timeSinceReset := []
 global instancePosition := []
 global rxc := rows*cols
 global projectorID := 0
+EnvGet, vUserProfile, USERPROFILE
+global sleepBgLock := vUserProfile . "/sleepbg.lock"
 
 EnvGet, threadCount, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override

@@ -386,17 +386,10 @@ SwitchInstance(idx, special:=False)
     FileAppend,%idx%,data/instance.txt
     hwnd := hwnds[idx]
     pid := PIDs[idx]
+    FileAppend,, %sleepBgLock%
     SetAffinities(idx)
     GetProjectorID(projectorID)
     WinMinimize, ahk_id %projectorID%
-    if unpauseOnSwitch
-      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    else
-      ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    if widthMultiplier
-      WinMaximize, ahk_pid %pid%
     if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
       fsKey := fsKeys[idx]
       ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
@@ -412,7 +405,16 @@ SwitchInstance(idx, special:=False)
     DllCall("SetForegroundWindow", "uint", hwnds[idx]) ; Probably only important in windowed, helps application take input without a Send Click
     DllCall("BringWindowToTop", "uint", hwnds[idx])
     DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
-    Send, {RButton} ; Should be able to remove this, will see
+
+    if unpauseOnSwitch
+      ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+    else
+      ControlSend,, {Blind}{Esc 2}, ahk_pid %pid%
+    if (f1States[idx] == 2)
+      ControlSend,, {Blind}{F1}, ahk_pid %pid%
+    if widthMultiplier
+      WinMaximize, ahk_pid %pid%
+
     if (coop)
       ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
     if (special)
@@ -463,8 +465,6 @@ ExitWorld(nextInst:=-1) {
     killFile := McDirectories[idx] . "kill.tmp"
     FileDelete,%holdFile%
     FileDelete, %killFile%
-    if widthMultiplier
-      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
     WinRestore, ahk_pid %pid%
     ResetInstance(idx)
     SetAffinities(nextInst)
@@ -476,7 +476,11 @@ ExitWorld(nextInst:=-1) {
       SwitchInstance(nextInst)
     else
       ToWall(idx)
+    if widthMultiplier
+      WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+    Winset, Bottom,, ahk_pid %pid%
     isWide := False
+    FileDelete, %sleepBgLock%
   }
 }
 
@@ -630,7 +634,7 @@ GetLockFile() {
 }
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
-  if (idx > instances || idx <= 0)
+  if (idx > instances || idx <= 0 || locked[idx])
     return
   if (mode == "I")
     SwapPositions(GetGridIndexFromInstanceNumber(idx), GetFirstPassive())
