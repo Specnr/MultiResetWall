@@ -115,7 +115,7 @@ def manage_movement():
                         wall_scene, instance_source_format.replace("*", instances[item].suffix))
                     inst_height, inst_width = screen_height / focus_rows, screen_width / focus_cols
                     move_source(scene_item, inst_width * (item %
-                                                          focus_cols), inst_height * (item // focus_rows))
+                                                          focus_cols), inst_height * (item // focus_cols))
 
                     scale_source(scene_item, inst_width - pX, inst_height - pY)
                     continue
