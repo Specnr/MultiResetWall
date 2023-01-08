@@ -169,24 +169,6 @@ def script_description():
     return f"MultiResetWall Instance Moving Controller {version}.\nPlease reload this script anytime you change any related settings in AHK.\n"
 
 
-def script_properties():  # ui
-    props = S.obs_properties_create()
-    p = S.obs_properties_add_list(
-        props,
-        "scene",
-        "Wall Scene",
-        S.OBS_COMBO_TYPE_EDITABLE,
-        S.OBS_COMBO_FORMAT_STRING,
-    )
-
-    scenes = S.obs_frontend_get_scenes()
-    for scene in scenes:
-        name = S.obs_source_get_name(scene)
-        S.obs_property_list_add_string(p, name, name)
-    S.source_list_release(scenes)
-    return props
-
-
 # Mainly works with numbers
 def get_setting_from_ahk(setting_name):
     setting = None
@@ -212,7 +194,15 @@ def script_update(settings):
     global screen_width
     global screen_height
     global pixels_between_instances
-    wall_scene_name = S.obs_data_get_string(settings, "scene")
+    wall_scene_name = ""
+    cache_path = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "..", "data", "wall-scene.txt"))
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            wall_scene_name = f.read().strip()
+    if (wall_scene_name == ""):
+        print("Could get wall scene from obs_controller. Please set it and refresh.")
+        return
     focus_rows = int(get_setting_from_ahk("rows"))
     focus_cols = int(get_setting_from_ahk("cols"))
     screen_estate_horizontal = float(
