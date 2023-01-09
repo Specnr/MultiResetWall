@@ -30,7 +30,22 @@ CountAttempts() {
   resets := 0
 }
 
+GetTotalIdleInstances() {
+  totalIdle := 0
+  for i, mcdir in McDirectories {
+    idle := mcdir . "idle.tmp"
+    if FileExist(idle)
+      totalIdle++
+  }
+  return totalIdle
+}
+
 FindBypassInstance() {
+  if (bypassThreshold != -1) {
+    idles := GetTotalIdleInstances()
+    if (bypassThreshold <= idles)
+      return -1
+  }
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
     idle := McDirectories[i] . "idle.tmp"
@@ -717,11 +732,16 @@ UnlockAll(sound:=true) {
 PlayNextLock(focusReset:=false, bypassLock:=false) {
   if (GetActiveInstanceNum() > 0)
     ExitWorld(FindBypassInstance())
-  else
-    if focusReset
-    FocusReset(FindBypassInstance(), bypassLock)
-  else
-    SwitchInstance(FindBypassInstance())
+  else {
+    if focusReset {
+      if ((bypass := FindBypassInstance()) != -1)
+        FocusReset(bypass, bypassLock)
+      else
+        ResetAll(bypassLock)
+    } else {
+      SwitchInstance(FindBypassInstance())
+    }
+  }
 }
 
 WorldBop() {
