@@ -30,6 +30,31 @@ CountAttempts() {
   resets := 0
 }
 
+GetOldestPreview() {
+  idx := GetOldestInstanceIndexOutsideGrid()
+  preview := McDirectories[instancePosition[idx]] . "preview.tmp"
+  if (!FileExist(preview))
+    return -1
+  return idx
+}
+
+ReplacePreviewsInGrid() {
+  gridUsageCount := GetFocusGridInstanceCount()
+  hasSwapped := False
+  loop %gridUsageCount% {
+    preview := McDirectories[instancePosition[A_Index]] . "preview.tmp"
+    if (!FileExist(preview)) {
+      foundPreview := GetOldestPreview()
+      if (foundPreview > 0) {
+        SwapPositions(A_Index, foundPreview)
+        hasSwapped := True
+      }
+    }
+  }
+  if (hasSwapped)
+    NotifyMovingController()
+}
+
 GetTotalIdleInstances() {
   totalIdle := 0
   for i, mcdir in McDirectories {
