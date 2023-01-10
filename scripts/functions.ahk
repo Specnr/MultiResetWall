@@ -30,7 +30,47 @@ CountAttempts() {
   resets := 0
 }
 
+GetOldestPreview() {
+  idx := GetOldestInstanceIndexOutsideGrid()
+  preview := McDirectories[instancePosition[idx]] . "preview.tmp"
+  if (!FileExist(preview))
+    return -1
+  return idx
+}
+
+ReplacePreviewsInGrid() {
+  gridUsageCount := GetFocusGridInstanceCount()
+  hasSwapped := False
+  loop %gridUsageCount% {
+    preview := McDirectories[instancePosition[A_Index]] . "preview.tmp"
+    if (!FileExist(preview)) {
+      foundPreview := GetOldestPreview()
+      if (foundPreview > 0) {
+        SwapPositions(A_Index, foundPreview)
+        hasSwapped := True
+      }
+    }
+  }
+  if (hasSwapped)
+    NotifyMovingController()
+}
+
+GetTotalIdleInstances() {
+  totalIdle := 0
+  for i, mcdir in McDirectories {
+    idle := mcdir . "idle.tmp"
+    if FileExist(idle)
+      totalIdle++
+  }
+  return totalIdle
+}
+
 FindBypassInstance() {
+  if (bypassThreshold != -1) {
+    idles := GetTotalIdleInstances()
+    if (bypassThreshold <= idles)
+      return -1
+  }
   activeNum := GetActiveInstanceNum()
   for i, isLocked in locked {
     idle := McDirectories[i] . "idle.tmp"
@@ -717,11 +757,16 @@ UnlockAll(sound:=true) {
 PlayNextLock(focusReset:=false, bypassLock:=false) {
   if (GetActiveInstanceNum() > 0)
     ExitWorld(FindBypassInstance())
-  else
-    if focusReset
-    FocusReset(FindBypassInstance(), bypassLock)
-  else
-    SwitchInstance(FindBypassInstance())
+  else {
+    if focusReset {
+      if ((bypass := FindBypassInstance()) != -1)
+        FocusReset(bypass, bypassLock)
+      else
+        ResetAll(bypassLock)
+    } else {
+      SwitchInstance(FindBypassInstance())
+    }
+  }
 }
 
 WorldBop() {

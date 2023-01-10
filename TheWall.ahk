@@ -3,6 +3,7 @@
 
 #NoEnv
 #SingleInstance Force
+Thread, NoTimers , True
 #Include %A_ScriptDir%\scripts\functions.ahk
 #Include settings.ahk
 
@@ -186,6 +187,7 @@ if (!disableTTS)
 #Persistent
 OnExit, ExitSub
 SetTimer, CheckScripts, 20
+SetTimer, ReplacePreviewsInGrid, 100
 return
 
 ExitSub:

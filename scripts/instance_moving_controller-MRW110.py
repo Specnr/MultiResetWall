@@ -141,8 +141,8 @@ def manage_movement():
 
                     inst_width = (
                         screen_width*screen_estate_horizontal) / locked_cols
-                    inst_height = (screen_height * (1-screen_estate_vertical))
-                    min(locked_count, locked_rows_before_rollover)
+                    inst_height = (screen_height * (1 - screen_estate_vertical)) / \
+                        min(locked_count, locked_rows_before_rollover)
                     move_source(scene_item, (inst_width * floor(lockedIndex / locked_rows_before_rollover)),
                                 screen_height * screen_estate_vertical + inst_height * (lockedIndex % locked_rows_before_rollover))
                     scale_source(scene_item, inst_width, inst_height)
