@@ -17,6 +17,8 @@ prev_passive_count = 0
 prev_locked_count = 0
 pixels_between_instances = 0
 lastUpdate = 0.0
+screen_width = 0
+screen_height = 0
 version = "v1.1.0"
 
 
@@ -77,6 +79,15 @@ def manage_movement():
         global prev_locked_count
         global prev_passive_count
         global locked_rows_before_rollover
+        global screen_width
+        global screen_height
+
+        if screen_height == 0:
+            wall_scene = S.obs_scene_get_source(
+                S.obs_get_scene_by_name(wall_scene_name))
+            screen_width = S.obs_source_get_width(wall_scene)
+            screen_height = S.obs_source_get_height(wall_scene)
+            S.obs_source_release(wall_scene)
 
         wall_scene = S.obs_get_scene_by_name(wall_scene_name)
         if not wall_scene:
@@ -191,8 +202,6 @@ def script_update(settings):
     global screen_estate_horizontal
     global screen_estate_vertical
     global locked_rows_before_rollover
-    global screen_width
-    global screen_height
     global pixels_between_instances
     wall_scene_name = ""
     cache_path = os.path.abspath(os.path.join(
@@ -212,8 +221,6 @@ def script_update(settings):
     locked_rows_before_rollover = int(get_setting_from_ahk("maxLockedRows"))
     wall_scene = S.obs_scene_get_source(
         S.obs_get_scene_by_name(wall_scene_name))
-    screen_width = S.obs_source_get_width(wall_scene)
-    screen_height = S.obs_source_get_height(wall_scene)
     pixels_between_instances = int(
         get_setting_from_ahk("pixelsBetweenInstances"))
     S.obs_source_release(wall_scene)
