@@ -57,16 +57,24 @@ def execute_cmd(cmd):
             S.obs_source_release(wall_scene)
         elif (cmd[0] == "Play"):
             inst_num = cmd[1]
-            instance_scene = S.obs_scene_get_source(S.obs_get_scene_by_name(
-                instance_scene_format.replace("*", str(inst_num))))
+            instance_name = instance_scene_format.replace("*", str(inst_num))
+            instance_scene = S.obs_scene_get_source(
+                S.obs_get_scene_by_name(instance_name))
+            if not instance_scene:
+                print(
+                    f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
             S.obs_frontend_set_current_scene(instance_scene)
         elif (cmd[0] == "Lock"):
             lock_num = cmd[1]
             render = cmd[2] == "1"
             wall_scene = S.obs_scene_get_source(
                 S.obs_get_scene_by_name(wall_scene_name))
+            lock_name = lock_format.replace("*", str(lock_num))
             lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
-                wall_scene), lock_format.replace("*", str(lock_num)))
+                wall_scene), lock_name)
+            if not lock_source:
+                print(
+                    f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
             S.obs_sceneitem_set_visible(lock_source, render)
     except Exception as e:
         print(f"Error: {e}")
