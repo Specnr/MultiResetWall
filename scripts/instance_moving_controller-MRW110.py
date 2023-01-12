@@ -17,7 +17,16 @@ prev_passive_count = 0
 prev_locked_count = 0
 pixels_between_instances = 0
 lastUpdate = 0.0
+screen_width = 0
+screen_height = 0
 version = "v1.1.0"
+path = os.path.dirname(os.path.realpath(__file__))
+reloadPath = os.path.abspath(os.path.realpath(
+    os.path.join(path, '..', 'data', 'macro.reload')))
+obstxtPath = os.path.abspath(os.path.realpath(
+    os.path.join(path, '..', 'data', 'obs.txt')))
+settingsPath = os.path.abspath(os.path.realpath(
+    os.path.join(path, '..', 'settings.ahk')))
 
 
 class FileInstance():
@@ -77,24 +86,50 @@ def manage_movement():
         global prev_locked_count
         global prev_passive_count
         global locked_rows_before_rollover
+        global screen_width
+        global screen_height
+        global focus_rows
+        global focus_cols
+        global screen_estate_horizontal
+        global screen_estate_vertical
+        global locked_rows_before_rollover
+        global pixels_between_instances
+
+        # Reload settings on macro reload
+        if os.path.exists(reloadPath):
+            focus_rows = int(get_setting_from_ahk("rows"))
+            focus_cols = int(get_setting_from_ahk("cols"))
+            screen_estate_horizontal = float(
+                get_setting_from_ahk("focusGridWidthPercent"))
+            screen_estate_vertical = float(
+                get_setting_from_ahk("focusGridHeightPercent"))
+            locked_rows_before_rollover = int(
+                get_setting_from_ahk("maxLockedRows"))
+            pixels_between_instances = int(
+                get_setting_from_ahk("pixelsBetweenInstances"))
+            os.remove(reloadPath)
+
+        if screen_height == 0:
+            wall_scene = S.obs_scene_get_source(
+                S.obs_get_scene_by_name(wall_scene_name))
+            screen_width = S.obs_source_get_width(wall_scene)
+            screen_height = S.obs_source_get_height(wall_scene)
+            S.obs_source_release(wall_scene)
 
         wall_scene = S.obs_get_scene_by_name(wall_scene_name)
         if not wall_scene:
             print("Can't find scene")
             return
 
-        path = os.path.dirname(os.path.realpath(__file__))
-        filePath = os.path.abspath(os.path.realpath(
-            os.path.join(path, '..', 'data', 'obs.txt')))
-        if not os.path.exists(filePath):
+        if not os.path.exists(obstxtPath):
             print("Can't find obs.txt")
             return
-        currentTime = os.path.getmtime(filePath)
+        currentTime = os.path.getmtime(obstxtPath)
         if currentTime == lastUpdate:
             return
         lastUpdate = currentTime
 
-        with open(filePath) as f:
+        with open(obstxtPath) as f:
 
             raw_instances_string = f.readlines()[0]
             instances = parse_instances_string(raw_instances_string)
@@ -172,10 +207,7 @@ def script_description():
 # Mainly works with numbers
 def get_setting_from_ahk(setting_name):
     setting = None
-    path = os.path.dirname(os.path.realpath(__file__))
-    settings_path = os.path.abspath(os.path.realpath(
-        os.path.join(path, '..', 'settings.ahk')))
-    with open(settings_path, "r") as f:
+    with open(settingsPath, "r") as f:
         for line in f:
             if line.startswith(f"global {setting_name}"):
                 # Can probably be cleaner with regex
@@ -191,8 +223,6 @@ def script_update(settings):
     global screen_estate_horizontal
     global screen_estate_vertical
     global locked_rows_before_rollover
-    global screen_width
-    global screen_height
     global pixels_between_instances
     wall_scene_name = ""
     cache_path = os.path.abspath(os.path.join(
@@ -210,12 +240,7 @@ def script_update(settings):
     screen_estate_vertical = float(
         get_setting_from_ahk("focusGridHeightPercent"))
     locked_rows_before_rollover = int(get_setting_from_ahk("maxLockedRows"))
-    wall_scene = S.obs_scene_get_source(
-        S.obs_get_scene_by_name(wall_scene_name))
-    screen_width = S.obs_source_get_width(wall_scene)
-    screen_height = S.obs_source_get_height(wall_scene)
     pixels_between_instances = int(
         get_setting_from_ahk("pixelsBetweenInstances"))
-    S.obs_source_release(wall_scene)
     S.timer_remove(manage_movement)
     S.timer_add(manage_movement, 100)

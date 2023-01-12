@@ -23,7 +23,7 @@ global focusGridWidthPercent := 0.8 ; Horizontal % of the focus grid. Setting th
 global focusGridHeightPercent := 0.8 ; Vertical % of the focus grid. Setting this to 1 hides the locked instances.
 global maxLockedRows := 2 ; Specifies how many rows have to be reached in the locked section to start a new column.
 global pixelsBetweenInstances := 0 ; The number of pixels to be between instances (for visual effect)
-global bypassThreshold := 2 ; The maximum number of fully loaded instances where ResetAllAndPlayNextLock will not play next lock (-1 = always play next lock)
+global bypassThreshold := -1 ; The maximum number of fully loaded instances where ResetAllAndPlayNextLock will not play next lock (-1 = always play next lock)
 
 ; Affinity
 ; -1 == use macro math to determine thread counts

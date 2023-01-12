@@ -179,6 +179,7 @@ Menu, Tray, Add, Launch Instances, LaunchInstances
 
 NotifyMovingController()
 ToWall(0)
+FileAppend,,data/macro.reload
 
 SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)
@@ -193,6 +194,7 @@ return
 ExitSub:
   if A_ExitReason not in Logoff,Shutdown
   {
+    FileDelete, data/obs.txt
     DetectHiddenWindows, On
     loop, %instances% {
       kill := McDirectories[A_Index] . "kill.tmp"

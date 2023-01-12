@@ -24,4 +24,5 @@ return
 
   ; Optional (Remove semicolon ';' and set a hotkey)
   ;::PlayNextLock()
+  ;::PlayNextLock(true) ; Utilizes bypassThreshold
 }
