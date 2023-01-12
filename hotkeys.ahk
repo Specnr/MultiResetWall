@@ -1,4 +1,3 @@
-; v1.0
 RAlt::Suspend ; Pause all macros
 #If WinActive("Minecraft") && (WinActive("ahk_exe javaw.exe") || WinActive("ahk_exe java.exe"))
 {
@@ -17,8 +16,7 @@ return
 
 #If WinActive("Fullscreen Projector") || WinActive("Full-screen Projector")
 {
-  *E Up::ResetInstance(MousePosToInstNumber())
-  *E::ResetInstance(MousePosToInstNumber(), false) ; drag reset to ignore locked instances
+  *E::ResetInstance(MousePosToInstNumber())
   *R::SwitchInstance(MousePosToInstNumber())
   *F::FocusReset(MousePosToInstNumber())
   *T::ResetAll()
@@ -26,4 +24,5 @@ return
 
   ; Optional (Remove semicolon ';' and set a hotkey)
   ;::PlayNextLock()
+  ;::PlayNextLock(true) ; Utilizes bypassThreshold
 }

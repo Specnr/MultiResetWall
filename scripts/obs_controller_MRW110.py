@@ -16,6 +16,7 @@ import os
 wall_scene_name = "The Wall"
 instance_scene_format = "Instance *"
 lock_format = "lock *"
+version = "v1.1.0"
 
 
 logging.basicConfig(
@@ -23,8 +24,6 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
-
-version = "v1.0.2"
 
 
 def get_cmd(path):
@@ -58,16 +57,24 @@ def execute_cmd(cmd):
             S.obs_source_release(wall_scene)
         elif (cmd[0] == "Play"):
             inst_num = cmd[1]
-            instance_scene = S.obs_scene_get_source(S.obs_get_scene_by_name(
-                instance_scene_format.replace("*", str(inst_num))))
+            instance_name = instance_scene_format.replace("*", str(inst_num))
+            instance_scene = S.obs_scene_get_source(
+                S.obs_get_scene_by_name(instance_name))
+            if not instance_scene:
+                print(
+                    f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
             S.obs_frontend_set_current_scene(instance_scene)
         elif (cmd[0] == "Lock"):
             lock_num = cmd[1]
             render = cmd[2] == "1"
             wall_scene = S.obs_scene_get_source(
                 S.obs_get_scene_by_name(wall_scene_name))
+            lock_name = lock_format.replace("*", str(lock_num))
             lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
-                wall_scene), lock_format.replace("*", str(lock_num)))
+                wall_scene), lock_name)
+            if not lock_source:
+                print(
+                    f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
             S.obs_sceneitem_set_visible(lock_source, render)
     except Exception as e:
         print(f"Error: {e}")
@@ -87,7 +94,7 @@ def execute_latest():
 
 
 def script_description():
-    return f"MultiResetWall OBS Script {version}.\nInstance Scene and Lock formats are automatically set to the Wall Scene Maker.\n If you're not using that make sure they match Instance * and lock * where * is the instance number."
+    return f"MultiResetWall OBS Script {version}.\nYou ONLY need to provide your Wall Scene now, don't worry about any other setting."
 
 
 def script_unload():
@@ -119,6 +126,11 @@ def script_update(settings):
     global instance_scene_format
     global lock_format
     wall_scene_name = S.obs_data_get_string(settings, "scene")
+    cache_path = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "..", "data", "wall-scene.txt"))
+    with open(cache_path, "w+") as f:
+        if (f.read().strip() == ""):
+            f.write(wall_scene_name)
 
     try:
         execute_cmd(["ToWall"])
