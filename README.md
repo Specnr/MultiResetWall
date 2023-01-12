@@ -3,7 +3,9 @@
 
 ## Instructions
 
-Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw)
+Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw) and read the [common issues support doc](https://bit.ly/3HfHZqQ) if needed.
+
+For new Instance Moving (advanced), see the [tutorial here](https://docs.google.com/document/d/11KRbPlepeOIomj5rmzMrxDrzopOzMp4XvNeBQkq1WfE/edit?usp=sharing).
 
 If further help is needed, feel free to open a ticket in my [Discord server](https://discord.gg/tXxwrYw).
 
@@ -18,13 +20,16 @@ On the Fullscreen projector, you have a few default hotkeys (You may customize t
 - T: Will reset all instances
 - Shift + Left Mouse button: Lock instance so "blanket reset" functions skip over it
 
+In a world you can use the following hotkeys:
+- U: Exit world and go back to the wall
+
 Other optional hotkey functions include (to use, put the quoted text after a hotkey and double colon in the hotkeys.ahk file):
 - "ResetAll(true)": Reset all instances regardless of locked status
 - "FocusReset(MousePosToInstNumber(), true)": Play the instance which your mouse is hovering over and reset all the rest regardless of locked status
 - "UnlockInstance(MousePosToInstNumber())": Unlock the instance which your mouse is hovering over
 - "LockAll()": Lock all instances (add False to the parentheses for it to be silent)
 - "UnlockAll()": Unlock all instances (add False to the parentheses for it to be silent)
-- "PlayNextLock()": Play to the first locked instance (add True in the parentheses to reset all other non-locked instances, add 2 True separated by a comma to reset all other instances regardless of locks) (for use on wall only)
+- "PlayNextLock()": Play to the first locked instance
 
 Use [this world deletion program](https://gist.github.com/Specnr/8a572ac5c5cfdb54eb0dc7d1eb2906a3) to delete worlds, or use the Delete Worlds option in the system tray (Requires Python).
 
@@ -97,7 +102,7 @@ The paths of the files used for counting attempts. This can make updating attemp
 - Me
 - Mach for efficient reset managers & for affinity management
 - Ravalle for a lot of great ideas and code
-- Boyenn for Instance Moving code & help, and general optimizations
+- Boyenn for Instance Moving code which we modified, and general optimizations
 - The collaborators listed for minor enhancements
 - PodX12 for some minor enhancements
 - Sam Dao (real)
