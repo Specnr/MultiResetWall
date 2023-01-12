@@ -3,7 +3,7 @@
 
 ## Instructions
 
-Watch the [NEW Multi Instance & Wall Setup Video](https://youtu.be/0xAHMW93MQw) and read the [common issues support doc](https://bit.ly/3HfHZqQ) if needed.
+Watch the [BRAND NEW Wall Tutorial](https://youtu.be/pVnNEBKC4aU) and read the [common issues support doc](https://bit.ly/3HfHZqQ) if needed.
 
 For new Instance Moving (advanced), see the [tutorial here](https://docs.google.com/document/d/11KRbPlepeOIomj5rmzMrxDrzopOzMp4XvNeBQkq1WfE/edit?usp=sharing).
 
