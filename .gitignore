@@ -4,6 +4,7 @@ TheWall*.zip
 *MyOptions*
 test.ahk
 *pycache*
+macro.reload
 *.log
 *.ops
 *.txt
