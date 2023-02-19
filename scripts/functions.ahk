@@ -430,11 +430,6 @@ SwitchInstance(idx, special:=False)
     SetAffinities(idx)
     GetProjectorID(projectorID)
     WinMinimize, ahk_id %projectorID%
-    if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
-      fsKey := fsKeys[idx]
-      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
-      sleep, %fullscreenDelay%
-    }
 
     foreGroundWindow := DllCall("GetForegroundWindow")
     windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint", foreGroundWindow, "uint", 0)
@@ -445,6 +440,12 @@ SwitchInstance(idx, special:=False)
     DllCall("SetForegroundWindow", "uint", hwnds[idx]) ; Probably only important in windowed, helps application take input without a Send Click
     DllCall("BringWindowToTop", "uint", hwnds[idx])
     DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
+
+    if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
+      fsKey := fsKeys[idx]
+      ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
+      sleep, %fullscreenDelay%
+    }
 
     if unpauseOnSwitch
       ControlSend,, {Blind}{Esc}, ahk_pid %pid%
