@@ -158,6 +158,7 @@ for i, mcdir in McDirectories {
 }
 
 SetTitles()
+UnlockAll(false)
 
 SendLog(LOG_LEVEL_INFO, Format("All instances ready for resetting", i))
 
