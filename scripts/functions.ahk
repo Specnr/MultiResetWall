@@ -420,8 +420,8 @@ SwitchInstance(idx, special:=False) {
     nextInst := FindBypassInstance()
     if (nextInst > 0) {
       SwitchInstance(nextInst)
-      return
     }
+    return
   }
 
   holdFile := McDirectories[idx] . "hold.tmp"
