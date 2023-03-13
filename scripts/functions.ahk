@@ -761,7 +761,7 @@ LockInstance(idx, sound:=true, affinityChange:=true, lockingAll:=false) {
 }
 
 UnlockInstance(idx, sound:=true, unlockingAll:=false) {
-  if (!IsValidInstance(idx) || !locked[idx])
+  if (!IsValidInstance(idx))
     return
 
   locked[idx] := false
