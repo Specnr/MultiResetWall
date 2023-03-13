@@ -94,6 +94,13 @@ if (obsControl == "C") {
       SendLog(LOG_LEVEL_INFO, Format("Automatically set OBS Python install path to {1}", pyDir))
     }
   }
+  coverObs := ""
+  loop, %instances% {
+    coverObs .= A_Index . ","
+  }
+  coverObs := RTrim(coverObs, ",")
+  SendOBSCmd(Format("Cover,1,{1}", coverObs))
+  UnlockAll(false)
 }
 
 for i, mcdir in McDirectories {
@@ -120,7 +127,7 @@ for i, mcdir in McDirectories {
   if (!FileExist(lockDest)) {
     FileCopy, %A_ScriptDir%\media\unlock.png, %lockDest%, 1
   }
-  UnlockInstance(i, False)
+  SendOBSCmd(Format("Cover,0,{1}", i))
   if (!FileExist(idle))
     FileAppend, %A_TickCount%, %idle%
   if FileExist(hold)
@@ -145,8 +152,6 @@ for i, mcdir in McDirectories {
     pid := PIDs[i]
     WinRestore, ahk_pid %pid%
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-  } else {
-    WinMaximize, ahk_pid %pid%
   }
   WinSet, AlwaysOnTop, Off, ahk_pid %pid%
   SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))

@@ -16,6 +16,7 @@ import os
 wall_scene_name = "The Wall"
 instance_scene_format = "Instance *"
 lock_format = "lock *"
+cover_format = "cover *"
 version = "v1.1.0"
 
 
@@ -65,17 +66,29 @@ def execute_cmd(cmd):
                     f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
             S.obs_frontend_set_current_scene(instance_scene)
         elif (cmd[0] == "Lock"):
-            lock_num = cmd[1]
-            render = cmd[2] == "1"
+            render = cmd[1] == "1"
             wall_scene = S.obs_scene_get_source(
                 S.obs_get_scene_by_name(wall_scene_name))
-            lock_name = lock_format.replace("*", str(lock_num))
-            lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
-                wall_scene), lock_name)
-            if not lock_source:
-                print(
-                    f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
-            S.obs_sceneitem_set_visible(lock_source, render)
+            for lock_num in cmd[2:len(cmd)]:
+                lock_name = lock_format.replace("*", str(lock_num))
+                lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
+                    wall_scene), lock_name)
+                if not lock_source:
+                    print(
+                        f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
+                S.obs_sceneitem_set_visible(lock_source, render)
+        elif (cmd[0] == "Cover"):
+            render = cmd[1] == "1"
+            wall_scene = S.obs_scene_get_source(
+                S.obs_get_scene_by_name(wall_scene_name))
+            for cover_num in cmd[2:len(cmd)]:
+                cover_name = cover_format.replace("*", str(cover_num))
+                cover_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
+                    wall_scene), cover_name)
+                if not cover_source:
+                    print(
+                        f"Could not find lock source '{cover_name}', make sure they are in the format 'lock *'")
+                S.obs_sceneitem_set_visible(cover_source, render)
     except Exception as e:
         print(f"Error: {e}")
         logging.error(e)

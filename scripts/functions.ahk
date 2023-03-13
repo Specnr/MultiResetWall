@@ -525,46 +525,72 @@ ExitWorld(nextInst:=-1) {
   }
 }
 
-ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false) {
+ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false, resetable:=false) {
   if (!haveVerifiedProjector) {
     VerifyProjector()
     if !haveVerifiedProjector
       return
   }
-  holdFile := McDirectories[idx] . "hold.tmp"
-  previewTime := GetPreviewTime(idx)
-  spawnProt := spawnProtection + extraProt
-  if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProt + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
-    if (mode == "I") {
-      if (!locked[idx])
-        SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
-      else {
-        gridUsageCount := GetFocusGridInstanceCount()
-        if (gridUsageCount < rxc)
-          SwapPositions(GetGridIndexFromInstanceNumber(idx), gridUsageCount + 1)
-        else
-          MoveLast(GetGridIndexFromInstanceNumber(idx))
-      }
-    }
-    FileAppend,, %holdFile%
-    SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
-    pid := PIDs[idx]
-    rmpid := RM_PIDs[idx]
-    resetKey := resetKeys[idx]
-    lpKey := lpKeys[idx]
-    previewFile := McDirectories[idx] . "preview.tmp"
-    FileDelete, %previewFile%
-    ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
-    timeSinceReset[idx] := A_TickCount
-    DetectHiddenWindows, On
-    PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
-    DetectHiddenWindows, Off
-    if locked[idx]
-      UnlockInstance(idx, false)
-    if (mode == "I" && !resettingAll)
-      NotifyMovingController()
-    resets++
+  if (!resetable) {
+    resetable := GetCanReset(idx, bypassLock, extraProt)
+    if (!resetable)
+      return
   }
+  if (mode == "I") {
+    if (!locked[idx])
+      SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
+    else {
+      gridUsageCount := GetFocusGridInstanceCount()
+      if (gridUsageCount < rxc)
+        SwapPositions(GetGridIndexFromInstanceNumber(idx), gridUsageCount + 1)
+      else
+        MoveLast(GetGridIndexFromInstanceNumber(idx))
+    }
+  }
+  if (!resettingAll && obsControl == "C") {
+    SendOBSCmd(Format("Cover,1,{1}", idx))
+  }
+  FileAppend,, %holdFile%
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
+  pid := PIDs[idx]
+  rmpid := RM_PIDs[idx]
+  resetKey := resetKeys[idx]
+  lpKey := lpKeys[idx]
+  previewFile := McDirectories[idx] . "preview.tmp"
+  FileDelete, %previewFile%
+  ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
+  timeSinceReset[idx] := A_TickCount
+  DetectHiddenWindows, On
+  PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
+  DetectHiddenWindows, Off
+  if locked[idx]
+    UnlockInstance(idx, false)
+  if (mode == "I" && !resettingAll)
+    NotifyMovingController()
+  resets++
+}
+
+GetCanReset(idx, bypassLock:=true, extraProt:=0) {
+  if (idx < 0 || idx > instances) {
+    return false
+  }
+
+  if (locked[idx] && !bypassLock) {
+    return false
+  }
+
+  holdFile := McDirectories[idx] . "hold.tmp"
+  if (FileExist(holdFile)) {
+    return false
+  }
+
+  spawnProt := spawnProtection + extraProt
+  previewTime := GetPreviewTime(idx)
+  if (A_TickCount <= (previewTime + spawnProt)) {
+    return false
+  }
+
+  return true
 }
 
 SetTitles() {
@@ -643,18 +669,29 @@ ResetAll(bypassLock:=false) {
     if !haveVerifiedProjector
       return
   }
-  if bypassLock
-    UnlockAll(false)
   if (mode == "I") {
     focusCount := GetFocusGridInstanceCount()
     loop, %focusCount%
       ResetInstance(instancePosition[A_Index],,,true)
     NotifyMovingController()
   } else {
+    resetable := []
+    resetableObs := ""
     loop, %instances% {
-      if locked[A_Index]
-        Continue
-      ResetInstance(A_Index)
+      if (GetCanReset(A_Index, bypassLock)) {
+        resetable.push(A_Index)
+        resetableObs .= A_Index . ","
+      }
+    }
+    if (obsControl == "C") {
+      resetableObs := RTrim(resetableObs, ",")
+      SendOBSCmd(Format("Cover,1,{1}", resetableObs))
+    }
+    if bypassLock {
+      UnlockAll(false)
+    }
+    for i, idx in resetable {
+      ResetInstance(idx,,,true,true)
     }
   }
 }
@@ -674,7 +711,7 @@ GetLockFile() {
   return source
 }
 
-LockInstance(idx, sound:=true, affinityChange:=true) {
+LockInstance(idx, sound:=true, affinityChange:=true, obs:=true) {
   if (idx > instances || idx <= 0 || locked[idx])
     return
   if (mode == "I")
@@ -686,8 +723,8 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   FileSetTime,,%lockDest%,M
   if (mode == "I")
     NotifyMovingController()
-  else if (obsControl == "C")
-    SendOBSCmd(Format("Lock,{1},1", idx))
+  else if (obs && obsControl == "C")
+    SendOBSCmd(Format("Lock,1,{1}", idx))
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
@@ -704,12 +741,12 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   }
 }
 
-UnlockInstance(idx, sound:=true) {
+UnlockInstance(idx, sound:=true, obs:=true) {
   if (idx > instances || idx <= 0)
     return
   locked[idx] := false
-  if (obsControl == "C")
-    SendOBSCmd(Format("Lock,{1},0", idx))
+  if (obs && obsControl == "C")
+    SendOBSCmd(Format("Lock,0,{1}", idx))
   else {
     lockDest := McDirectories[idx] . "lock.png"
     FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
@@ -728,8 +765,18 @@ UnlockInstance(idx, sound:=true) {
 }
 
 LockAll(sound:=true) {
+  lock := []
+  lockObs := ""
   loop, %instances% {
-    LockInstance(A_Index, false)
+    lock.push(A_Index)
+    lockObs .= A_Index . ","
+  }
+  if (obsControl == "C") {
+    lockObs := RTrim(lockObs, ",")
+    SendOBSCmd(Format("Lock,1,{1}", lockObs))
+  }
+  for i, idx in lock {
+    LockInstance(idx,false,,false)
   }
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\lock.wav
@@ -742,8 +789,18 @@ LockAll(sound:=true) {
 }
 
 UnlockAll(sound:=true) {
+  unlock := []
+  unlockObs := ""
   loop, %instances% {
-    UnlockInstance(A_Index, false)
+    unlock.push(A_Index)
+    unlockObs .= A_Index . ","
+  }
+  if (obsControl == "C") {
+    unlockObs := RTrim(unlockObs, ",")
+    SendOBSCmd(Format("Lock,0,{1}", unlockObs))
+  }
+  for i, idx in unlock {
+    UnlockInstance(idx,false,false)
   }
   if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
