@@ -926,16 +926,16 @@ UnlockSound(sound) {
   }
 }
 
-GetLockableInstances(toCheck) {
-  lockable := []
-  loop, %toCheck% {
-    lockable.push(A_Index)
+GetInstancesArray(insts) {
+  instanceArray := []
+  loop, %insts% {
+    instanceArray.push(A_Index)
   }
-  return lockable
+  return instanceArray
 }
 
 LockAll(sound:=true, affinityChange:=true) {
-  lockable := GetLockableInstances(GetFocusGridInstanceCount())
+  lockable := GetInstancesArray(GetFocusGridInstanceCount())
   
   SendOBSCmd(GetCoverTypeObsCmd("Lock","1", lockable))
 
@@ -950,7 +950,7 @@ LockAll(sound:=true, affinityChange:=true) {
 }
 
 UnlockAll(sound:=true) {
-  unlockable := GetLockableInstances(GetFocusGridInstanceCount())
+  unlockable := GetInstancesArray(GetFocusGridInstanceCount())
   
   SendOBSCmd(GetCoverTypeObsCmd("Lock","0", unlockable))
 

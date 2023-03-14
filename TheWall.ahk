@@ -94,12 +94,8 @@ if (obsControl == "C") {
       SendLog(LOG_LEVEL_INFO, Format("Automatically set OBS Python install path to {1}", pyDir))
     }
   }
-  coverObs := ""
-  loop, %instances% {
-    coverObs .= A_Index . ","
-  }
-  coverObs := RTrim(coverObs, ",")
-  SendOBSCmd(Format("Cover,1,{1}", coverObs))
+  instanceArr := GetInstancesArray(instances)
+  SendOBSCmd(GetCoverTypeObsCmd("Cover","1", instanceArr))
   UnlockAll(false)
 }
 
@@ -127,7 +123,6 @@ for i, mcdir in McDirectories {
   if (!FileExist(lockDest)) {
     FileCopy, %A_ScriptDir%\media\unlock.png, %lockDest%, 1
   }
-  SendOBSCmd(Format("Cover,0,{1}", i))
   if (!FileExist(idle))
     FileAppend, %A_TickCount%, %idle%
   if FileExist(hold)
@@ -184,6 +179,8 @@ Menu, Tray, Add, Close Instances, CloseInstances
 Menu, Tray, Add, Launch Instances, LaunchInstances
 
 NotifyMovingController()
+instanceArr := GetInstancesArray(instances)
+SendOBSCmd(GetCoverTypeObsCmd("Cover","0", instanceArr))
 ToWall(0)
 FileAppend,,data/macro.reload
 
