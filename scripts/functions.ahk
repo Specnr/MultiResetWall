@@ -407,20 +407,20 @@ VerifyProjector() {
 }
 
 SwitchInstance(idx, special:=False) {
-  wasLocked := locked[idx]
-  if (!wasLocked)
-    LockInstance(idx, False, False)
-  else if (mode == "I")
-    NotifyMovingController()
+  if (idx == -1) {
+    ToWall(0)
+    return
+  }
 
-  idleFile := McDirectories[idx] . "idle.tmp"
-  if ((mode != "C" && !FileExist(idleFile)) || !IsValidInstance(idx)) {
-    if !smartSwitch
-      return
-    nextInst := FindBypassInstance()
-    if (nextInst > 0) {
-      SwitchInstance(nextInst)
-    }
+  if (mode == "I" && locked[idx])
+    NotifyMovingController()
+  else if (!locked[idx])
+    LockInstance(idx, False, False)
+
+  if !GetCanPlay(idx) && !smartSwitch
+    return
+  else if !GetCanPlay(idx) {
+    SwitchInstance(FindBypassInstance())
     return
   }
 
@@ -431,11 +431,49 @@ SwitchInstance(idx, special:=False) {
   FileDelete,data/instance.txt
   FileAppend,%idx%,data/instance.txt
   FileAppend,, %sleepBgLock%
+  
+  SetAffinities(idx)
+  
+  SwitchWindowToInstance(idx)
+  
+  ManageJoinInstance(idx, special)
+
+  SwitchToInstanceObs(idx)
+}
+
+SwitchToInstanceObs(idx) {
+  obsKey := ""
+  if (obsControl == "C") {
+    SendOBSCmd("Play," . idx)
+    return
+  } else if (obsControl == "N") {
+    obsKey := "Numpad" . idx
+  } else if (obsControl == "F") {
+    obsKey := "F" . (idx+12)
+  } else if (obsControl == "ARR") {
+    obsKey := obsCustomKeyArray[idx]
+  }
+  Send {%obsKey% down}
+  Sleep, %obsDelay%
+  Send {%obsKey% up}
+}
+
+ManageJoinInstance(idx, special:=false) {
+  pid := PIDs[idx]
+  ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+  if (f1States[idx] == 2)
+    ControlSend,, {Blind}{F1}, ahk_pid %pid%
+  if (special)
+    OnJoinSettingsChange(pid)
+  if (coop)
+    ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
+  if !unpauseOnSwitch
+    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
+}
+
+SwitchWindowToInstance(idx) {
   hwnd := hwnds[idx]
   pid := PIDs[idx]
-
-  SetAffinities(idx)
-
   GetProjectorID(projectorID)
   WinMinimize, ahk_id %projectorID%
 
@@ -444,9 +482,9 @@ SwitchInstance(idx, special:=False) {
   currentThreadId := DllCall("GetCurrentThreadId")
   DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 1)
   if (widthMultiplier && (windowMode == "W" || windowMode == "B"))
-    DllCall("SendMessage", "uint", hwnds[idx], "uint", 0x0112, "uint", 0xF030, "int", 0) ; fast maximize
-  DllCall("SetForegroundWindow", "uint", hwnds[idx]) ; Probably only important in windowed, helps application take input without a Send Click
-  DllCall("BringWindowToTop", "uint", hwnds[idx])
+    DllCall("SendMessage", "uint", hwnd, "uint", 0x0112, "uint", 0xF030, "int", 0) ; fast maximize
+  DllCall("SetForegroundWindow", "uint",hwnd) ; Probably only important in windowed, helps application take input without a Send Click
+  DllCall("BringWindowToTop", "uint", hwnd)
   DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
 
   if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
@@ -454,37 +492,6 @@ SwitchInstance(idx, special:=False) {
     ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
     sleep, %fullscreenDelay%
   }
-
-  if unpauseOnSwitch {
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
-  } else {
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-    if (f1States[idx] == 2)
-      ControlSend,, {Blind}{F1}, ahk_pid %pid%
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-  }
-  if (coop)
-    ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-  if (special)
-    OnJoinSettingsChange(pid)
-
-  if widthMultiplier
-    WinMaximize, ahk_pid %pid%
-
-  if (obsControl != "C") {
-    if (obsControl == "N")
-      obsKey := "Numpad" . idx
-    else if (obsControl == "F")
-      obsKey := "F" . (idx+12)
-    else if (obsControl == "ARR")
-      obsKey := obsCustomKeyArray[idx]
-    Send {%obsKey% down}
-    Sleep, %obsDelay%
-    Send {%obsKey% up}
-  } else
-    SendOBSCmd("Play," . idx)
 }
 
 GetActiveInstanceNum() {
@@ -498,15 +505,12 @@ GetActiveInstanceNum() {
 
 ExitWorld(nextInst:=-1) {
   idx := GetActiveInstanceNum()
+  pid := PIDs[idx]
   if (!IsValidInstance(idx)) {
     return
   }
 
-  pid := PIDs[idx]
-  if f1States[idx]
-    ControlSend,, {Blind}{F1}{F3}{Esc 3}, ahk_pid %pid%
-  else
-    ControlSend,, {Blind}{F3}{Esc 3}, ahk_pid %pid%
+  GhostPie(idx)
 
   if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
     fsKey := fsKeys[idx]
@@ -518,85 +522,203 @@ ExitWorld(nextInst:=-1) {
   killFile := McDirectories[idx] . "kill.tmp"
   FileDelete,%holdFile%
   FileDelete, %killFile%
+  
   WinRestore, ahk_pid %pid%
 
-  ResetInstance(idx,,,,true)
-  SetAffinities(nextInst)
+  ResetInstance(idx,,,true)
 
-  if (mode == "C" && nextInst == -1)
-    nextInst := Mod(idx, instances) + 1
-  else if ((mode == "B" || mode == "M") && nextInst == -1)
-    nextInst := FindBypassInstance()
+  SetAffinities(GetNextInstance(idx))
 
-  if (nextInst > 0)
-    SwitchInstance(nextInst)
-  else
-    ToWall(idx)
+  SwitchInstance(GetNextInstance(idx))
   
   if widthMultiplier
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   Winset, Bottom,, ahk_pid %pid%
   isWide := False
+
   FileDelete, %sleepBgLock%
 }
 
-ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false, resetable:=false) {
-  if (!resettingAll)
-    resetable := GetCanReset(idx, bypassLock, extraProt)
+GetNextInstance(idx) {
+  if (mode == "C" && nextInst == -1)
+    return Mod(idx, instances) + 1
+  else if ((mode == "B" || mode == "M") && nextInst == -1)
+    return FindBypassInstance()
+  return -1
+}
 
-  if (!resetable)
-    return
+GhostPie(idx) {
+  pid := PIDs[idx]
+  if f1States[idx]
+    ControlSend,, {Blind}{F1}{F3}{Esc 3}, ahk_pid %pid%
+  else
+    ControlSend,, {Blind}{F3}{Esc 3}, ahk_pid %pid%
+}
 
-  if (mode == "I")
-    MoveResetInstance(idx)
+{
+  ; ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false, resetable:=false) {
+  ;   SendLog(LOG_LEVEL_INFO, Format("key press {1}", idx))
+  ;   if (!resettingAll)
+  ;     resetable := GetCanReset(idx, bypassLock, extraProt)
 
-  if (!resettingAll && obsControl == "C")
-    SendOBSCmd(Format("Cover,1,{1}", idx))
+  ;   if (!resetable)
+  ;     return
 
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
+  ;   if (mode == "I")
+  ;     MoveResetInstance(idx)
 
+  ;   if (!resettingAll && obsControl == "C")
+  ;     SendOBSCmd(Format("Cover,1,{1}", idx))
+
+  ;   SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
+
+  ;   pid := PIDs[idx]
+  ;   rmpid := RM_PIDs[idx]
+  ;   resetKey := resetKeys[idx]
+  ;   lpKey := lpKeys[idx]
+  ;   holdFile := McDirectories[idx] . "hold.tmp"
+  ;   FileAppend,, %holdFile%
+  ;   previewFile := McDirectories[idx] . "preview.tmp"
+  ;   FileDelete, %previewFile%
+  ;   SendLog(LOG_LEVEL_INFO, Format("kesy pressed {1}", idx))
+  ;   ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
+
+  ;   timeSinceReset[idx] := A_TickCount
+  ;   resets++
+
+  ;   DetectHiddenWindows, On
+  ;   PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
+  ;   DetectHiddenWindows, Off
+  ;   SendLog(LOG_LEVEL_INFO, Format("msg sent {1}", idx))
+  ;   if locked[idx]
+  ;     UnlockInstance(idx, false)
+
+  ;   if (mode == "I" && !resettingAll)
+  ;     NotifyMovingController()
+  ; }
+
+  ; ; Reset all instances
+  ; ResetAll(bypassLock:=false, extraProt:=0) {
+  ;   if (mode == "I")
+  ;     toCheck := GetFocusGridInstanceCount()
+  ;   else
+  ;     toCheck := instances
+
+  ;   resetable := []
+
+  ;   loop, %toCheck% {
+  ;     if (GetCanReset(A_Index, bypassLock, extraProt)) {
+  ;       resetable.push(A_Index)
+  ;       resetableObs .= A_Index . ","
+  ;     }
+  ;   }
+  ;   resetableObs := RTrim(resetableObs, ",")
+
+  ;   ; if bypassLock {
+  ;   ;   UnlockAll(false)
+  ;   ; }
+
+  ;   for i, idx in resetable {
+  ;     if (mode == "I")
+  ;       ResetInstance(instancePosition[i],,,true,true)
+  ;     else
+  ;       ResetInstance(idx,,,true,true)
+  ;   }
+
+  ;   if (mode == "I")
+  ;     NotifyMovingController()
+  ;   else if (obsControl == "C")
+  ;     SendOBSCmd(Format("Cover,1,{1}", resetableObs))
+  ; }
+
+  ; ResetAll(bypassLock:=false, extraProt:=0) {
+  ;   if (mode == "I")
+  ;     toCheck := GetFocusGridInstanceCount()
+  ;   else
+  ;     toCheck := instances
+
+  ;   resetable := []
+
+  ;   for i, idx in toCheck {
+  ;     if (GetCanReset(idx, bypassLock, extraProt))
+  ;       resetable.push(idx)
+  ;   }
+
+  ;   if (mode == "I") {
+  ;     for i, idx in resetable {
+  ;       ResetInstance([instancePosition[i]],,,true)
+  ;     }
+  ;   } else {
+  ;     ResetInstance([1,2,3,4,5,6,7,8,9],,,true)
+  ;   }
+  ; }
+}
+
+ResetAll(bypassLock:=false, extraProt:=0) {
+  resetable := GetResetableInstances(GetFocusGridInstanceCount(), bypassLock, extraProt)
+  
+  for i, idx in resetable {
+    SendReset(idx)
+  }
+  
+  for i, idx in resetable {
+    SetAffinity(PIDs[idx],highBitMask)
+  }
+
+  SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
+  SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
+}
+
+GetResetableInstances(toCheck, bypassLock, extraProt) {
+  resetable := []
+  loop, %toCheck% {
+    if (GetCanReset(A_Index, bypassLock, extraProt))
+      resetable.push(A_Index)
+  }
+  return resetable
+}
+
+GetCoverTypeObsCmd(type, render, insts) {
+  cmd := ""
+  for i, idx in insts {
+    cmd .= idx . ","
+  }
+  return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
+}
+
+SendReset(num) {
+  idx := mode == "I" ? instancePosition[num] : num
   pid := PIDs[idx]
   rmpid := RM_PIDs[idx]
   resetKey := resetKeys[idx]
   lpKey := lpKeys[idx]
-  holdFile := McDirectories[idx] . "hold.tmp"
-  FileAppend,, %holdFile%
-  previewFile := McDirectories[idx] . "preview.tmp"
-  FileDelete, %previewFile%
-
   ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
-
-  timeSinceReset[idx] := A_TickCount
-  resets++
-
   DetectHiddenWindows, On
   PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
   DetectHiddenWindows, Off
+  timeSinceReset[idx] := A_TickCount
+  resets++
+}
 
-  if locked[idx]
-    UnlockInstance(idx, false)
+ResetInstance(idx, bypassLock:=true, extraProt:=0, force:=false) {
+  if (!force && !GetCanReset(idx, bypassLock, extraProt))
+    return
 
-  if (mode == "I" && !resettingAll)
+  SendReset(idx)
+  SetAffinity(PIDs[idx],highBitMask)
+
+  if (mode == "I")
+    MoveResetInstance(idx)
+  else if (obsControl == "C")
+    SendOBSCmd(GetCoverTypeObsCmd("Cover","1",[idx]))
+
+  UnlockInstance(idx,false)
+  if (mode == "I")
     NotifyMovingController()
 }
 
-MoveResetInstance(idx) {
-  if (!locked[idx])
-    SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
-  else
-    MoveLockedResetInstance(idx)
-}
-
-MoveLockedResetInstance(idx) {
-  gridUsageCount := GetFocusGridInstanceCount()
-  if (gridUsageCount < rxc)
-    SwapPositions(GetGridIndexFromInstanceNumber(idx), gridUsageCount + 1)
-  else
-    MoveLast(GetGridIndexFromInstanceNumber(idx))
-}
-
 GetCanReset(idx, bypassLock:=true, extraProt:=0) {
-  if (idx < 0 || idx > instances) {
+  if (!IsValidInstance(idx)) {
     return false
   }
 
@@ -616,6 +738,34 @@ GetCanReset(idx, bypassLock:=true, extraProt:=0) {
   }
 
   return true
+}
+
+GetCanPlay(idx) {
+  if (!IsValidInstance(idx)) {
+    return false
+  }
+
+  idleFile := McDirectories[idx] . "idle.tmp"
+  if (!FileExist(idleFile) && mode != "C") {
+    return false
+  }
+
+  return true
+}
+
+MoveResetInstance(idx) {
+  if (!locked[idx])
+    SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
+  else
+    MoveLockedResetInstance(idx)
+}
+
+MoveLockedResetInstance(idx) {
+  gridUsageCount := GetFocusGridInstanceCount()
+  if (gridUsageCount < rxc)
+    SwapPositions(GetGridIndexFromInstanceNumber(idx), gridUsageCount + 1)
+  else
+    MoveLast(GetGridIndexFromInstanceNumber(idx))
 }
 
 SetTitles() {
@@ -676,40 +826,6 @@ FocusReset(focusInstance, bypassLock:=false) {
   ResetAll(bypassLock, spawnProtection)
 }
 
-; Reset all instances
-ResetAll(bypassLock:=false, extraProt:=0) {
-  if (mode == "I")
-    toCheck := GetFocusGridInstanceCount()
-  else
-    toCheck := instances
-
-  resetable := []
-  resetableObs := ""
-  loop, %toCheck% {
-    if (GetCanReset(A_Index, bypassLock, extraProt)) {
-      resetable.push(A_Index)
-      resetableObs .= A_Index . ","
-    }
-  }
-  resetableObs := RTrim(resetableObs, ",")
-
-  if bypassLock {
-    UnlockAll(false)
-  }
-
-  for i, idx in resetable {
-    if (mode == "I")
-      ResetInstance(instancePosition[i],,,true,true)
-    else
-      ResetInstance(idx,,,true,true)
-  }
-
-  if (mode == "I")
-    NotifyMovingController()
-  else if (obsControl == "C")
-    SendOBSCmd(Format("Cover,1,{1}", resetableObs))
-}
-
 GetLockFile() {
   if (useRandomLocks > 1) {
     Random, randLock, 1, %useRandomLocks%
@@ -725,31 +841,41 @@ GetLockFile() {
   return source
 }
 
-LockInstance(idx, sound:=true, affinityChange:=true, lockingAll:=false) {
-  if (!IsValidInstance(idx) || locked[idx])
+LockInstance(idx, sound:=true, affinityChange:=true) {
+  if (!IsValidInstance(idx))
     return
   
-  locked[idx] := true
+  LockFiles(idx)
+  
+  LockOBS(idx)
 
+  locked[idx] := true
+  
+  if affinityChange
+    SetAffinity(PIDs[idx], lockBitMask)
+  
+  LockSound(sound)
+}
+
+LockFiles(idx) {
   lockDest := McDirectories[idx] . "lock.png"
   lockSource := GetLockFile()
   FileCopy, %lockSource%, %lockDest%, 1
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
   FileAppend,, %lockDest%
+}
 
-  if (mode == "I") {
+LockOBS(idx) {
+  if (obsControl == "C" && mode != "I" && !locked[idx]) {
+    SendOBSCmd(GetCoverTypeObsCmd("Lock","1",[idx]))
+  } else if (mode == "I") {
     SwapPositions(GetGridIndexFromInstanceNumber(idx), GetFirstPassive())
     NotifyMovingController()
-  } else if (!lockingAll && obsControl == "C") {
-    SendOBSCmd(Format("Lock,1,{1}", idx))
   }
-  
-  if affinityChange {
-    pid := PIDs[idx]
-    SetAffinity(pid, lockBitMask)
-  }
-  
+}
+
+LockSound(sound) {
   if (sound && (sounds == "A" || sounds == "F" || sound == "L")) {
     SoundPlay, A_ScriptDir\..\media\lock.wav
     if obsLockMediaKey {
@@ -760,23 +886,37 @@ LockInstance(idx, sound:=true, affinityChange:=true, lockingAll:=false) {
   }
 }
 
-UnlockInstance(idx, sound:=true, unlockingAll:=false) {
+UnlockInstance(idx, sound:=true) {
   if (!IsValidInstance(idx))
     return
+  
+  UnlockFiles(idx)
+
+  UnlockOBS(idx)
 
   locked[idx] := false
 
-  if (!unlockingAll && obsControl == "C")
-    SendOBSCmd(Format("Lock,0,{1}", idx))
-  else {
+  UnlockSound(sound)
+}
+
+UnlockFiles(idx) {
+  if (obsControl != "C" && locked[idx]) {
     lockDest := McDirectories[idx] . "lock.png"
     FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
     FileSetTime,,%lockDest%,M
   }
   lockDest := McDirectories[idx] . "lock.tmp"
   FileDelete, %lockDest%
+}
 
-  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
+UnlockOBS(idx) {
+  if (obsControl == "C" && mode != "I" && locked[idx]) {
+    SendOBSCmd(GetCoverTypeObsCmd("Lock","0",[idx]))
+  }
+}
+
+UnlockSound(sound) {
+  if (sound && (sounds == "A" || sounds == "F" || sound == "L")) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
     if obsUnlockMediaKey {
       send {%obsUnlockMediaKey% down}
@@ -784,58 +924,42 @@ UnlockInstance(idx, sound:=true, unlockingAll:=false) {
       send {%obsUnlockMediaKey% up}
     }
   }
+}
+
+GetLockableInstances(toCheck) {
+  lockable := []
+  loop, %toCheck% {
+    lockable.push(A_Index)
+  }
+  return lockable
 }
 
 LockAll(sound:=true, affinityChange:=true) {
-  lockable := []
-  lockObs := ""
-  loop, %instances% {
-    lockable.push(A_Index)
-    lockObs .= A_Index . ","
-  }
-  lockObs := RTrim(lockObs, ",")
-
-  if (obsControl == "C")
-    SendOBSCmd(Format("Lock,1,{1}", lockObs))
+  lockable := GetLockableInstances(GetFocusGridInstanceCount())
+  
+  SendOBSCmd(GetCoverTypeObsCmd("Lock","1", lockable))
 
   for i, idx in lockable {
-    LockInstance(idx,false,affinityChange,true)
+    locked[idx] := true
+    LockFiles(idx)
+    if affinityChange
+      SetAffinity(PIDs[idx], lockBitMask)
   }
 
-  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
-    SoundPlay, A_ScriptDir\..\media\lock.wav
-    if obsLockMediaKey {
-      send {%obsLockMediaKey% down}
-      sleep, %obsDelay%
-      send {%obsLockMediaKey% up}
-    }
-  }
+  LockSound(sound)
 }
 
 UnlockAll(sound:=true) {
-  unlockable := []
-  unlockObs := ""
-  loop, %instances% {
-    unlockable.push(A_Index)
-    unlockObs .= A_Index . ","
-  }
-  unlockObs := RTrim(unlockObs, ",")
-
-  if (obsControl == "C")
-    SendOBSCmd(Format("Lock,0,{1}", unlockObs))
+  unlockable := GetLockableInstances(GetFocusGridInstanceCount())
   
+  SendOBSCmd(GetCoverTypeObsCmd("Lock","0", unlockable))
+
   for i, idx in unlockable {
-    UnlockInstance(idx,false,true)
+    locked[idx] := false
+    UnlockFiles(idx)
   }
 
-  if ((sounds == "A" || sounds == "F" || sound == "L") && sound) {
-    SoundPlay, A_ScriptDir\..\media\unlock.wav
-    if obsUnlockMediaKey {
-      send {%obsUnlockMediaKey% down}
-      sleep, %obsDelay%
-      send {%obsUnlockMediaKey% up}
-    }
-  }
+  UnlockSound(sound)
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
@@ -960,6 +1084,8 @@ GetPassiveGridInstanceCount() {
 }
 
 GetFocusGridInstanceCount() {
+  if (mode != "I")
+    return instances
   gridInstanceCount := 0
   for i, inst in instancePosition {
     if (locked[inst]) {

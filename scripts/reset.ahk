@@ -48,6 +48,7 @@ Reset() {
   previewLoaded := false
   covered := true
   FileAppend,, %holdFile%
+  FileDelete, %previewFile%
   FileDelete, %idleFile%
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -%manageResetAfter%
