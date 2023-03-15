@@ -562,14 +562,20 @@ ResetAll(bypassLock:=false, extraProt:=0) {
 
   for i, idx in resetable {
     SendReset(idx)
+    if (mode == "I")
+      MoveResetInstance(idx)
   }
 
   for i, idx in resetable {
     SetAffinity(PIDs[idx],highBitMask)
   }
 
-  SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
-  SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
+  if (mode == "I") {
+    NotifyMovingController()
+  } else {
+    SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
+    SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
+  }
 }
 
 GetResetableInstances(toCheck, bypassLock, extraProt) {
