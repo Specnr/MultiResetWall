@@ -53,21 +53,21 @@ def get_cmd(path):
 def handle_wall():
     wall_scene = S.obs_get_scene_by_name(wall_scene_name)
     wall_scene_source = S.obs_scene_get_source(wall_scene)
+    S.obs_scene_release(wall_scene)
     S.obs_frontend_set_current_scene(wall_scene_source)
     S.obs_source_release(wall_scene_source)
-    S.obs_scene_release(wall_scene)
 
 
-def handle_play(inst):  # Broken
+def handle_play(inst):
     instance_name = instance_scene_format.replace("*", str(inst))
     instance_scene = S.obs_get_scene_by_name(instance_name)
     instance_scene_source = S.obs_scene_get_source(instance_scene)
+    S.obs_scene_release(instance_scene)
     if not instance_scene_source:
         print(
             f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
     S.obs_frontend_set_current_scene(instance_scene_source)
     S.obs_source_release(instance_scene_source)
-    S.obs_scene_release(instance_scene)
 
 
 def handle_lock(render, cmd):
