@@ -29,6 +29,7 @@ global lowBitMask := A_Args[15]
 global bgLoadBitMask := A_Args[16]
 global doubleCheckUnexpectedLoads := A_Args[17]
 
+global covered := false
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
@@ -45,7 +46,9 @@ Reset() {
   }
   state := "kill"
   previewLoaded := false
+  covered := true
   FileAppend,, %holdFile%
+  FileDelete, %previewFile%
   FileDelete, %idleFile%
   lastImportantLine := GetLineCount(logFile)
   SetTimer, ManageReset, -%manageResetAfter%
@@ -108,6 +111,10 @@ ManageReset() {
         return
       } else if (InStr(A_LoopReadLine, "%")) {
         loadPercent := StrSplit(StrSplit(A_LoopReadLine, ": ")[3], "%")[1]
+        if (state == "preview" && covered) {
+          covered := false
+          SendOBSCmd(Format("Cover,0,{1}", idx))
+        }
         if (loadPercent > previewLoadPercent && !previewLoaded) {
           previewLoaded := true
           SendLog(LOG_LEVEL_INFO, Format("Instance {1} {2}% loading finished", idx, previewLoadPercent))

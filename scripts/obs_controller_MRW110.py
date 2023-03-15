@@ -16,6 +16,8 @@ import os
 wall_scene_name = "The Wall"
 instance_scene_format = "Instance *"
 lock_format = "lock *"
+cover_format = "cover *"
+mc_format = "mc *"
 version = "v1.1.0"
 
 
@@ -65,17 +67,48 @@ def execute_cmd(cmd):
                     f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
             S.obs_frontend_set_current_scene(instance_scene)
         elif (cmd[0] == "Lock"):
-            lock_num = cmd[1]
-            render = cmd[2] == "1"
+            render = cmd[1] == "1"
             wall_scene = S.obs_scene_get_source(
                 S.obs_get_scene_by_name(wall_scene_name))
-            lock_name = lock_format.replace("*", str(lock_num))
-            lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
-                wall_scene), lock_name)
-            if not lock_source:
-                print(
-                    f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
-            S.obs_sceneitem_set_visible(lock_source, render)
+            for lock_num in cmd[2:len(cmd)]:
+                lock_name = lock_format.replace("*", str(lock_num))
+                lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
+                    wall_scene), lock_name)
+                if not lock_source:
+                    print(
+                        f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
+                S.obs_sceneitem_set_visible(lock_source, render)
+        elif (cmd[0] == "Cover"):
+            render = cmd[1] == "1"
+            wall_scene = S.obs_scene_get_source(
+                S.obs_get_scene_by_name(wall_scene_name))
+            for num in cmd[2:len(cmd)]:
+                cover_name = cover_format.replace("*", str(num))
+                cover_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
+                    wall_scene), cover_name)
+                if not cover_source:
+                    print(
+                        f"Could not find cover source '{cover_name}', make sure they are in the format 'cover *'")
+                S.obs_sceneitem_set_visible(cover_source, render)
+
+                mc_name = mc_format.replace("*", str(num))
+                mc_source = S.obs_get_source_by_name(mc_name)
+
+                invis_filter = S.obs_source_get_filter_by_name(mc_source, "invisible " + num)
+                if not invis_filter:
+                    print("Could not find invisible filter 'invisible " + num + "', creating and adding now")
+                    temp_settings = S.obs_data_create()
+                    S.obs_data_set_int(temp_settings, "opacity", 0)
+                    invis_source = S.obs_source_create_private(
+                        "color_filter", "invisible " + num, temp_settings
+                    )
+                    S.obs_source_filter_add(mc_source, invis_source)
+                    S.obs_source_release(mc_source)
+                    S.obs_data_release(temp_settings)
+                    S.obs_source_release(invis_source)
+                    
+                S.obs_source_set_enabled(invis_filter, render)
+
     except Exception as e:
         print(f"Error: {e}")
         logging.error(e)
