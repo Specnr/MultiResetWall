@@ -115,6 +115,7 @@ def handle_cover(render, cmd):
 
         S.obs_source_release(mc_source)
         S.obs_source_set_enabled(invis_filter, render)
+        S.obs_data_release(invis_filter)
     S.obs_source_release(wall_scene)
 
 
