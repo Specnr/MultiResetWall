@@ -58,7 +58,7 @@ def handle_wall():
     S.obs_scene_release(wall_scene)
 
 
-def handle_play(inst):
+def handle_play(inst):  # Broken
     instance_name = instance_scene_format.replace("*", str(inst))
     instance_scene = S.obs_get_scene_by_name(instance_name)
     instance_scene_source = S.obs_scene_get_source(instance_scene)
@@ -81,10 +81,10 @@ def handle_lock(render, cmd):
                 f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
         S.obs_sceneitem_set_visible(lock_source, render)
         S.obs_source_release(lock_source)
-    S.obs_source_release(wall_scene)
+    S.obs_scene_release(wall_scene)
 
 
-def handle_cover(render, cmd):
+def handle_cover(render, cmd):  # Broken
     wall_scene = S.obs_get_scene_by_name(wall_scene_name)
     for num in cmd[2:len(cmd)]:
         cover_name = cover_format.replace("*", str(num))
@@ -116,7 +116,7 @@ def handle_cover(render, cmd):
         S.obs_source_release(mc_source)
         S.obs_source_set_enabled(invis_filter, render)
         S.obs_data_release(invis_filter)
-    S.obs_source_release(wall_scene)
+    S.obs_scene_release(wall_scene)
 
 
 def execute_cmd(cmd):
