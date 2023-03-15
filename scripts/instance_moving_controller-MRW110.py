@@ -19,7 +19,7 @@ pixels_between_instances = 0
 lastUpdate = 0.0
 screen_width = 0
 screen_height = 0
-version = "v1.1.0"
+version = "v1.2.0"
 path = os.path.dirname(os.path.realpath(__file__))
 reloadPath = os.path.abspath(os.path.realpath(
     os.path.join(path, '..', 'data', 'macro.reload')))

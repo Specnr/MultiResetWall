@@ -39,6 +39,8 @@ GetOldestPreview() {
 }
 
 ReplacePreviewsInGrid() {
+  if (mode != "I")
+    return
   gridUsageCount := GetFocusGridInstanceCount()
   hasSwapped := False
   loop %gridUsageCount% {
@@ -431,11 +433,11 @@ SwitchInstance(idx, special:=False) {
   FileDelete,data/instance.txt
   FileAppend,%idx%,data/instance.txt
   FileAppend,, %sleepBgLock%
-  
+
   SetAffinities(idx)
-  
+
   SwitchWindowToInstance(idx)
-  
+
   ManageJoinInstance(idx, special)
 
   SwitchToInstanceObs(idx)
@@ -522,7 +524,7 @@ ExitWorld(nextInst:=-1) {
   killFile := McDirectories[idx] . "kill.tmp"
   FileDelete,%holdFile%
   FileDelete, %killFile%
-  
+
   WinRestore, ahk_pid %pid%
 
   ResetInstance(idx,,,true)
@@ -530,7 +532,7 @@ ExitWorld(nextInst:=-1) {
   SetAffinities(GetNextInstance(idx))
 
   SwitchInstance(GetNextInstance(idx))
-  
+
   if widthMultiplier
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
   Winset, Bottom,, ahk_pid %pid%
@@ -557,11 +559,11 @@ GhostPie(idx) {
 
 ResetAll(bypassLock:=false, extraProt:=0) {
   resetable := GetResetableInstances(GetFocusGridInstanceCount(), bypassLock, extraProt)
-  
+
   for i, idx in resetable {
     SendReset(idx)
   }
-  
+
   for i, idx in resetable {
     SetAffinity(PIDs[idx],highBitMask)
   }
@@ -723,7 +725,7 @@ IsValidInstance(idx) {
 FocusReset(focusInstance, bypassLock:=false) {
   if (IsValidInstance(focusInstance))
     SwitchInstance(focusInstance)
-  
+
   ResetAll(bypassLock, spawnProtection)
 }
 
@@ -745,16 +747,16 @@ GetLockFile() {
 LockInstance(idx, sound:=true, affinityChange:=true) {
   if (!IsValidInstance(idx))
     return
-  
+
   LockFiles(idx)
-  
+
   LockOBS(idx)
 
   locked[idx] := true
-  
+
   if affinityChange
     SetAffinity(PIDs[idx], lockBitMask)
-  
+
   LockSound(sound)
 }
 
@@ -790,7 +792,7 @@ LockSound(sound) {
 UnlockInstance(idx, sound:=true) {
   if (!IsValidInstance(idx))
     return
-  
+
   UnlockFiles(idx)
 
   UnlockOBS(idx)
@@ -837,7 +839,7 @@ GetInstancesArray(insts) {
 
 LockAll(sound:=true, affinityChange:=true) {
   lockable := GetInstancesArray(GetFocusGridInstanceCount())
-  
+
   SendOBSCmd(GetCoverTypeObsCmd("Lock","1", lockable))
 
   for i, idx in lockable {
@@ -852,7 +854,7 @@ LockAll(sound:=true, affinityChange:=true) {
 
 UnlockAll(sound:=true) {
   unlockable := GetInstancesArray(GetFocusGridInstanceCount())
-  
+
   SendOBSCmd(GetCoverTypeObsCmd("Lock","0", unlockable))
 
   for i, idx in unlockable {
@@ -868,7 +870,7 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
     ExitWorld(FindBypassInstance())
   else {
     if focusReset
-        FocusReset(FindBypassInstance(), bypassLock)
+      FocusReset(FindBypassInstance(), bypassLock)
     else
       SwitchInstance(FindBypassInstance())
   }
