@@ -16,7 +16,9 @@ import os
 wall_scene_name = "The Wall"
 instance_scene_format = "Instance *"
 lock_format = "lock *"
-version = "v1.1.0"
+cover_format = "cover *"
+mc_format = "mc *"
+version = "v1.1.2"
 
 
 logging.basicConfig(
@@ -48,34 +50,45 @@ def get_cmd(path):
     return cmd
 
 
+def handle_wall():
+    wall_scene = S.obs_get_scene_by_name(wall_scene_name)
+    wall_scene_source = S.obs_scene_get_source(wall_scene)
+    S.obs_scene_release(wall_scene)
+    S.obs_frontend_set_current_scene(wall_scene_source)
+
+
+def handle_play(inst):
+    instance_name = instance_scene_format.replace("*", str(inst))
+    instance_scene = S.obs_get_scene_by_name(instance_name)
+    instance_scene_source = S.obs_scene_get_source(instance_scene)
+    S.obs_scene_release(instance_scene)
+    if not instance_scene_source:
+        print(
+            f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
+    S.obs_frontend_set_current_scene(instance_scene_source)
+
+
+def handle_lock(render, inst):
+    wall_scene = S.obs_get_scene_by_name(wall_scene_name)
+    lock_name = lock_format.replace("*", str(inst))
+    lock_source = S.obs_scene_find_source_recursive(
+        wall_scene, lock_name)
+    if not lock_source:
+        print(
+            f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
+    S.obs_sceneitem_set_visible(lock_source, render)
+    S.obs_scene_release(wall_scene)
+
+
 def execute_cmd(cmd):
     try:
         if (cmd[0] == "ToWall"):
-            wall_scene = S.obs_scene_get_source(
-                S.obs_get_scene_by_name(wall_scene_name))
-            S.obs_frontend_set_current_scene(wall_scene)
-            S.obs_source_release(wall_scene)
+            handle_wall()
         elif (cmd[0] == "Play"):
-            inst_num = cmd[1]
-            instance_name = instance_scene_format.replace("*", str(inst_num))
-            instance_scene = S.obs_scene_get_source(
-                S.obs_get_scene_by_name(instance_name))
-            if not instance_scene:
-                print(
-                    f"Could not find instance scene '{instance_name}', make sure they are in the format 'Instance *'")
-            S.obs_frontend_set_current_scene(instance_scene)
+            handle_play(cmd[1])
         elif (cmd[0] == "Lock"):
-            lock_num = cmd[1]
-            render = cmd[2] == "1"
-            wall_scene = S.obs_scene_get_source(
-                S.obs_get_scene_by_name(wall_scene_name))
-            lock_name = lock_format.replace("*", str(lock_num))
-            lock_source = S.obs_scene_find_source_recursive(S.obs_scene_from_source(
-                wall_scene), lock_name)
-            if not lock_source:
-                print(
-                    f"Could not find lock source '{lock_name}', make sure they are in the format 'lock *'")
-            S.obs_sceneitem_set_visible(lock_source, render)
+            handle_lock(cmd[2] == "1", cmd[1])
+
     except Exception as e:
         print(f"Error: {e}")
         logging.error(e)

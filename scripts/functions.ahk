@@ -39,6 +39,10 @@ GetOldestPreview() {
 }
 
 ReplacePreviewsInGrid() {
+  if (mode != "I")
+    return
+  if (GetPassiveGridInstanceCount() == 0)
+    return
   gridUsageCount := GetFocusGridInstanceCount()
   hasSwapped := False
   loop %gridUsageCount% {
@@ -536,8 +540,10 @@ ResetInstance(idx, bypassLock:=true, extraProt:=0, resettingAll:=false) {
   spawnProt := spawnProtection + extraProt
   if (idx > 0 && idx <= instances && !FileExist(holdFile) && (spawnProt + previewTime) < A_TickCount && ((!bypassLock && !locked[idx]) || bypassLock)) {
     if (mode == "I") {
-      if (!locked[idx])
-        SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
+      if (!locked[idx]) {
+        if (GetPassiveGridInstanceCount() > 0)
+          SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
+      }
       else {
         gridUsageCount := GetFocusGridInstanceCount()
         if (gridUsageCount < rxc)
