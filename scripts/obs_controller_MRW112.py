@@ -18,7 +18,7 @@ instance_scene_format = "Instance *"
 lock_format = "lock *"
 cover_format = "cover *"
 mc_format = "mc *"
-version = "v1.1.0"
+version = "v1.1.2"
 
 
 logging.basicConfig(
