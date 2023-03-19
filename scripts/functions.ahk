@@ -775,7 +775,11 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   LockOBS(idx)
   
   locked[idx] := true
-  
+
+  if (mode == "I") {
+    NotifyMovingController()
+  }
+
   if affinityChange
     SetAffinity(PIDs[idx], lockBitMask)
   
@@ -796,7 +800,6 @@ LockOBS(idx) {
     SendOBSCmd(GetCoverTypeObsCmd("Lock","1",[idx]))
   } else if (mode == "I") {
     SwapPositions(GetGridIndexFromInstanceNumber(idx), GetFirstPassive())
-    NotifyMovingController()
   }
 }
 
