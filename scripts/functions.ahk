@@ -427,6 +427,8 @@ SwitchInstance(idx, special:=False)
     return
   }
 
+  currentInstance := idx
+
   holdFile := McDirectories[idx] . "hold.tmp"
   FileAppend,,%holdFile%
   killFile := McDirectories[idx] . "kill.tmp"
@@ -529,10 +531,10 @@ ExitWorld(nextInst:=-1) {
   WinRestore, ahk_pid %pid%
 
   SetAffinities(GetNextInstance(idx, nextInst))
+
+  ResetInstance(idx,,,true)
   
   SwitchInstance(GetNextInstance(idx, nextInst))
-  
-  ResetInstance(idx,,,true)
   
   if widthMultiplier
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
@@ -563,6 +565,7 @@ ResetAll(bypassLock:=false, extraProt:=0) {
   
   for i, idx in resetable {
     SendReset(idx)
+    MoveResetInstance(idx)
   }
   
   for i, idx in resetable {
@@ -604,8 +607,7 @@ GetCoverTypeObsCmd(type, render, insts) {
   return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
 }
 
-SendReset(inst) {
-  idx := mode == "I" ? instancePosition[inst] : inst
+SendReset(idx) {
   pid := PIDs[idx]
   rmpid := RM_PIDs[idx]
   resetKey := resetKeys[idx]
@@ -657,7 +659,7 @@ GetCanReset(idx, bypassLock:=true, extraProt:=0) {
     return false
   }
 
-  if (idx == GetActiveInstanceNum()) {
+  if (idx == GetActiveInstanceNum() || idx == currentInstance) {
     return false
   }
 
@@ -720,6 +722,7 @@ GetProjectorID(ByRef projID) {
 }
 
 ToWall(comingFrom) {
+  currentInstance := -1
   FileDelete,data/instance.txt
   FileAppend,0,data/instance.txt
 
@@ -838,7 +841,7 @@ UnlockFiles(idx) {
 }
 
 UnlockOBS(idx) {
-  if (obsControl == "C" && mode != "I" && locked[idx]) {
+  if (obsControl == "C" && locked[idx]) {
     SendOBSCmd(GetCoverTypeObsCmd("Lock","0",[idx]))
   }
 }
@@ -1042,7 +1045,7 @@ NotifyMovingController() {
     if (locked[inst])
       output := output . "L"
 
-    if (!locked[inst] && A_Index > focusGridInstanceCount)
+    if (!locked[inst] && idx > focusGridInstanceCount)
       output := output . "H"
   }
   FileDelete, data/obs.txt

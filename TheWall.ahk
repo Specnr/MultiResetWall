@@ -32,6 +32,7 @@ global fsKeys := []
 global commandkeys := []
 global f1States := []
 global resets := 0
+global currentInstance := -1
 global doubleCheckUnexpectedLoads := True
 global unpauseOnSwitch := True
 global useRandomLocks := 0
