@@ -39,6 +39,8 @@ GetOldestPreview() {
 }
 
 ReplacePreviewsInGrid() {
+  if (mode != "I" || GetPassiveGridInstanceCount() == 0)
+    return
   gridUsageCount := GetFocusGridInstanceCount()
   hasSwapped := False
   loop %gridUsageCount% {
@@ -406,7 +408,8 @@ VerifyProjector() {
     haveVerifiedProjector := true
 }
 
-SwitchInstance(idx, special:=False) {
+SwitchInstance(idx, special:=False)
+{
   if (idx == -1) {
     ToWall(0)
     return
@@ -417,10 +420,10 @@ SwitchInstance(idx, special:=False) {
   else if (!locked[idx])
     LockInstance(idx, False, False)
 
-  if !GetCanPlay(idx) && !smartSwitch
-    return
-  else if !GetCanPlay(idx) {
+  if !GetCanPlay(idx) && smartSwitch {
     SwitchInstance(FindBypassInstance())
+    return
+  } else if !GetCanPlay(idx) {
     return
   }
 
@@ -525,11 +528,11 @@ ExitWorld(nextInst:=-1) {
   
   WinRestore, ahk_pid %pid%
 
+  SetAffinities(GetNextInstance(idx, nextInst))
+  
+  SwitchInstance(GetNextInstance(idx, nextInst))
+  
   ResetInstance(idx,,,true)
-
-  SetAffinities(GetNextInstance(idx))
-
-  SwitchInstance(GetNextInstance(idx))
   
   if widthMultiplier
     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
@@ -539,12 +542,12 @@ ExitWorld(nextInst:=-1) {
   FileDelete, %sleepBgLock%
 }
 
-GetNextInstance(idx) {
+GetNextInstance(idx, nextInst) {
   if (mode == "C" && nextInst == -1)
     return Mod(idx, instances) + 1
   else if ((mode == "B" || mode == "M") && nextInst == -1)
     return FindBypassInstance()
-  return -1
+  return nextInst
 }
 
 GhostPie(idx) {
@@ -565,16 +568,30 @@ ResetAll(bypassLock:=false, extraProt:=0) {
   for i, idx in resetable {
     SetAffinity(PIDs[idx],highBitMask)
   }
+  
+  if (obsControl == "C" && mode != "I") {
+    SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
+    SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
+  }
+  
+  if bypassLock
+    UnlockAll(false)
+  else {
+    for i, idx in resetable {
+      UnlockInstance(idx,false)
+    }
+  }
 
-  SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
-  SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
+  if (mode == "I")
+    NotifyMovingController()
 }
 
 GetResetableInstances(toCheck, bypassLock, extraProt) {
   resetable := []
   loop, %toCheck% {
-    if (GetCanReset(A_Index, bypassLock, extraProt))
-      resetable.push(A_Index)
+    checking := mode == "I" ? instancePosition[A_Index] : A_Index
+    if (GetCanReset(checking, bypassLock, extraProt))
+      resetable.push(checking)
   }
   return resetable
 }
@@ -587,8 +604,8 @@ GetCoverTypeObsCmd(type, render, insts) {
   return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
 }
 
-SendReset(num) {
-  idx := mode == "I" ? instancePosition[num] : num
+SendReset(inst) {
+  idx := mode == "I" ? instancePosition[inst] : inst
   pid := PIDs[idx]
   rmpid := RM_PIDs[idx]
   resetKey := resetKeys[idx]
@@ -605,6 +622,8 @@ ResetInstance(idx, bypassLock:=true, extraProt:=0, force:=false) {
   if (!force && !GetCanReset(idx, bypassLock, extraProt))
     return
 
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
+  
   SendReset(idx)
   SetAffinity(PIDs[idx],highBitMask)
 
@@ -638,6 +657,10 @@ GetCanReset(idx, bypassLock:=true, extraProt:=0) {
     return false
   }
 
+  if (idx == GetActiveInstanceNum()) {
+    return false
+  }
+
   return true
 }
 
@@ -656,7 +679,8 @@ GetCanPlay(idx) {
 
 MoveResetInstance(idx) {
   if (!locked[idx])
-    SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
+    if (GetPassiveGridInstanceCount() > 0)
+      SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
   else
     MoveLockedResetInstance(idx)
 }
@@ -749,7 +773,7 @@ LockInstance(idx, sound:=true, affinityChange:=true) {
   LockFiles(idx)
   
   LockOBS(idx)
-
+  
   locked[idx] := true
   
   if affinityChange
@@ -792,9 +816,9 @@ UnlockInstance(idx, sound:=true) {
     return
   
   UnlockFiles(idx)
-
+  
   UnlockOBS(idx)
-
+  
   locked[idx] := false
 
   UnlockSound(sound)
@@ -830,7 +854,8 @@ UnlockSound(sound) {
 GetInstancesArray(insts) {
   instanceArray := []
   loop, %insts% {
-    instanceArray.push(A_Index)
+    inst := mode == "I" ? instancePosition[A_Index] : A_Index
+    instanceArray.push(inst)
   }
   return instanceArray
 }
@@ -868,7 +893,7 @@ PlayNextLock(focusReset:=false, bypassLock:=false) {
     ExitWorld(FindBypassInstance())
   else {
     if focusReset
-        FocusReset(FindBypassInstance(), bypassLock)
+      FocusReset(FindBypassInstance(), bypassLock)
     else
       SwitchInstance(FindBypassInstance())
   }
