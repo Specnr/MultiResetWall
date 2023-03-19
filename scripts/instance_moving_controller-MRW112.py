@@ -19,7 +19,7 @@ pixels_between_instances = 0
 lastUpdate = 0.0
 screen_width = 0
 screen_height = 0
-version = "v1.1.0"
+version = "v1.1.2"
 path = os.path.dirname(os.path.realpath(__file__))
 reloadPath = os.path.abspath(os.path.realpath(
     os.path.join(path, '..', 'data', 'macro.reload')))
@@ -109,23 +109,24 @@ def manage_movement():
                 get_setting_from_ahk("pixelsBetweenInstances"))
             os.remove(reloadPath)
 
-        if screen_height == 0:
-            wall_scene = S.obs_scene_get_source(
-                S.obs_get_scene_by_name(wall_scene_name))
-            screen_width = S.obs_source_get_width(wall_scene)
-            screen_height = S.obs_source_get_height(wall_scene)
-            S.obs_source_release(wall_scene)
-
         wall_scene = S.obs_get_scene_by_name(wall_scene_name)
+        if screen_height == 0:
+            wall_scene_source = S.obs_scene_get_source(wall_scene)
+            screen_width = S.obs_source_get_width(wall_scene_source)
+            screen_height = S.obs_source_get_height(wall_scene_source)
+
         if not wall_scene:
             print("Can't find scene")
+            S.obs_scene_release(wall_scene)
             return
 
         if not os.path.exists(obstxtPath):
             print("Can't find obs.txt")
+            S.obs_scene_release(wall_scene)
             return
         currentTime = os.path.getmtime(obstxtPath)
         if currentTime == lastUpdate:
+            S.obs_scene_release(wall_scene)
             return
         lastUpdate = currentTime
 
@@ -192,6 +193,7 @@ def manage_movement():
                                                focus_cols), row * (screen_height * screen_estate_vertical / focus_rows))
                 scale_source(scene_item, screen_width * screen_estate_horizontal /
                              focus_cols - pX, screen_height * screen_estate_vertical / focus_rows - pY)
+            S.obs_scene_release(wall_scene)
             prev_instances = instances
             prev_passive_count = passive_count
             prev_locked_count = locked_count
