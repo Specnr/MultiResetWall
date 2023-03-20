@@ -1021,13 +1021,14 @@ GetFocusGridInstanceCount() {
   gridInstanceCount := 0
   for i, inst in instancePosition {
     if (locked[inst]) {
-      return gridInstanceCount
+      continue
     }
     gridInstanceCount++
     if (gridInstanceCount == rxc) {
       return gridInstanceCount
     }
   }
+  return gridInstanceCount
 }
 
 NotifyMovingController() {
@@ -1156,7 +1157,7 @@ VerifyInstance(mcdir, pid, idx) {
   } else {
     standardSettingsFile := mcdir . "config\standardoptions.txt"
     FileRead, ssettings, %standardSettingsFile%
-    if (RegExMatch(ssettings, "[A-Z]\w{0}:(\/|\\).+.txt", globalPath)) {
+    if (RegExMatch(ssettings, "[A-Z]:(\/|\\).+\.txt", globalPath)) {
       standardSettingsFile := globalPath
       SendLog(LOG_LEVEL_INFO, Format("Global standard options file detected, rereading standard options from {1}", standardSettingsFile))
       FileRead, ssettings, %standardSettingsFile%
@@ -1524,7 +1525,7 @@ CheckOptionsForValue(file, optionsCheck, defaultValue) {
   ,"key.mouse.4", "XButton1"
   ,"key.mouse.5", "XButton2")
   FileRead, fileData, %file%
-  if (RegExMatch(fileData, "[A-Z]\w{0}:(\/|\\).+.txt", globalPath)) {
+  if (RegExMatch(fileData, "[A-Z]:(\/|\\).+\.txt", globalPath)) {
     file := globalPath
   }
   Loop, Read, %file%
