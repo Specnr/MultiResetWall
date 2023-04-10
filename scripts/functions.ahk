@@ -1,32 +1,33 @@
-SendLog(lvlText, msg) {
-  tc := A_TickCount
-  file := FileOpen("data/log.log", "a -rw")
-  if (!IsObject(file)) {
-    logQueue := Func("SendLog").Bind(lvlText, msg, tc)
+SendLog(logLevel, logMsg) {
+  timeStamp := A_TickCount
+  macroLogFile := FileOpen("data/log.log", "a -rw")
+  if (!IsObject(macroLogFile)) {
+    logQueue := Func("SendLog").Bind(logLevel, logMsg, timeStamp)
     SetTimer, %logQueue%, -10
     return
   }
-  file.Close()
-  FileAppend, [%tc%] [%A_YYYY%-%A_MM%-%A_DD% %A_Hour%:%A_Min%:%A_Sec%] [SYS-%lvlText%] %msg%`n, data/log.log
+  macroLogFile.Close()
+  FileAppend, % Format("[{3}] [{4}-{5}-{6} {7}:{8}:{9}] [SYS-{2}] {1}`n", logMsg, logLevel, timeStamp, A_YYYY, A_MM, A_DD, A_Hour, A_Min, A_Sec), data/log.log
 }
 
 CountAttempts() {
-  file := overallAttemptsFile
-  FileRead, WorldNumber, %file%
+
+  FileRead, WorldNumber, %overallAttemptsFile%
   if (ErrorLevel)
     WorldNumber := resets
   else
-    FileDelete, %file%
+    FileDelete, %overallAttemptsFile%
   WorldNumber += resets
-  FileAppend, %WorldNumber%, %file%
-  file := dailyAttemptsFile
-  FileRead, WorldNumber, %file%
+  FileAppend, %WorldNumber%, %overallAttemptsFile%
+
+  FileRead, WorldNumber, %dailyAttemptsFile%
   if (ErrorLevel)
     WorldNumber := resets
   else
-    FileDelete, %file%
+    FileDelete, %dailyAttemptsFile%
   WorldNumber += resets
-  FileAppend, %WorldNumber%, %file%
+  FileAppend, %WorldNumber%, %dailyAttemptsFile%
+
   resets := 0
 }
 
@@ -160,6 +161,8 @@ GetOldestInstanceIndexOutsideGrid() {
 
 MousePosToInstNumber() {
   MouseGetPos, mX, mY
+  instWidth := Floor(A_ScreenWidth / cols)
+  instHeight := Floor(A_ScreenHeight / rows)
   if (mX < 0 || mY < 0 || mX > A_ScreenWidth || mY > A_ScreenHeight)
     return -1
   if (mode != "I")
@@ -275,6 +278,7 @@ GetPIDFromMcDir(mcdir) {
 
 GetInstanceTotal() {
   idx := 1
+  rawPIDs := []
   WinGet, all, list
   Loop, %all%
   {
@@ -285,7 +289,7 @@ GetInstanceTotal() {
       idx += 1
     }
   }
-  return rawPIDs.MaxIndex()
+  return rawPIDs
 }
 
 GetMcDirFromFile(idx) {
@@ -311,46 +315,73 @@ GetMcDirFromFile(idx) {
 GetAllPIDs()
 {
   SendLog(LOG_LEVEL_INFO, "Getting all Minecraft directory and PID data")
-  instances := GetInstanceTotal()
-  if !instances {
-    MsgBox, No open instances detected.
-    SendLog(LOG_LEVEL_WARNING, "No open instances detected, and make sure that fabric is installed.")
-    Return
-  }
-  SendLog(LOG_LEVEL_INFO, Format("{1} Instances detected", instances))
+  rawPIDs := GetInstanceTotal()
+  ; if !instances {
+  ;   MsgBox, No open instances detected.
+  ;   SendLog(LOG_LEVEL_WARNING, "No open instances detected, and make sure that fabric is installed.")
+  ;   Return
+  ; }
+  ; SendLog(LOG_LEVEL_INFO, Format("{1} Instances detected", instances))
   ; If there are more/less instances than usual, rebuild cache
-  if hasMcDirCache && GetLineCount("data/mcdirs.txt") != instances {
-    FileDelete,data/mcdirs.txt
-    hasMcDirCache := False
-  }
+  ; if hasMcDirCache && GetLineCount("data/mcdirs.txt") != instances {
+  ;   FileDelete,data/mcdirs.txt
+  ;   hasMcDirCache := False
+  ; }
   ; Generate mcdir and order PIDs
-  if hasMcDirCache {
-    Loop, %instances% {
-      mcdir := GetMcDirFromFile(A_Index)
-      PIDs[A_Index] := GetPIDFromMcDir(mcdir)
-      ; If it already exists then theres a dupe instNum
-      pastMcDir := McDirectories[A_Index]
-      if (pastMcDir) {
-        FileDelete,data/mcdirs.txt
-        MsgBox, Instance Number %A_Index% was found twice, rename your instances correctly and relaunch.
-        ExitApp
-      }
-      McDirectories[A_Index] := mcdir
-    }
-  } else {
-    rawNumToMcDir := {}
-    Loop, %instances% {
-      mcdir := GetMcDir(rawPIDs[A_Index])
-      rawNum := GetRawInstanceNumberFromMcDir(mcdir)
-      ; Putting them in an object like this sorts them by rawNum
-      rawNumToMcDir[rawNum] := mcdir
-    }
-    for i, mcdir in rawNumToMcDir {
-      FileAppend,%A_Index%~%mcdir%`n,data/mcdirs.txt
-      PIDs[A_Index] := GetPIDFromMcDir(mcdir)
-      McDirectories[A_Index] := mcdir
-    }
+  ; if hasMcDirCache {
+  ;   Loop, %instances% {
+  ;     mcdir := GetMcDirFromFile(A_Index)
+  ;     PIDs[A_Index] := GetPIDFromMcDir(mcdir)
+  ;     ; If it already exists then theres a dupe instNum
+  ;     pastMcDir := McDirectories[A_Index]
+  ;     if (pastMcDir) {
+  ;       FileDelete,data/mcdirs.txt
+  ;       MsgBox, Instance Number %A_Index% was found twice, rename your instances correctly and relaunch.
+  ;       ExitApp
+  ;     }
+  ;     McDirectories[A_Index] := mcdir
+  ;   }
+  ; } else {
+  ;   rawNumToMcDir := {}
+  ;   Loop, %instances% {
+  ;     mcdir := GetMcDir(rawPIDs[A_Index])
+  ;     rawNum := GetRawInstanceNumberFromMcDir(mcdir)
+  ;     ; Putting them in an object like this sorts them by rawNum
+  ;     rawNumToMcDir[rawNum] := mcdir
+  ;   }
+  ;   for i, mcdir in rawNumToMcDir {
+  ;     FileAppend,%A_Index%~%mcdir%`n,data/mcdirs.txt
+  ;     PIDs[A_Index] := GetPIDFromMcDir(mcdir)
+  ;     McDirectories[A_Index] := mcdir
+  ;   }
+  ; }
+
+  rawNumToMcDir := {}
+  for i, rawPID in rawPIDs {
+    mcDir := GetMcDir(rawPID)
+    rawNum := GetRawInstanceNumberFromMcDir(mcDir)
+    rawNumToMcDir[rawNum] := mcDir
   }
+  for i, mcDir in rawNumToMcDir {
+    instances.Push(new Instance(i, GetPIDFromMcDir(mcDir), mcDir))
+  }
+
+  ; Loop, %instances% {
+  ;   mcdir := GetMcDir(rawPIDs[A_Index])
+  ;   if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
+  ;     ExitApp
+  ;   if !hasMcDirCache {
+  ;     FileAppend,%num%~%mcdir%`n,data/mcdirs.txt
+  ;     pid := rawPIDs[A_Index]
+  ;     PIDs[num] := rawPIDs[A_Index] ; TODELETE
+  ;   } else {
+  ;     pid := GetPIDFromMcDir(mcdir)
+  ;     PIDs[num] := GetPIDFromMcDir(mcdir) ; TODELETE
+  ;   }
+  ;   McDirectories[num] := mcdir
+
+  ;   inMemoryInstances.Push(new Instance(pid,mcdir,num))
+  ; }
 }
 
 getHwndForPid(pid) {
@@ -618,6 +649,11 @@ SendReset(idx) {
   DetectHiddenWindows, Off
   timeSinceReset[idx] := A_TickCount
   resets++
+}
+
+TESTReset(idx) {
+  SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
+  instances[idx].Reset(bypassLock, extraProt)
 }
 
 ResetInstance(idx, bypassLock:=true, extraProt:=0, force:=false) {

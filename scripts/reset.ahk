@@ -1,6 +1,6 @@
 #NoEnv
 #NoTrayIcon
-#Include settings.ahk
+#Include settings-Mach.ahk
 #Include %A_ScriptDir%\functions.ahk
 #SingleInstance, off
 
@@ -11,30 +11,40 @@ global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
 
-global pid := A_Args[1]
-global logFile := A_Args[2]
-global idleFile := A_Args[3]
-global holdFile := A_Args[4]
-global previewFile := A_Args[5]
-global lockFile := A_Args[6]
-global killFile := A_Args[7]
-global resetKey := A_Args[8]
-global lpKey := A_Args[9]
-global idx := A_Args[10]
-global playBitMask := A_Args[11]
-global lockBitMask := A_Args[12]
-global highBitMask := A_Args[13]
-global midBitMask := A_Args[14]
-global lowBitMask := A_Args[15]
-global bgLoadBitMask := A_Args[16]
-global doubleCheckUnexpectedLoads := A_Args[17]
+global idx := A_Args[1]
+global pid := A_Args[2]
+global doubleCheckUnexpectedLoads := A_Args[3]
+global mcDir := A_Args[4]
+
+global logFile := Format("{1}logs\latest.log", mcDir)
+global idleFile := Format("{1}idle.tmp", mcDir)
+global holdFile := Format("{1}hold.tmp", mcDir)
+global previewFile := Format("{1}preview.tmp", mcDir)
+global lockFile := Format("{1}lock.tmp", mcDir)
+global killFile := Format("{1}kill.tmp", mcDir)
+
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
+global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
+global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : threadCount ; total threads unless override
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
+
+global playBitMask := GetBitMask(playThreads)
+global lockBitMask := GetBitMask(lockThreads)
+global highBitMask := GetBitMask(highThreads)
+global midBitMask := GetBitMask(midThreads)
+global lowBitMask := GetBitMask(lowThreads)
+global bgLoadBitMask := GetBitMask(bgLoadThreads)
 
 global covered := false
 global state := "unknown"
 global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
 
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, resetKey, lpKey, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
+FileDelete, %holdFile%
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
 
 OnMessage(MSG_RESET, "Reset")
 
