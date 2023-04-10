@@ -592,42 +592,41 @@ GhostPie(idx) {
 }
 
 ResetAll(bypassLock:=false, extraProt:=0) {
-  resetable := GetResetableInstances(GetFocusGridInstanceCount(), bypassLock, extraProt)
-  
-  for i, idx in resetable {
-    SendReset(idx)
-    MoveResetInstance(idx)
-  }
-  
-  for i, idx in resetable {
-    SetAffinity(PIDs[idx],highBitMask)
-  }
-  
-  if (obsControl == "C" && mode != "I") {
-    SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
-    SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
-  }
-  
-  if bypassLock
-    UnlockAll(false)
-  else {
-    for i, idx in resetable {
-      UnlockInstance(idx,false)
-    }
-  }
+    resetable := GetResetableInstances(GetFocusGridInstances(), bypassLock, extraProt)
 
-  if (mode == "I")
-    NotifyMovingController()
+    for i, instance in resetable {
+        instance.SendReset()
+    }
+
+    for i, instance in resetable {
+        instance.SetAffinity(highBitMask)
+        instance.Unlock(false)
+    }
+    
+;   if (obsControl == "C" && mode != "I") {
+;     SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
+;     SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
+;   }
+  
+;   if bypassLock
+;     UnlockAll(false)
+;   else {
+;     for i, idx in resetable {
+;       UnlockInstance(idx,false)
+;     }
+;   }
+
+;   if (mode == "I")
+;     NotifyMovingController()
 }
 
 GetResetableInstances(toCheck, bypassLock, extraProt) {
-  resetable := []
-  loop, %toCheck% {
-    checking := mode == "I" ? instancePosition[A_Index] : A_Index
-    if (GetCanReset(checking, bypassLock, extraProt))
-      resetable.push(checking)
-  }
-  return resetable
+    resetable := []
+    for i, instance in instances {
+        if (instance.GetCanReset(bypassLock, extraProt))
+            resetable.Push(instance)
+    }
+    return resetable
 }
 
 GetCoverTypeObsCmd(type, render, insts) {
@@ -657,22 +656,16 @@ TESTReset(idx) {
 }
 
 ResetInstance(idx, bypassLock:=true, extraProt:=0, force:=false) {
-  if (!force && !GetCanReset(idx, bypassLock, extraProt))
-    return
+    instances[idx].Reset(bypassLock, extraProt, force)
 
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
-  
-  SendReset(idx)
-  SetAffinity(PIDs[idx],highBitMask)
+;   if (mode == "I")
+;     MoveResetInstance(idx)
+;   else if (obsControl == "C")
+;     SendOBSCmd(GetCoverTypeObsCmd("Cover","1",[idx]))
 
-  if (mode == "I")
-    MoveResetInstance(idx)
-  else if (obsControl == "C")
-    SendOBSCmd(GetCoverTypeObsCmd("Cover","1",[idx]))
-
-  UnlockInstance(idx,false)
-  if (mode == "I")
-    NotifyMovingController()
+;   UnlockInstance(idx,false)
+;   if (mode == "I")
+;     NotifyMovingController()
 }
 
 GetCanReset(idx, bypassLock:=true, extraProt:=0) {
@@ -778,7 +771,7 @@ ToWall(comingFrom) {
 }
 
 IsValidInstance(idx) {
-  if (idx > 0 && idx <= instances)
+  if (idx > 0 && idx <= instances.MaxIndex())
     return true
   return false
 }
@@ -790,7 +783,7 @@ FocusReset(focusInstance, bypassLock:=false) {
   ResetAll(bypassLock, spawnProtection)
 }
 
-GetLockFile() {
+GetLockImage() {
   if (useRandomLocks > 1) {
     Random, randLock, 1, %useRandomLocks%
     source := A_ScriptDir . "\media\lock" . randLock . ".png"
@@ -806,28 +799,29 @@ GetLockFile() {
 }
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
-  if (!IsValidInstance(idx))
-    return
-  
-  LockFiles(idx)
-  
-  LockOBS(idx)
-  
-  locked[idx] := true
+    instances[idx].Lock(sound, affinityChange)
+    ; if (!IsValidInstance(idx))
+    ;     return
 
-  if (mode == "I") {
-    NotifyMovingController()
-  }
+    ; LockFiles(idx)
 
-  if affinityChange
-    SetAffinity(PIDs[idx], lockBitMask)
-  
-  LockSound(sound)
+    ; LockOBS(idx)
+
+    ; locked[idx] := true
+
+    ; if (mode == "I") {
+    ;     NotifyMovingController()
+    ; }
+
+    ; if affinityChange
+    ;     SetAffinity(PIDs[idx], lockBitMask)
+
+    ; LockSound(sound)
 }
 
 LockFiles(idx) {
   lockDest := McDirectories[idx] . "lock.png"
-  lockSource := GetLockFile()
+  lockSource := GetLockImage()
   FileCopy, %lockSource%, %lockDest%, 1
   FileSetTime,,%lockDest%,M
   lockDest := McDirectories[idx] . "lock.tmp"
@@ -843,14 +837,14 @@ LockOBS(idx) {
 }
 
 LockSound(sound) {
-  if (sound && (sounds == "A" || sounds == "F" || sound == "L")) {
-    SoundPlay, A_ScriptDir\..\media\lock.wav
-    if obsLockMediaKey {
-      send {%obsLockMediaKey% down}
-      sleep, %obsDelay%
-      send {%obsLockMediaKey% up}
+    if (sound && (sounds == "A" || sounds == "F" || sound == "L")) {
+        SoundPlay, A_ScriptDir\..\media\lock.wav
+        if obsLockMediaKey {
+            send {%obsLockMediaKey% down}
+            sleep, %obsDelay%
+            send {%obsLockMediaKey% up}
+        }
     }
-  }
 }
 
 UnlockInstance(idx, sound:=true) {
@@ -1055,16 +1049,22 @@ GetFocusGridInstanceCount() {
   if (mode != "I")
     return instances
   gridInstanceCount := 0
-  for i, inst in instancePosition {
-    if (locked[inst]) {
-      continue
-    }
-    gridInstanceCount++
-    if (gridInstanceCount == rxc) {
-      return gridInstanceCount
+  for i, instance in instances {
+    if (instance.focus) {
+      gridInstanceCount++
     }
   }
   return gridInstanceCount
+}
+
+GetFocusGridInstances() {
+    focusGridInstances := []
+    for i, instance in instances {
+        if (instance.focus) {
+            focusGridInstances.Push(instance)
+        }
+    }
+    return focusGridInstances
 }
 
 NotifyMovingController() {

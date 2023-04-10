@@ -7,6 +7,7 @@ class Instance {
         this.playing := false
         this.idleFile := Format("{1}idle.tmp", mcDir)
         this.lockFile := Format("{1}lock.tmp", mcDir)
+        this.lockImage := Format("{1}lock.png", mcDir)
         this.killFile := Format("{1}kill.tmp", mcDir)
         this.holdFile := Format("{1}hold.tmp", mcDir)
         this.previewFile := Format("{1}preview.tmp", mcDir)
@@ -21,13 +22,57 @@ class Instance {
         DetectHiddenWindows, Off
     }
 
-    Reset(bypassLock:=true, extraProt:=0) {
-        if (!this.GetCanReset(bypassLock, extraProt))
+    Reset(bypassLock:=true, extraProt:=0, force:=false) {
+        if (!this.GetCanReset(bypassLock, extraProt, force))
             Return
 
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
 
         this.SendReset()
+        this.SetAffinity(highBitMask)
+        this.Unlock(false)
+    }
+
+    Switch() {
+
+    }
+
+    Exit() {
+
+    }
+
+    Lock(sound:=true, affinityChange:=true) {
+        this.locked := true
+
+        this.LockFiles()
+
+        if affinityChange
+            this.SetAffinity(lockBitMask)
+          
+        LockSound(sound)
+    }
+
+    Unlock(sound:=true) {
+        this.locked := false
+
+        this.UnlockFiles()
+
+        UnlockSound(sound)
+    }
+
+    LockFiles() {
+        lockSource := GetLockImage()
+        FileCopy, % GetLockImage(), % this.lockImage, 1
+        FileSetTime,, % this.lockImage, M
+        FileAppend,, % this.lockFile
+    }
+
+    UnlockFiles() {
+        if (obsControl != "C") {
+            FileCopy, A_ScriptDir\..\media\unlock.png, % this.lockImage, 1
+            FileSetTime,, % this.lockImage, M
+        }
+        FileDelete, % this.lockFile
     }
 
     SendReset() {
@@ -46,6 +91,12 @@ class Instance {
         return this.rmPID
     }
 
+    SetAffinity(mask) {
+        hProc := DllCall("OpenProcess", "UInt", 0x0200, "Int", false, "UInt", this.pid, "Ptr")
+        DllCall("SetProcessAffinityMask", "Ptr", hProc, "Ptr", mask)
+        DllCall("CloseHandle", "Ptr", hProc)
+    }
+
     KillResetManager() {
         DetectHiddenWindows, On
         WinClose, % Format("ahk_pid {1}", this.rmPID)
@@ -54,10 +105,13 @@ class Instance {
         SetAffinity(this.pid, GetBitMask(threadCount))
     }
 
-    GetCanReset(bypassLock:=true, extraProt:=0) {
+    GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
+
+        if (force) {
+            return true
+        }
       
         if (this.locked && !bypassLock) {
-            MsgBox,,, locked
             return false
         }
       
@@ -70,7 +124,6 @@ class Instance {
         }
       
         if (this.playing) {
-            MsgBox,,, playing
             return false
         }
       
