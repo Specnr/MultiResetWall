@@ -44,6 +44,7 @@ global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
 
 FileDelete, %holdFile%
+FileDelete, %killFile%
 SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
 
 OnMessage(MSG_RESET, "Reset")
@@ -61,6 +62,7 @@ Reset() {
   FileDelete, %previewFile%
   FileDelete, %idleFile%
   lastImportantLine := GetLineCount(logFile)
+  ManageThisAffinity()
   SetTimer, ManageReset, -%manageResetAfter%
   if (sounds == "A" || sounds == "F" || sounds == "R") {
     SoundPlay, A_ScriptDir\..\media\reset.wav
@@ -152,10 +154,11 @@ ManageThisAffinity() {
   if (idx == activeInstance) { ; this is active instance
     SetAffinity(pid, playBitMask)
   } else if activeInstance { ; there is another active instance
-    if (state != "idle") ; if loading
+    if (state != "idle") { ; if loading
       SetAffinity(pid, bgLoadBitMask)
-    else
+    } else {
       SetAffinity(pid, lowBitMask)
+    }
   } else { ; there is no active instance
     if FileExist(lockFile) ; if locked
       SetAffinity(pid, lockBitMask)

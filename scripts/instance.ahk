@@ -25,6 +25,33 @@ class Instance {
         DetectHiddenWindows, On
         WinWait, % Format("ahk_pid {1}", this.rmPID)
         DetectHiddenWindows, Off
+        
+        this.PrepareWindow()
+
+        this.SetAffinity(highBitMask)
+        
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
+    }
+
+    PrepareWindow() {
+        WinGetTitle, winTitle, % Format("ahk_pid {1}", this.pid)
+        if !InStr(winTitle, " - ") {
+            ControlClick, x0 y0, % Format("ahk_pid {1}", this.pid),, RIGHT
+            ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
+            WinMinimize, % Format("ahk_pid {1}", this.pid)
+            WinRestore, % Format("ahk_pid {1}", this.pid)
+        }
+        if (windowMode == "B") {
+            WinSet, Style, -0xC40000, % Format("ahk_pid {1}", this.pid)
+        } else {
+            WinSet, Style, +0xC40000, % Format("ahk_pid {1}", this.pid)
+        }
+        if (widthMultiplier) {
+            WinRestore, % Format("ahk_pid {1}", this.pid)
+            WinMove, % Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
+        }
+        WinSet, AlwaysOnTop, Off, % Format("ahk_pid {1}", this.pid)
+
         this.SetTitle()
     }
 
@@ -62,7 +89,7 @@ class Instance {
 
         this.SwitchFiles()
 
-        SetAffinities(idx)
+        SetAffinities(this.idx)
 
         this.SwitchWindowToInstance()
   
@@ -230,6 +257,11 @@ class Instance {
         WinWaitClose, % Format("ahk_pid {1}", this.rmPID)
         DetectHiddenWindows, Off
         SetAffinity(this.pid, GetBitMask(threadCount))
+    }
+
+    CloseInstance() {
+        WinClose, % Format("ahk_pid {1}", this.pid)
+        this.KillResetManager()
     }
 
     GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {

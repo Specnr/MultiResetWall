@@ -390,7 +390,7 @@ getHwndForPid(pid) {
 
 SetAffinities(idx:=0) {
     for i, instance in instances {
-        if (i == instance.idx) { ; this is active instance
+        if (idx == instance.idx) { ; this is active instance
             instance.SetAffinity(playBitMask)
         } else if (idx > 0) { ; there is another active instance
             if !instance.GetIsIdle()
@@ -784,11 +784,10 @@ IsValidInstance(idx) {
   return false
 }
 
-FocusReset(focusInstance, bypassLock:=false) {
-  if (IsValidInstance(focusInstance))
-    SwitchInstance(focusInstance)
-  
-  ResetAll(bypassLock, spawnProtection)
+FocusReset(focusInstance, bypassLock:=false, special:=false) {
+    SwitchInstance(focusInstance, special)
+    
+    ResetAll(bypassLock, spawnProtection)
 }
 
 GetLockImage() {
@@ -944,15 +943,16 @@ UnlockAll(sound:=true) {
     UnlockSound(sound)
 }
 
-PlayNextLock(focusReset:=false, bypassLock:=false) {
-  if (GetActiveInstanceNum() > 0)
-    ExitWorld(FindBypassInstance())
-  else {
-    if focusReset
-      FocusReset(FindBypassInstance(), bypassLock)
-    else
-      SwitchInstance(FindBypassInstance())
-  }
+PlayNextLock(focusReset:=false, bypassLock:=false, special:=false) {
+    if (GetActiveInstanceNum() > 0) {
+        ExitWorld(FindBypassInstance())
+    } else {
+        if (focusReset) {
+            FocusReset(FindBypassInstance(), bypassLock, special)
+        } else {
+            SwitchInstance(FindBypassInstance(), special)
+        }
+    }
 }
 
 WorldBop() {
@@ -974,14 +974,10 @@ CloseInstances() {
   MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
   IfMsgBox No
   Return
-  for i, pid in PIDs {
-    WinClose, ahk_pid %pid%
+  for i, instance in instances {
+    instance.CloseInstance()
   }
-  DetectHiddenWindows, On
-  for i, rmpid in RM_PIDs {
-    WinClose, ahk_pid %rmpid%
-  }
-  DetectHiddenWindows, Off
+  instances := []
 }
 
 LaunchInstances() {
@@ -1058,7 +1054,7 @@ SendOBSCmd(cmd) {
     if (obsControl != "C") {
         Return
     }
-    
+
     static cmdNum := 1
     static cmdDir := % "data/pycmds/" . A_TickCount
     if !FileExist("data/pycmds")

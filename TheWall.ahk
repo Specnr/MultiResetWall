@@ -17,6 +17,21 @@ global LOG_LEVEL_INFO := "INFO"
 global LOG_LEVEL_WARNING := "WARN"
 global LOG_LEVEL_ERROR := "ERR"
 
+EnvGet, threadCount, NUMBER_OF_PROCESSORS
+global playThreads := playThreadsOverride > 0 ? playThreadsOverride : threadCount ; total threads unless override
+global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : threadCount ; total threads unless override
+global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.95) : threadCount ; 95% or 2 less than max threads, whichever is higher unless override or none
+global midThreads := midThreadsOverride > 0 ? midThreadsOverride : affinityType == "A" ? Ceil(threadCount * 0.8) : highThreads ; 80% if advanced otherwise high unless override
+global lowThreads := lowThreadsOverride > 0 ? lowThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.7) : threadCount ; 70% if advanced otherwise high unless override
+global bgLoadThreads := bgLoadThreadsOverride > 0 ? bgLoadThreadsOverride : affinityType != "N" ? Ceil(threadCount * 0.4) : threadCount ; 40% unless override or none
+
+global playBitMask := GetBitMask(playThreads)
+global lockBitMask := GetBitMask(lockThreads)
+global highBitMask := GetBitMask(highThreads)
+global midBitMask := GetBitMask(midThreads)
+global lowBitMask := GetBitMask(lowThreads)
+global bgLoadBitMask := GetBitMask(bgLoadThreads)
+
 FileDelete, data/log.log
 
 SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.2")
@@ -43,6 +58,24 @@ SetTheme(theme)
 CheckOBSPython()
 
 UnlockAll(false)
+
+if audioGui {
+    Gui, New
+    Gui, Show,, The Wall Audio
+}
+
+WinGet, obsPid, PID, OBS
+if IsProcessElevated(obsPid) {
+    MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
+    SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work")
+}
+
+Menu, Tray, Add, Delete Worlds, WorldBop
+
+Menu, Tray, Add, Close Instances, CloseInstances
+
+Menu, Tray, Add, Launch Instances, LaunchInstances
+
 SendOBSCmd(GetCoverTypeObsCmd("Cover",false, instances))
 ToWall(0)
 
@@ -63,14 +96,14 @@ CheckScripts:
 return
 
 ExitSub:
-  if A_ExitReason not in Logoff,Shutdown
-  {
-    FileDelete, data/obs.txt
-    DetectHiddenWindows, On
-    for i, instance in instances {
-        instance.KillResetManager()
+    if A_ExitReason not in Logoff,Shutdown
+    {
+        FileDelete, data/obs.txt
+        DetectHiddenWindows, On
+        for i, instance in instances {
+            instance.KillResetManager()
+        }
     }
-  }
 ExitApp
 
 
