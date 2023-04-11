@@ -6,6 +6,7 @@ class Instance {
         this.hwnd := this.GetHwnd()
         this.locked := false
         this.playing := false
+        this.focus := true
         this.isWide := false
         this.idleFile := Format("{1}idle.tmp", mcDir)
         this.lockFile := Format("{1}lock.tmp", mcDir)
@@ -158,6 +159,8 @@ class Instance {
 
         this.LockFiles()
 
+        this.LockOBS()
+
         if affinityChange
             this.SetAffinity(lockBitMask)
           
@@ -169,7 +172,21 @@ class Instance {
 
         this.UnlockFiles()
 
+        this.UnlockOBS()
+
         UnlockSound(sound)
+    }
+
+    LockOBS() {
+        if (obsControl == "C" && mode != "I") {
+            SendOBSCmd(GetCoverTypeObsCmd("Lock",true,[this]))
+        }
+    }
+
+    UnlockOBS() {
+        if (obsControl == "C" && mode != "I") {
+            SendOBSCmd(GetCoverTypeObsCmd("Lock",false,[this]))
+        }
     }
 
     LockFiles() {
@@ -193,14 +210,6 @@ class Instance {
         PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
         DetectHiddenWindows, Off
         resets++
-    }
-
-    GetIdx() {
-        return this.idx
-    }
-
-    GetRMPID() {
-        return this.rmPID
     }
 
     SetAffinity(mask) {

@@ -612,7 +612,7 @@ GhostPie(idx) {
 }
 
 ResetAll(bypassLock:=false, extraProt:=0) {
-    resetable := GetResetableInstances(GetFocusGridInstances(), bypassLock, extraProt)
+    resetable := GetResetableInstances(bypassLock, extraProt)
 
     for i, instance in resetable {
         instance.SendReset()
@@ -640,7 +640,7 @@ ResetAll(bypassLock:=false, extraProt:=0) {
 ;     NotifyMovingController()
 }
 
-GetResetableInstances(toCheck, bypassLock, extraProt) {
+GetResetableInstances(bypassLock, extraProt) {
     resetable := []
     for i, instance in instances {
         if (instance.GetCanReset(bypassLock, extraProt))
@@ -649,12 +649,12 @@ GetResetableInstances(toCheck, bypassLock, extraProt) {
     return resetable
 }
 
-GetCoverTypeObsCmd(type, render, insts) {
-  cmd := ""
-  for i, idx in insts {
-    cmd .= idx . ","
-  }
-  return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
+GetCoverTypeObsCmd(type, render, selectInstances) {
+    cmd := ""
+    for i, instance in selectInstances {
+        cmd .= instance.idx . ","
+    }
+    return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
 }
 
 SendReset(idx) {
@@ -846,16 +846,17 @@ LockSound(sound) {
 }
 
 UnlockInstance(idx, sound:=true) {
-  if (!IsValidInstance(idx))
-    return
-  
-  UnlockFiles(idx)
-  
-  UnlockOBS(idx)
-  
-  locked[idx] := false
+    instances[idx].Unlock(sound)
+    ; if (!IsValidInstance(idx))
+    ;     return
+    
+    ; UnlockFiles(idx)
+    
+    ; UnlockOBS(idx)
+    
+    ; locked[idx] := false
 
-  UnlockSound(sound)
+    ; UnlockSound(sound)
 }
 
 UnlockFiles(idx) {
@@ -894,32 +895,42 @@ GetInstancesArray(insts) {
   return instanceArray
 }
 
+GetFocusGridInstances() {
+    focusGridInstances := []
+    for i, instance in instances {
+        if (instance.focus) {
+            focusGridInstances.Push(instance)
+        }
+    }
+    return focusGridInstances
+}
+
 LockAll(sound:=true, affinityChange:=true) {
-  lockable := GetInstancesArray(GetFocusGridInstanceCount())
-  
-  SendOBSCmd(GetCoverTypeObsCmd("Lock","1", lockable))
+    lockable := GetFocusGridInstances()
 
-  for i, idx in lockable {
-    locked[idx] := true
-    LockFiles(idx)
-    if affinityChange
-      SetAffinity(PIDs[idx], lockBitMask)
-  }
+    SendOBSCmd(GetCoverTypeObsCmd("Lock",true, lockable))
 
-  LockSound(sound)
+    for i, instance in lockable {
+        instance.locked := true
+        instance.LockFiles()
+        if affinityChange
+            instance.SetAffinity(lockBitMask)
+    }
+
+    LockSound(sound)
 }
 
 UnlockAll(sound:=true) {
-  unlockable := GetInstancesArray(GetFocusGridInstanceCount())
-  
-  SendOBSCmd(GetCoverTypeObsCmd("Lock","0", unlockable))
+    unlockable := GetFocusGridInstances()
+    
+    SendOBSCmd(GetCoverTypeObsCmd("Lock",false, unlockable))
 
-  for i, idx in unlockable {
-    locked[idx] := false
-    UnlockFiles(idx)
-  }
+    for i, instance in unlockable {
+        instance.locked := false
+        instance.UnlockFiles()
+    }
 
-  UnlockSound(sound)
+    UnlockSound(sound)
 }
 
 PlayNextLock(focusReset:=false, bypassLock:=false) {
@@ -1053,16 +1064,6 @@ GetFocusGridInstanceCount() {
     }
   }
   return gridInstanceCount
-}
-
-GetFocusGridInstances() {
-    focusGridInstances := []
-    for i, instance in instances {
-        if (instance.focus) {
-            focusGridInstances.Push(instance)
-        }
-    }
-    return focusGridInstances
 }
 
 NotifyMovingController() {
