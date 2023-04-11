@@ -69,25 +69,23 @@ GetTotalIdleInstances() {
 }
 
 FindBypassInstance() {
-  if (bypassThreshold != -1) {
-    idles := GetTotalIdleInstances()
-    if (bypassThreshold <= idles)
-      return -1
-  }
-  activeNum := GetActiveInstanceNum()
-  for i, isLocked in locked {
-    idle := McDirectories[i] . "idle.tmp"
-    if (FileExist(idle) && isLocked && i != activeNum)
-      return i
-  }
-  if (mode == "M") {
-    for i, mcdir in McDirectories {
-      idle := mcdir . "idle.tmp"
-      if (FileExist(idle) && i != activeNum)
-        return i
+    if (bypassThreshold != -1) {
+        idles := GetTotalIdleInstances()
+        if (bypassThreshold <= idles)
+        return -1
     }
-  }
-  return -1
+    activeNum := GetActiveInstanceNum()
+    for i, instance in instances {
+        if (instance.GetIsIdle() && instance.locked && instance.idx != activeNum)
+            return instance.idx
+    }
+    if (mode == "M") {
+        for i, instance in instances {
+            if (instance.GetIsIdle() && instance.idx != activeNum)
+                return instance.idx
+        }
+    }
+    return -1
 }
 
 MoveLast(oldIdx) {

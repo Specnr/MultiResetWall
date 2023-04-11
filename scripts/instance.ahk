@@ -89,6 +89,8 @@ class Instance {
             WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
         Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
         this.isWide := false
+
+        this.playing := false
       
         FileDelete, %sleepBgLock%
     }
@@ -225,7 +227,7 @@ class Instance {
             return false
         }
       
-        if (FileExist(this.holdFile)) {
+        if (this.GetIsHeld()) {
             return false
         }
 
@@ -241,7 +243,7 @@ class Instance {
     }
 
     GetCanPlay() {
-        if (FileExist(this.idleFile) || mode != "C") {
+        if (this.GetIsIdle() || mode == "C") {
             return true
         }
         
