@@ -38,7 +38,10 @@ global sleepBgLock := vUserProfile . "/sleepbg.lock"
 
 GetAllPIDs()
 
+SetTheme(theme)
+
 ToWall(0)
+
 FileAppend,,data/macro.reload
 SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)

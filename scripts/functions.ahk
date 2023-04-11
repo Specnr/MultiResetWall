@@ -618,7 +618,7 @@ ResetAll(bypassLock:=false, extraProt:=0) {
         SendOBSCmd(GetCoverTypeObsCmd("Cover", true, resetable))
         SendOBSCmd(GetCoverTypeObsCmd("Lock", false, resetable))
     }
-    
+
     for i, instance in resetable {
         instance.SendReset()
         instance.SetAffinity(highBitMask)
@@ -792,18 +792,19 @@ FocusReset(focusInstance, bypassLock:=false) {
 }
 
 GetLockImage() {
-  if (useRandomLocks > 1) {
-    Random, randLock, 1, %useRandomLocks%
-    source := A_ScriptDir . "\media\lock" . randLock . ".png"
-    SendLog(LOG_LEVEL_INFO, Format("Randomly picked lock{1}.png to send as lock", randLock))
-    if !FileExist(source) {
-      source := A_ScriptDir . "\media\lock.png"
-      SendLog(LOG_LEVEL_ERROR, Format("lock{1}.png did not exist, defaulting to lock.png", randLock))
+    static lockImages := []
+    if (lockImages.MaxIndex() < 1) {
+        Loop, Files, %A_ScriptDir%\media\lock*.png
+        {
+            lockImages.Push(A_LoopFileFullPath)
+        }
+        SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", lockImages.MaxIndex()))
     }
-  } else {
-    source := A_ScriptDir . "\media\lock.png"
-  }
-  return source
+
+    Random, randLock, 1, % lockImages.MaxIndex()
+    SendLog(LOG_LEVEL_INFO, Format("{1} being used as lock", lockImages[randLock]))
+
+    return lockImages[randLock]
 }
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
@@ -998,25 +999,20 @@ GetLineCount(file) {
 }
 
 SetTheme(theme) {
-  SendLog(LOG_LEVEL_INFO, Format("Setting macro theme to {1}", theme))
-  if !FileExist(A_ScriptDir . "\media\")
-    FileCreateDir, %A_ScriptDir%\media\
-  Loop, Files, %A_ScriptDir%\media\*
-  {
-    FileDelete, %A_LoopFileFullPath%
-  }
-  Loop, Files, %A_ScriptDir%\themes\%theme%\*
-  {
-    fileDest := A_ScriptDir . "\media\" . A_LoopFileName
-    FileCopy, %A_LoopFileFullPath%, %fileDest%, 1
-    FileSetTime,,%fileDest%,M
-    SendLog(LOG_LEVEL_INFO, Format("Copying file {1} to {2}", A_LoopFileFullPath, fileDest))
-  }
-  Loop, Files, %A_ScriptDir%\media\lock*.png
-  {
-    useRandomLocks += 1
-  }
-  SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", useRandomLocks))
+    SendLog(LOG_LEVEL_INFO, Format("Setting macro theme to {1}", theme))
+    if !FileExist(A_ScriptDir . "\media\")
+        FileCreateDir, %A_ScriptDir%\media\
+    Loop, Files, %A_ScriptDir%\media\*
+    {
+        FileDelete, %A_LoopFileFullPath%
+    }
+    Loop, Files, %A_ScriptDir%\themes\%theme%\*
+    {
+        fileDest := A_ScriptDir . "\media\" . A_LoopFileName
+        FileCopy, %A_LoopFileFullPath%, %fileDest%, 1
+        FileSetTime,,%fileDest%,M
+        SendLog(LOG_LEVEL_INFO, Format("Copying file {1} to {2}", A_LoopFileFullPath, fileDest))
+    }
 }
 
 IsProcessElevated(ProcessID) {

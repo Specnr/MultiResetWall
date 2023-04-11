@@ -35,7 +35,7 @@ class Instance {
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", this.idx))
 
         this.SendReset()
-        
+
         this.SetAffinity(highBitMask)
 
         if (mode == "I")
@@ -197,7 +197,6 @@ class Instance {
     }
 
     LockFiles() {
-        lockSource := GetLockImage()
         FileCopy, % GetLockImage(), % this.lockImage, 1
         FileSetTime,, % this.lockImage, M
         FileAppend,, % this.lockFile
