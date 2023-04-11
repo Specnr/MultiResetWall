@@ -40,6 +40,10 @@ GetAllPIDs()
 
 SetTheme(theme)
 
+CheckOBSPython()
+
+UnlockAll(false)
+SendOBSCmd(GetCoverTypeObsCmd("Cover",false, instances))
 ToWall(0)
 
 FileAppend,,data/macro.reload

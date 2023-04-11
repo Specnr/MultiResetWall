@@ -1029,13 +1029,42 @@ IsProcessElevated(ProcessID) {
   return IsElevated, DllCall("CloseHandle", "ptr", hToken) && DllCall("CloseHandle", "ptr", hProcess)
 }
 
+CheckOBSPython() {
+    if (obsControl != "C") {
+        Return
+    }
+
+    EnvGet, userProfileDir, USERPROFILE
+    obsIni = %userProfileDir%\AppData\Roaming\obs-studio\global.ini
+    IniRead, pyDir, %obsIni%, Python, Path64bit, N
+    
+    if (FileExist(Format("{1}\python.exe", pyDir))) {
+        Return
+    }
+
+    pyPath := RegExReplace(ComObjCreate("WScript.Shell").Exec("python -c ""import sys; print(sys.executable)""").StdOut.ReadAll(), " *(\n|\r)+","")
+    
+    if (!FileExist(pyPath)) {
+        SendLog(LOG_LEVEL_WARNING, "Couldn't find Python path")
+        return
+    }
+
+    SplitPath, pyPath,, pyDir
+    IniWrite, %pyDir%, %obsIni%, Python, Path64bit
+    SendLog(LOG_LEVEL_INFO, Format("Automatically set OBS Python install path to {1}", pyDir))
+}
+
 SendOBSCmd(cmd) {
-  static cmdNum := 1
-  static cmdDir := % "data/pycmds/" . A_TickCount
-  if !FileExist("data/pycmds")
-    FileCreateDir, data/pycmds/
-  FileAppend, %cmd%, %cmdDir%%cmdNum%.txt
-  cmdNum++
+    if (obsControl != "C") {
+        Return
+    }
+    
+    static cmdNum := 1
+    static cmdDir := % "data/pycmds/" . A_TickCount
+    if !FileExist("data/pycmds")
+        FileCreateDir, data/pycmds/
+    FileAppend, %cmd%, %cmdDir%%cmdNum%.txt
+    cmdNum++
 }
 
 GetLockedGridInstanceCount() {
