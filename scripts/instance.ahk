@@ -32,10 +32,17 @@ class Instance {
         if (!this.GetCanReset(bypassLock, extraProt, force))
             Return
 
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", this.idx))
 
         this.SendReset()
+        
         this.SetAffinity(highBitMask)
+
+        if (mode == "I")
+            MoveResetInstance(idx)
+        else if (obsControl == "C")
+            SendOBSCmd(GetCoverTypeObsCmd("Cover",true,[this]))
+
         this.Unlock(false)
     }
 

@@ -614,15 +614,25 @@ GhostPie(idx) {
 ResetAll(bypassLock:=false, extraProt:=0) {
     resetable := GetResetableInstances(bypassLock, extraProt)
 
+    if (obsControl == "C" && mode != "I") {
+        SendOBSCmd(GetCoverTypeObsCmd("Cover", true, resetable))
+        SendOBSCmd(GetCoverTypeObsCmd("Lock", false, resetable))
+    }
+    
     for i, instance in resetable {
         instance.SendReset()
-    }
-
-    for i, instance in resetable {
         instance.SetAffinity(highBitMask)
         instance.Unlock(false)
     }
     
+    ; for i, instance in resetable {
+    ;     instance.SetAffinity(highBitMask)
+    ;     instance.Unlock(false)
+    ; }
+    ; for i, instance in resetable {
+    ;     instance.SendReset()
+    ; }
+
 ;   if (obsControl == "C" && mode != "I") {
 ;     SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
 ;     SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
@@ -642,7 +652,7 @@ ResetAll(bypassLock:=false, extraProt:=0) {
 
 GetResetableInstances(bypassLock, extraProt) {
     resetable := []
-    for i, instance in instances {
+    for i, instance in GetFocusGridInstances() {
         if (instance.GetCanReset(bypassLock, extraProt))
             resetable.Push(instance)
     }
