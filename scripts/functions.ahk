@@ -391,31 +391,27 @@ getHwndForPid(pid) {
 }
 
 SetAffinities(idx:=0) {
-  for i, mcdir in McDirectories {
-    pid := PIDs[i]
-    idle := mcdir . "idle.tmp"
-    hold := mcdir . "hold.tmp"
-    preview := mcdir . "preview.tmp"
-    if (idx == i) { ; this is active instance
-      SetAffinity(pid, playBitMask)
-    } else if (idx > 0) { ; there is another active instance
-      if !FileExist(idle)
-        SetAffinity(pid, bgLoadBitMask)
-      else
-        SetAffinity(pid, lowBitMask)
-    } else { ; there is no active instance
-      if FileExist(idle)
-        SetAffinity(pid, lowBitMask)
-      else if locked[i]
-        SetAffinity(pid, lockBitMask)
-      else if FileExist(hold)
-        SetAffinity(pid, highBitMask)
-      else if FileExist(preview)
-        SetAffinity(pid, midBitMask)
-      else
-        SetAffinity(pid, highBitMask)
+    for i, instance in instances {
+        if (i == instance.idx) { ; this is active instance
+            instance.SetAffinity(playBitMask)
+        } else if (idx > 0) { ; there is another active instance
+            if !instance.GetIsIdle()
+                instance.SetAffinity(bgLoadBitMask)
+            else
+                instance.SetAffinity(lowBitMask)
+        } else { ; there is no active instance
+            if instance.GetIsIdle()
+                instance.SetAffinity(lowBitMask)
+            else if instance.locked
+                instance.SetAffinity(lockBitMask)
+            else if instance.GetIsHeld()
+                instance.SetAffinity(highBitMask)
+            else if instance.GetIsPreviewing()
+                instance.SetAffinity(midBitMask)
+            else
+                instance.SetAffinity(highBitMask)
+        }
     }
-  }
 }
 
 SetAffinity(pid, mask) {
@@ -430,51 +426,76 @@ GetBitMask(threads) {
 
 ; Verifies that the user is using the correct projector
 VerifyProjector() {
-  if haveVerifiedProjector
-    return
-  WinGetTitle, projTitle, A
-  if InStr(projTitle, "(Preview)")
-    MsgBox, You're using a Preview projector, please use the Scene projector of the wall scene.
-  else
-    haveVerifiedProjector := true
+    static haveVerifiedProjector := false
+    if haveVerifiedProjector
+        return
+    WinGetTitle, projTitle, A
+    if InStr(projTitle, "(Preview)")
+        MsgBox,,, You're using a Preview projector`, please use the Scene projector of the wall scene.
+    else
+        haveVerifiedProjector := true
+    GetProjectorID()
+}
+
+GetProjectorID() {
+    static projectorID := 0
+    if (WinExist("ahk_id " . projectorID))
+        return projectorID
+    WinGet, IDs, List, ahk_exe obs64.exe
+    Loop %IDs% {
+        newProjectorID := IDs%A_Index%
+        if (HwndIsFullscreen(newProjectorID)) {
+            projectorID := newProjectorID
+            return projectorID
+        }
+    }
+    SendLog(LOG_LEVEL_WARNING, "Could not detect OBS Fullscreen Projector window. Will try again at next Wall action.")
+    return -1
+}
+
+HwndIsFullscreen(hwnd) { ; ahk_id or ID is HWND
+    WinGetPos,,, w, h, % Format("ahk_id {1}", hwnd)
+    SendLog(LOG_LEVEL_INFO, Format("hwnd {1} size is {2}x{3}", hwnd, w, h))
+    return (w == A_ScreenWidth && h == A_ScreenHeight)
 }
 
 SwitchInstance(idx, special:=False)
 {
-  if (idx == -1) {
-    ToWall(0)
-    return
-  }
+    instances[idx].Switch(special)
+;   if (idx == -1) {
+;     ToWall(0)
+;     return
+;   }
 
-  if (mode == "I" && locked[idx])
-    NotifyMovingController()
-  else if (!locked[idx])
-    LockInstance(idx, False, False)
+;   if (mode == "I" && locked[idx])
+;     NotifyMovingController()
+;   else if (!locked[idx])
+;     LockInstance(idx, False, False)
 
-  if !GetCanPlay(idx) && smartSwitch {
-    SwitchInstance(FindBypassInstance())
-    return
-  } else if !GetCanPlay(idx) {
-    return
-  }
+;   if !GetCanPlay(idx) && smartSwitch {
+;     SwitchInstance(FindBypassInstance())
+;     return
+;   } else if !GetCanPlay(idx) {
+;     return
+;   }
 
-  currentInstance := idx
+;   currentInstance := idx
 
-  holdFile := McDirectories[idx] . "hold.tmp"
-  FileAppend,,%holdFile%
-  killFile := McDirectories[idx] . "kill.tmp"
-  FileAppend,,%killFile%
-  FileDelete,data/instance.txt
-  FileAppend,%idx%,data/instance.txt
-  FileAppend,, %sleepBgLock%
+;   holdFile := McDirectories[idx] . "hold.tmp"
+;   FileAppend,,%holdFile%
+;   killFile := McDirectories[idx] . "kill.tmp"
+;   FileAppend,,%killFile%
+;   FileDelete,data/instance.txt
+;   FileAppend,%idx%,data/instance.txt
+;   FileAppend,, %sleepBgLock%
   
-  SetAffinities(idx)
+;   SetAffinities(idx)
   
-  SwitchWindowToInstance(idx)
+;   SwitchWindowToInstance(idx)
   
-  ManageJoinInstance(idx, special)
+;   ManageJoinInstance(idx, special)
 
-  SwitchToInstanceObs(idx)
+;   SwitchToInstanceObs(idx)
 }
 
 SwitchToInstanceObs(idx) {
@@ -510,7 +531,7 @@ ManageJoinInstance(idx, special:=false) {
 SwitchWindowToInstance(idx) {
   hwnd := hwnds[idx]
   pid := PIDs[idx]
-  GetProjectorID(projectorID)
+  GetProjectorID()
   WinMinimize, ahk_id %projectorID%
 
   foreGroundWindow := DllCall("GetForegroundWindow")
@@ -531,53 +552,54 @@ SwitchWindowToInstance(idx) {
 }
 
 GetActiveInstanceNum() {
-  WinGet, pid, PID, A
-  for i, tmppid in PIDs {
-    if (tmppid == pid)
-      return i
-  }
-  return -1
+    WinGet, pid, PID, A
+    for i, instance in instances {
+        if (instance.pid == pid)
+            return instance.idx
+        }
+    return -1
 }
 
 ExitWorld(nextInst:=-1) {
-  idx := GetActiveInstanceNum()
-  pid := PIDs[idx]
-  if (!IsValidInstance(idx)) {
-    return
-  }
+    instances[GetActiveInstanceNum()].Exit(nextInst)
+;   idx := GetActiveInstanceNum()
+;   pid := PIDs[idx]
+;   if (!IsValidInstance(idx)) {
+;     return
+;   }
 
-  GhostPie(idx)
+;   GhostPie(idx)
 
-  if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
-    fsKey := fsKeys[idx]
-    ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
-    sleep, %fullscreenDelay%
-  }
+;   if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
+;     fsKey := fsKeys[idx]
+;     ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
+;     sleep, %fullscreenDelay%
+;   }
 
-  holdFile := McDirectories[idx] . "hold.tmp"
-  killFile := McDirectories[idx] . "kill.tmp"
-  FileDelete,%holdFile%
-  FileDelete, %killFile%
+;   holdFile := McDirectories[idx] . "hold.tmp"
+;   killFile := McDirectories[idx] . "kill.tmp"
+;   FileDelete,%holdFile%
+;   FileDelete, %killFile%
   
-  WinRestore, ahk_pid %pid%
+;   WinRestore, ahk_pid %pid%
 
-  SetAffinities(GetNextInstance(idx, nextInst))
+;   SetAffinities(GetNextInstance(idx, nextInst))
 
-  ResetInstance(idx,,,true)
+;   ResetInstance(idx,,,true)
   
-  SwitchInstance(GetNextInstance(idx, nextInst))
+;   SwitchInstance(GetNextInstance(idx, nextInst))
   
-  if widthMultiplier
-    WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-  Winset, Bottom,, ahk_pid %pid%
-  isWide := False
+;   if widthMultiplier
+;     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
+;   Winset, Bottom,, ahk_pid %pid%
+;   isWide := False
 
-  FileDelete, %sleepBgLock%
+;   FileDelete, %sleepBgLock%
 }
 
 GetNextInstance(idx, nextInst) {
   if (mode == "C" && nextInst == -1)
-    return Mod(idx, instances) + 1
+    return Mod(idx, instances.MaxIndex()) + 1
   else if ((mode == "B" || mode == "M") && nextInst == -1)
     return FindBypassInstance()
   return nextInst
@@ -730,34 +752,14 @@ SetTitles() {
   }
 }
 
-HwndIsFullscreen(hwnd) { ; ahk_id or ID is HWND
-  WinGetPos,,, w, h, ahk_id %hwnd%
-  SendLog(LOG_LEVEL_INFO, Format("OBS Window {1} {2}", w, h))
-  return (w == A_ScreenWidth && h == A_ScreenHeight)
-}
-
-GetProjectorID(ByRef projID) {
-  if (WinExist("ahk_id " . projID))
-    return
-  WinGet, IDs, List, ahk_exe obs64.exe
-  Loop %IDs%
-  {
-    projID := IDs%A_Index%
-    if (HwndIsFullscreen(projID))
-      return
-  }
-  projID := -1
-  SendLog(LOG_LEVEL_WARNING, "Could not detect OBS Fullscreen Projector window. Will try again at next Wall action.")
-}
-
 ToWall(comingFrom) {
   currentInstance := -1
   FileDelete,data/instance.txt
   FileAppend,0,data/instance.txt
 
-  GetProjectorID(projectorID)
-  WinMaximize, ahk_id %projectorID%
-  WinActivate, ahk_id %projectorID%
+  VerifyProjector()
+  WinMaximize, % Format("ahk_id {1}", GetProjectorID())
+  WinActivate, % Format("ahk_id {1}", GetProjectorID())
 
   if (obsControl != "C") {
     send {%obsWallSceneKey% down}
@@ -766,8 +768,6 @@ ToWall(comingFrom) {
   } else {
     SendOBSCmd(Format("ToWall"))
   }
-
-  VerifyProjector()
 }
 
 IsValidInstance(idx) {

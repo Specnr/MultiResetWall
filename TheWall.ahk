@@ -30,6 +30,11 @@ if (SubStr(A_AhkVersion, 1, 3) != "1.1") {
 
 global instances := []
 global resets := 0
+if (widthMultiplier)
+    global newHeight := Floor(A_ScreenHeight / widthMultiplier)
+
+EnvGet, vUserProfile, USERPROFILE
+global sleepBgLock := vUserProfile . "/sleepbg.lock"
 
 GetAllPIDs()
 

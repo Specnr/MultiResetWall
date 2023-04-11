@@ -3,8 +3,10 @@ class Instance {
         this.idx := idx
         this.pid := pid
         this.mcDir := mcDir
+        this.hwnd := this.GetHwnd()
         this.locked := false
         this.playing := false
+        this.isWide := false
         this.idleFile := Format("{1}idle.tmp", mcDir)
         this.lockFile := Format("{1}lock.tmp", mcDir)
         this.lockImage := Format("{1}lock.png", mcDir)
@@ -12,6 +14,8 @@ class Instance {
         this.holdFile := Format("{1}hold.tmp", mcDir)
         this.previewFile := Format("{1}preview.tmp", mcDir)
         this.doubleCheckUnexpectedLoads := true
+        this.f1State := 0
+        this.unpauseOnSwitch := true
         this.VerifyInstance(this.idx, this.pid, this.mcDir)
 
         SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4}", this.idx, this.pid, this.doubleCheckUnexpectedLoads, this.mcDir))
@@ -20,6 +24,7 @@ class Instance {
         DetectHiddenWindows, On
         WinWait, % Format("ahk_pid {1}", this.rmPID)
         DetectHiddenWindows, Off
+        this.SetTitle()
     }
 
     Reset(bypassLock:=true, extraProt:=0, force:=false) {
@@ -33,12 +38,117 @@ class Instance {
         this.Unlock(false)
     }
 
-    Switch() {
+    Switch(special:=false) {
+        if (!this.locked) {
+            this.Lock(false, false)
+        }
 
+        if (!this.GetCanPlay() && smartSwitch) {
+            SwitchInstance(FindBypassInstance())
+            return
+        } else if !this.GetCanPlay() {
+            return
+        }
+
+        this.playing := true
+
+        this.SwitchFiles()
+
+        SetAffinities(idx)
+
+        this.SwitchWindowToInstance()
+  
+        this.ManageJoinInstance(special)
+    }
+    
+    Exit(nextInst:=-1) {
+        this.GhostPie()
+      
+        if (CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "true") {
+            ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
+            sleep, %fullscreenDelay%
+        }
+
+        FileDelete, % this.holdFile
+        FileDelete, % this.killFile
+        
+        WinRestore, % Format("ahk_pid {1}", this.pid)
+
+        SetAffinities(nextInst)
+      
+        this.Reset(,,true)
+
+        nextInst := GetNextInstance(this.idx, nextInst)
+        if (nextInst <= 0) {
+            ToWall(this.idx)
+        } else {
+            instances[nextInst].Switch()
+        }
+
+        if widthMultiplier
+            WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
+        Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
+        this.isWide := false
+      
+        FileDelete, %sleepBgLock%
+    }
+    
+    GhostPie() {
+        if this.f1State
+            ControlSend,, {Blind}{F1}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
+        else
+            ControlSend,, {Blind}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
     }
 
-    Exit() {
+    SwitchFiles() {
+        FileAppend,, % this.holdFile
+        FileAppend,, % this.killFile
+        FileDelete, data/instance.txt
+        FileAppend, % this.idx, data/instance.txt
+        FileAppend,, %sleepBgLock%
+    }
 
+    SwitchWindowToInstance() {
+        WinMinimize, % Format("ahk_id {1}", GetProjectorID())
+        
+        foreGroundWindow := DllCall("GetForegroundWindow")
+        windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint", foreGroundWindow, "uint", 0)
+        currentThreadId := DllCall("GetCurrentThreadId")
+        DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 1)
+        if (widthMultiplier && (windowMode == "W" || windowMode == "B"))
+            DllCall("SendMessage", "uint", this.hwnd, "uint", 0x0112, "uint", 0xF030, "int", 0) ; fast maximize
+        DllCall("SetForegroundWindow", "uint",this.hwnd) ; Probably only important in windowed, helps application take input without a Send Click
+        DllCall("BringWindowToTop", "uint", this.hwnd)
+        DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
+        
+        if (windowMode == "F" && CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "false") {
+            ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
+            sleep, %fullscreenDelay%
+        }
+    }
+
+    ManageJoinInstance(special:=false) {
+        ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
+        if (this.f1State == 2)
+            ControlSend,, {Blind}{F1}, % Format("ahk_pid {1}", this.pid)
+        if (special)
+            this.OnJoinSettingsChange()
+        if (coop)
+            ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, % Format("ahk_pid {1}", this.pid)
+        if (!this.unpauseOnSwitch)
+            ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
+    }
+
+    OnJoinSettingsChange() {
+        rdPresses := renderDistance - 2
+        ControlSend,, {Blind}{Shift down}{F3 down}{f 30}{Shift up}{f %rdPresses%}{F3 up}, % Format("ahk_pid {1}", this.pid)
+        if (toggleChunkBorders)
+            ControlSend,, {Blind}{F3 down}{g}{F3 up}, % Format("ahk_pid {1}", this.pid)
+        if (toggleHitBoxes)
+            ControlSend,, {Blind}{F3 down}{b}{F3 up}, % Format("ahk_pid {1}", this.pid)
+        FOVPresses := ceil((110-fov)*1.7875)
+        entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
+        ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, % Format("ahk_pid {1}", this.pid)
     }
 
     Lock(sound:=true, affinityChange:=true) {
@@ -130,11 +240,40 @@ class Instance {
         return true
     }
 
+    GetCanPlay() {
+        if (FileExist(this.idleFile) || mode != "C") {
+            return true
+        }
+        
+        return false
+    }
+
+    GetIsIdle() {
+        return FileExist(this.idleFile)
+    }
+
+    GetIsHeld() {
+        return FileExist(this.holdFile)
+    }
+
+    GetIsPreviewing() {
+        return FileExist(this.previewFile)
+    }
+
     GetPreviewTime() {
         FileRead, previewStartTime, % this.previewFile
         previewStartTime += 0
         previewTime := A_TickCount - previewStartTime
         return previewTime
+    }
+
+    GetHwnd() {
+        WinGet, hwnd, ID, % Format("ahk_pid {1}", this.pid)
+        return StrReplace(hwnd, "ffffffff")
+    }
+
+    SetTitle() {
+        WinSetTitle, % Format("ahk_pid {1}", this.pid), , % Format("Minecraft* - Instance {1}", this.idx)
     }
 
     VerifyInstance(idx, pid, mcDir) {
@@ -147,7 +286,6 @@ class Instance {
         sleepBg := false
         sodium := false
         srigt := false
-        f1States[idx] := 0
         SendLog(LOG_LEVEL_INFO, Format("Starting instance verification for directory: {1}", mcDir))
         ; Check for mod dependencies
         Loop, Files, %moddir%*.jar
@@ -172,14 +310,14 @@ class Instance {
         if !atum {
           SendLog(LOG_LEVEL_ERROR, Format("Instance {1} missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases. (In directory: {2})", idx, moddir))
           MsgBox, Instance %idx% missing required mod: atum. Macro will not work. Download: https://github.com/VoidXWalker/Atum/releases.`n(In directory: %moddir%)
-        } else if unpauseOnSwitch {
+        } else if this.unpauseOnSwitch {
           config := mcDir . "config\atum\atum.properties"
           ; Read the atum.properties and set unpauseOnSwitch to false if a seed is set
           Loop, Read, %config%
           {
             if (InStr(A_LoopReadLine, "seed=") && StrLen(A_LoopReadLine) > 5) {
               SendLog(LOG_LEVEL_INFO, "Found a set seed, setting 'unpauseOnSwitch' to False")
-              unpauseOnSwitch := False
+              this.unpauseOnSwitch := False
               break
             }
           }
@@ -221,7 +359,7 @@ class Instance {
               MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
                 SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile))
             }
-            fsKey := CheckOptionsForValue(optionsFile, "key_key.fullscreen", "F11")
+            this.fsKey := CheckOptionsForValue(optionsFile, "key_key.fullscreen", "F11")
             fsKeys[idx] := fsKey
             SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, optionsFile))
           }
@@ -243,7 +381,7 @@ class Instance {
           }
           if (RegExMatch(ssettings, "f1:.+", f1Match)) {
             SendLog(LOG_LEVEL_INFO, Format("Instance {1} f1 state '{2}' found. This will be used for ghost pie and instance join. (In file: {3})", idx, f1Match, standardSettingsFile))
-            f1States[idx] := f1Match == "f1:true" ? 2 : 1
+            this.f1State := f1Match == "f1:true" ? 2 : 1
           }
           Loop, 1 {
             if (InStr(ssettings, "key_Create New World:key.keyboard.unknown") && atum) {
@@ -362,13 +500,13 @@ class Instance {
                   IfMsgBox No
                 break
                 ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
-                fsKeys[idx] := "F11"
+                this.fsKey := "F11"
                 SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'. (In file: {2})", idx, standardSettingsFile))
                 break 2
               }
               SendLog(LOG_LEVEL_ERROR, Format("Instance {1} has no Fullscreen key set. (In file: {2})", idx, standardSettingsFile))
             } else {
-              fsKey := CheckOptionsForValue(standardSettingsFile, "key_key.fullscreen", "F11")
+                this.fsKey := CheckOptionsForValue(standardSettingsFile, "key_key.fullscreen", "F11")
               SendLog(LOG_LEVEL_INFO, Format("Found Fullscreen key: {1} for instance {2} from {3}", fsKey, idx, standardSettingsFile))
               fsKeys[idx] := fsKey
               break
@@ -406,8 +544,7 @@ class Instance {
           SendLog(LOG_LEVEL_WARNING, Format("Directory {1} missing recommended mod SpeedRunIGT. Download: https://redlime.github.io/SpeedRunIGT/", moddir))
         FileRead, settings, %optionsFile%
         if InStr(settings, "fullscreen:true") {
-          fsKey := fsKeys[idx]
-          ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
+            ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
         }
         SendLog(LOG_LEVEL_INFO, Format("Finished instance verification for directory: {1}", mcDir))
       }
