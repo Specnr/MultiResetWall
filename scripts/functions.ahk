@@ -935,7 +935,7 @@ LockAll(sound:=true, affinityChange:=true) {
     SendOBSCmd(GetCoverTypeObsCmd("Lock",true, lockable))
 
     for i, instance in lockable {
-        instance.GetLocked() := true
+        instance.SetLocked(true)
         instance.LockFiles()
         if affinityChange
             instance.window.SetAffinity(lockBitMask)
@@ -950,7 +950,7 @@ UnlockAll(sound:=true) {
     SendOBSCmd(GetCoverTypeObsCmd("Lock",false, unlockable))
 
     for i, instance in unlockable {
-        instance.GetLocked() := false
+        instance.SetLocked(false)
         instance.UnlockFiles()
     }
 
