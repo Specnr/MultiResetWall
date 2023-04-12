@@ -1,6 +1,8 @@
 class Instance {
 
     #Include %A_ScriptDir%\scripts\Window.ahk
+    #Include %A_ScriptDir%\scripts\InstanceGetters.ahk
+    #Include %A_ScriptDir%\scripts\InstanceSetters.ahk
 
     __New(idx, pid, mcDir) {
         this.idx := idx
@@ -54,7 +56,7 @@ class Instance {
     }
 
     Switch(special:=false) {
-        if (!this.locked) {
+        if (!this.GetLocked()) {
             this.Lock(false, false)
         }
 
@@ -159,14 +161,6 @@ class Instance {
         UnlockSound(sound)
     }
 
-    GetLocked() {
-        return this.locked
-    }
-
-    SetLocked(lock) {
-        this.locked := lock
-    }
-
     LockOBS() {
         if (this.GetLocked()) {
             return
@@ -224,58 +218,6 @@ class Instance {
     CloseInstance() {
         WinClose, % Format("ahk_pid {1}", this.pid)
         this.KillResetManager()
-    }
-
-    GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
-
-        if (force) {
-            return true
-        }
-      
-        if (this.locked && !bypassLock) {
-            return false
-        }
-      
-        if (this.GetIsHeld()) {
-            return false
-        }
-
-        if (this.GetPreviewTime() < spawnProtection + extraProt) {
-            return false
-        }
-      
-        if (this.playing) {
-            return false
-        }
-      
-        return true
-    }
-
-    GetCanPlay() {
-        if (this.GetIsIdle() || mode == "C") {
-            return true
-        }
-        
-        return false
-    }
-
-    GetIsIdle() {
-        return FileExist(this.idleFile)
-    }
-
-    GetIsHeld() {
-        return FileExist(this.holdFile)
-    }
-
-    GetIsPreviewing() {
-        return FileExist(this.previewFile)
-    }
-
-    GetPreviewTime() {
-        FileRead, previewStartTime, % this.previewFile
-        previewStartTime += 0
-        previewTime := A_TickCount - previewStartTime
-        return previewTime
     }
 
     VerifyInstance(idx, pid, mcDir) {

@@ -76,13 +76,13 @@ FindBypassInstance() {
     }
     activeNum := GetActiveInstanceNum()
     for i, instance in instances {
-        if (instance.GetIsIdle() && instance.locked && instance.idx != activeNum)
-            return instance.idx
+        if (instance.GetIdle() && instance.GetLocked() && instance.GetIdx() != activeNum)
+            return instance.GetIdx()
     }
     if (mode == "M") {
         for i, instance in instances {
-            if (instance.GetIsIdle() && instance.idx != activeNum)
-                return instance.idx
+            if (instance.GetIdle() && instance.GetIdx() != activeNum)
+                return instance.GetIdx()
         }
     }
     return -1
@@ -390,21 +390,21 @@ getHwndForPid(pid) {
 
 SetAffinities(idx:=0) {
     for i, instance in instances {
-        if (idx == instance.idx) { ; this is active instance
+        if (idx == instance.GetIdx()) { ; this is active instance
             instance.window.SetAffinity(playBitMask)
         } else if (idx > 0) { ; there is another active instance
-            if !instance.GetIsIdle()
+            if !instance.GetIdle()
                 instance.window.SetAffinity(bgLoadBitMask)
             else
                 instance.window.SetAffinity(lowBitMask)
         } else { ; there is no active instance
-            if instance.GetIsIdle()
+            if instance.GetIdle()
                 instance.window.SetAffinity(lowBitMask)
-            else if instance.locked
+            else if instance.GetLocked()
                 instance.window.SetAffinity(lockBitMask)
-            else if instance.GetIsHeld()
+            else if instance.GetHeld()
                 instance.window.SetAffinity(highBitMask)
-            else if instance.GetIsPreviewing()
+            else if instance.GetPreviewing()
                 instance.window.SetAffinity(midBitMask)
             else
                 instance.window.SetAffinity(highBitMask)
@@ -552,8 +552,8 @@ SwitchWindowToInstance(idx) {
 GetActiveInstanceNum() {
     WinGet, pid, PID, A
     for i, instance in instances {
-        if (instance.pid == pid)
-            return instance.idx
+        if (instance.GetPID() == pid)
+            return instance.GetIdx()
         }
     return -1
 }
@@ -622,7 +622,7 @@ ResetAll(bypassLock:=false, extraProt:=0) {
 
     for i, instance in resetable {
         instance.SendReset()
-        instance.SetAffinity(highBitMask)
+        instance.window.SetAffinity(highBitMask)
         instance.SetLocked(false)
         instance.UnlockFiles()
     }
@@ -676,7 +676,7 @@ GetCoverTypeObsCmd(type, render, selectInstances) {
     }
     cmd := ""
     for i, instance in selectInstances {
-        cmd .= instance.idx . ","
+        cmd .= instance.GetIdx() . ","
     }
     return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
 }
@@ -922,7 +922,7 @@ GetInstancesArray(insts) {
 GetFocusGridInstances() {
     focusGridInstances := []
     for i, instance in instances {
-        if (instance.focus) {
+        if (instance.GetFocus()) {
             focusGridInstances.Push(instance)
         }
     }
@@ -935,10 +935,10 @@ LockAll(sound:=true, affinityChange:=true) {
     SendOBSCmd(GetCoverTypeObsCmd("Lock",true, lockable))
 
     for i, instance in lockable {
-        instance.locked := true
+        instance.GetLocked() := true
         instance.LockFiles()
         if affinityChange
-            instance.SetAffinity(lockBitMask)
+            instance.window.SetAffinity(lockBitMask)
     }
 
     LockSound(sound)
@@ -950,7 +950,7 @@ UnlockAll(sound:=true) {
     SendOBSCmd(GetCoverTypeObsCmd("Lock",false, unlockable))
 
     for i, instance in unlockable {
-        instance.locked := false
+        instance.GetLocked() := false
         instance.UnlockFiles()
     }
 
@@ -1104,7 +1104,7 @@ GetFocusGridInstanceCount() {
     return instances
   gridInstanceCount := 0
   for i, instance in instances {
-    if (instance.focus) {
+    if (instance.GetFocus()) {
       gridInstanceCount++
     }
   }
