@@ -3,6 +3,8 @@ Class Window {
         this.idx := idx
         this.pid := pid
         this.mcDir := mcDir
+        this.f1State := 0
+        this.unpauseOnSwitch := true
         this.hwnd := this.GetHwnd()
 
         this.VerifyInstance(this.idx, this.pid, this.mcDir)
@@ -35,8 +37,9 @@ Class Window {
         this.SetTitle()
     }
 
-    SendReset() {
+    SendResetInput() {
         ControlSend, ahk_parent, % Format("{Blind}{{1}}{{2}}", this.lpKey, this.resetKey), % Format("ahk_pid {1}", this.pid)
+        resets++
     }
 
     SwitchTo() {
@@ -52,10 +55,66 @@ Class Window {
         DllCall("BringWindowToTop", "uint", this.hwnd)
         DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
         
-        if (windowMode == "F" && CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "false") {
+        if (windowMode == "F") {
+            this.ToggleFullscreen(true)
+        }
+    }
+
+    JoinInstance(special:=false) {
+        ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
+        if (this.f1State == 2)
+            ControlSend,, {Blind}{F1}, % Format("ahk_pid {1}", this.pid)
+        if (special)
+            this.OnJoinSettingsChange()
+        if (coop)
+            ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, % Format("ahk_pid {1}", this.pid)
+        if (!this.unpauseOnSwitch)
+            ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
+    }
+    
+    OnJoinSettingsChange() {
+        rdPresses := renderDistance - 2
+        ControlSend,, {Blind}{Shift down}{F3 down}{f 30}{Shift up}{f %rdPresses%}{F3 up}, % Format("ahk_pid {1}", this.pid)
+        if (toggleChunkBorders)
+            ControlSend,, {Blind}{F3 down}{g}{F3 up}, % Format("ahk_pid {1}", this.pid)
+        if (toggleHitBoxes)
+            ControlSend,, {Blind}{F3 down}{b}{F3 up}, % Format("ahk_pid {1}", this.pid)
+        FOVPresses := ceil((110-fov)*1.7875)
+        entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
+        ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, % Format("ahk_pid {1}", this.pid)
+    }
+          
+    GhostPie() {
+        if this.f1State
+            ControlSend,, {Blind}{F1}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
+        else
+            ControlSend,, {Blind}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
+    }
+    
+    Restore() {
+        WinRestore, % Format("ahk_pid {1}", this.pid)
+    }
+
+    Widen() {
+        if widthMultiplier
+            WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
+    }
+
+    SendBack() {
+        Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
+    }
+
+    ToggleFullscreen(toggle) {
+        if (CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") != toggle) {
             ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
             sleep, %fullscreenDelay%
         }
+    }
+    
+    SetAffinity(mask) {
+        hProc := DllCall("OpenProcess", "UInt", 0x0200, "Int", false, "UInt", this.pid, "Ptr")
+        DllCall("SetProcessAffinityMask", "Ptr", hProc, "Ptr", mask)
+        DllCall("CloseHandle", "Ptr", hProc)
     }
     
     SetTitle() {

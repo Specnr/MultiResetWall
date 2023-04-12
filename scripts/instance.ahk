@@ -6,11 +6,9 @@ class Instance {
         this.idx := idx
         this.pid := pid
         this.mcDir := mcDir
-        this.hwnd := this.GetHwnd()
         this.locked := false
         this.playing := false
         this.focus := true
-        this.isWide := false
         this.idleFile := Format("{1}idle.tmp", mcDir)
         this.lockFile := Format("{1}lock.tmp", mcDir)
         this.lockImage := Format("{1}lock.png", mcDir)
@@ -18,8 +16,7 @@ class Instance {
         this.holdFile := Format("{1}hold.tmp", mcDir)
         this.previewFile := Format("{1}preview.tmp", mcDir)
         this.doubleCheckUnexpectedLoads := true
-        this.f1State := 0
-        this.unpauseOnSwitch := true
+
         ; this.VerifyInstance(this.idx, this.pid, this.mcDir)
 
         SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4}", this.idx, this.pid, this.doubleCheckUnexpectedLoads, this.mcDir))
@@ -33,7 +30,7 @@ class Instance {
         
         this.window.PrepareWindow()
 
-        this.SetAffinity(highBitMask)
+        this.window.SetAffinity(highBitMask)
         
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
     }
@@ -46,7 +43,7 @@ class Instance {
 
         this.SendReset()
 
-        this.SetAffinity(highBitMask)
+        this.window.SetAffinity(highBitMask)
 
         if (mode == "I")
             MoveResetInstance(idx)
@@ -76,23 +73,19 @@ class Instance {
 
         this.window.SwitchTo()
   
-        this.ManageJoinInstance(special)
+        this.window.JoinInstance(special)
 
         this.SwitchToInstanceObs()
     }
     
     Exit(nextInst:=-1) {
-        this.GhostPie()
+        this.window.GhostPie()
       
-        if (CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "true") {
-            ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
-            sleep, %fullscreenDelay%
-        }
+        this.window.ToggleFullscreen(false)
 
-        FileDelete, % this.holdFile
-        FileDelete, % this.killFile
+        this.ExitFiles()
         
-        WinRestore, % Format("ahk_pid {1}", this.pid)
+        this.window.Restore()
 
         SetAffinities(nextInst)
       
@@ -102,17 +95,14 @@ class Instance {
         if (nextInst <= 0) {
             ToWall(this.idx)
         } else {
-            instances[nextInst].Switch()
+            SwitchInstance(nextInst)
         }
 
-        if widthMultiplier
-            WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
-        Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
-        this.isWide := false
+        this.window.Widen()
+
+        this.window.SendBack()
 
         this.playing := false
-      
-        FileDelete, %sleepBgLock%
     }
 
     SwitchToInstanceObs() {
@@ -131,13 +121,6 @@ class Instance {
         Sleep, %obsDelay%
         Send {%obsKey% up}
     }
-      
-    GhostPie() {
-        if this.f1State
-            ControlSend,, {Blind}{F1}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
-        else
-            ControlSend,, {Blind}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
-    }
 
     SwitchFiles() {
         FileAppend,, % this.holdFile
@@ -147,28 +130,10 @@ class Instance {
         FileAppend,, %sleepBgLock%
     }
 
-    ManageJoinInstance(special:=false) {
-        ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
-        if (this.f1State == 2)
-            ControlSend,, {Blind}{F1}, % Format("ahk_pid {1}", this.pid)
-        if (special)
-            this.OnJoinSettingsChange()
-        if (coop)
-            ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, % Format("ahk_pid {1}", this.pid)
-        if (!this.unpauseOnSwitch)
-            ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
-    }
-
-    OnJoinSettingsChange() {
-        rdPresses := renderDistance - 2
-        ControlSend,, {Blind}{Shift down}{F3 down}{f 30}{Shift up}{f %rdPresses%}{F3 up}, % Format("ahk_pid {1}", this.pid)
-        if (toggleChunkBorders)
-            ControlSend,, {Blind}{F3 down}{g}{F3 up}, % Format("ahk_pid {1}", this.pid)
-        if (toggleHitBoxes)
-            ControlSend,, {Blind}{F3 down}{b}{F3 up}, % Format("ahk_pid {1}", this.pid)
-        FOVPresses := ceil((110-fov)*1.7875)
-        entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
-        ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, % Format("ahk_pid {1}", this.pid)
+    ExitFiles() {
+        FileDelete, % this.holdFile
+        FileDelete, % this.killFile
+        FileDelete, %sleepBgLock%
     }
 
     Lock(sound:=true, affinityChange:=true) {
@@ -179,7 +144,7 @@ class Instance {
         this.SetLocked(true)
         
         if affinityChange
-            this.SetAffinity(lockBitMask)
+            this.window.SetAffinity(lockBitMask)
         
         LockSound(sound)
     }
@@ -241,18 +206,11 @@ class Instance {
     }
 
     SendReset() {
-        this.window.SendReset()
+        this.window.SendResetInput()
         
         DetectHiddenWindows, On
         PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
         DetectHiddenWindows, Off
-        resets++
-    }
-
-    SetAffinity(mask) {
-        hProc := DllCall("OpenProcess", "UInt", 0x0200, "Int", false, "UInt", this.pid, "Ptr")
-        DllCall("SetProcessAffinityMask", "Ptr", hProc, "Ptr", mask)
-        DllCall("CloseHandle", "Ptr", hProc)
     }
 
     KillResetManager() {
@@ -260,7 +218,7 @@ class Instance {
         WinClose, % Format("ahk_pid {1}", this.rmPID)
         WinWaitClose, % Format("ahk_pid {1}", this.rmPID)
         DetectHiddenWindows, Off
-        SetAffinity(this.pid, GetBitMask(threadCount))
+        this.window.SetAffinity(GetBitMask(threadCount))
     }
 
     CloseInstance() {
@@ -318,15 +276,6 @@ class Instance {
         previewStartTime += 0
         previewTime := A_TickCount - previewStartTime
         return previewTime
-    }
-
-    GetHwnd() {
-        WinGet, hwnd, ID, % Format("ahk_pid {1}", this.pid)
-        return StrReplace(hwnd, "ffffffff")
-    }
-
-    GetFsKey() {
-        return this.fsKey
     }
 
     VerifyInstance(idx, pid, mcDir) {
