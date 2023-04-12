@@ -391,23 +391,23 @@ getHwndForPid(pid) {
 SetAffinities(idx:=0) {
     for i, instance in instances {
         if (idx == instance.idx) { ; this is active instance
-            instance.SetAffinity(playBitMask)
+            instance.window.SetAffinity(playBitMask)
         } else if (idx > 0) { ; there is another active instance
             if !instance.GetIsIdle()
-                instance.SetAffinity(bgLoadBitMask)
+                instance.window.SetAffinity(bgLoadBitMask)
             else
-                instance.SetAffinity(lowBitMask)
+                instance.window.SetAffinity(lowBitMask)
         } else { ; there is no active instance
             if instance.GetIsIdle()
-                instance.SetAffinity(lowBitMask)
+                instance.window.SetAffinity(lowBitMask)
             else if instance.locked
-                instance.SetAffinity(lockBitMask)
+                instance.window.SetAffinity(lockBitMask)
             else if instance.GetIsHeld()
-                instance.SetAffinity(highBitMask)
+                instance.window.SetAffinity(highBitMask)
             else if instance.GetIsPreviewing()
-                instance.SetAffinity(midBitMask)
+                instance.window.SetAffinity(midBitMask)
             else
-                instance.SetAffinity(highBitMask)
+                instance.window.SetAffinity(highBitMask)
         }
     }
 }
