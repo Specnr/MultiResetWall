@@ -1,332 +1,65 @@
-class Instance {
-
-    #Include %A_ScriptDir%\scripts\Window.ahk
-
+Class Window {
     __New(idx, pid, mcDir) {
         this.idx := idx
         this.pid := pid
         this.mcDir := mcDir
         this.hwnd := this.GetHwnd()
-        this.locked := false
-        this.playing := false
-        this.focus := true
-        this.isWide := false
-        this.idleFile := Format("{1}idle.tmp", mcDir)
-        this.lockFile := Format("{1}lock.tmp", mcDir)
-        this.lockImage := Format("{1}lock.png", mcDir)
-        this.killFile := Format("{1}kill.tmp", mcDir)
-        this.holdFile := Format("{1}hold.tmp", mcDir)
-        this.previewFile := Format("{1}preview.tmp", mcDir)
-        this.doubleCheckUnexpectedLoads := true
-        this.f1State := 0
-        this.unpauseOnSwitch := true
-        ; this.VerifyInstance(this.idx, this.pid, this.mcDir)
 
-        SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4}", this.idx, this.pid, this.doubleCheckUnexpectedLoads, this.mcDir))
-        Run, % Format("""{1}`\scripts`\reset.ahk"" {2} {3} {4} ""{5}", A_ScriptDir, this.idx, this.pid, this.doubleCheckUnexpectedLoads, this.mcDir), %A_ScriptDir%,, rmPID
-        this.rmPID := rmPID
-        DetectHiddenWindows, On
-        WinWait, % Format("ahk_pid {1}", this.rmPID)
-        DetectHiddenWindows, Off
-
-        this.window := New this.Window(this.idx, this.pid, this.mcDir)
-        
-        this.window.PrepareWindow()
-
-        this.SetAffinity(highBitMask)
-        
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
-    }
-
-    Reset(bypassLock:=true, extraProt:=0, force:=false) {
-        if (!this.GetCanReset(bypassLock, extraProt, force))
-            Return
-
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", this.idx))
-
-        this.SendReset()
-
-        this.SetAffinity(highBitMask)
-
-        if (mode == "I")
-            MoveResetInstance(idx)
-        else if (obsControl == "C")
-            SendOBSCmd(GetCoverTypeObsCmd("Cover",true,[this]))
-
-        this.Unlock(false)
-    }
-
-    Switch(special:=false) {
-        if (!this.locked) {
-            this.Lock(false, false)
-        }
-
-        if (!this.GetCanPlay() && smartSwitch) {
-            SwitchInstance(FindBypassInstance())
-            return
-        } else if !this.GetCanPlay() {
-            return
-        }
-
-        this.playing := true
-
-        this.SwitchFiles()
-
-        SetAffinities(this.idx)
-
-        this.window.SwitchTo()
-  
-        this.ManageJoinInstance(special)
-
-        this.SwitchToInstanceObs()
-    }
-    
-    Exit(nextInst:=-1) {
-        this.GhostPie()
-      
-        if (CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "true") {
-            ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
-            sleep, %fullscreenDelay%
-        }
-
-        FileDelete, % this.holdFile
-        FileDelete, % this.killFile
-        
-        WinRestore, % Format("ahk_pid {1}", this.pid)
-
-        SetAffinities(nextInst)
-      
-        this.Reset(,,true)
-
-        nextInst := GetNextInstance(this.idx, nextInst)
-        if (nextInst <= 0) {
-            ToWall(this.idx)
-        } else {
-            instances[nextInst].Switch()
-        }
-
-        if widthMultiplier
-            WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
-        Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
-        this.isWide := false
-
-        this.playing := false
-      
-        FileDelete, %sleepBgLock%
-    }
-
-    SwitchToInstanceObs() {
-        obsKey := ""
-        if (obsControl == "C") {
-            SendOBSCmd("Play," . this.idx)
-            return
-        } else if (obsControl == "N") {
-            obsKey := "Numpad" . this.idx
-        } else if (obsControl == "F") {
-            obsKey := "F" . (this.idx+12)
-        } else if (obsControl == "ARR") {
-            obsKey := obsCustomKeyArray[this.idx]
-        }
-        Send {%obsKey% down}
-        Sleep, %obsDelay%
-        Send {%obsKey% up}
-    }
-      
-    GhostPie() {
-        if this.f1State
-            ControlSend,, {Blind}{F1}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
-        else
-            ControlSend,, {Blind}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
-    }
-
-    SwitchFiles() {
-        FileAppend,, % this.holdFile
-        FileAppend,, % this.killFile
-        FileDelete, data/instance.txt
-        FileAppend, % this.idx, data/instance.txt
-        FileAppend,, %sleepBgLock%
-    }
-
-    ManageJoinInstance(special:=false) {
-        ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
-        if (this.f1State == 2)
-            ControlSend,, {Blind}{F1}, % Format("ahk_pid {1}", this.pid)
-        if (special)
-            this.OnJoinSettingsChange()
-        if (coop)
-            ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, % Format("ahk_pid {1}", this.pid)
-        if (!this.unpauseOnSwitch)
-            ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
-    }
-
-    OnJoinSettingsChange() {
-        rdPresses := renderDistance - 2
-        ControlSend,, {Blind}{Shift down}{F3 down}{f 30}{Shift up}{f %rdPresses%}{F3 up}, % Format("ahk_pid {1}", this.pid)
-        if (toggleChunkBorders)
-            ControlSend,, {Blind}{F3 down}{g}{F3 up}, % Format("ahk_pid {1}", this.pid)
-        if (toggleHitBoxes)
-            ControlSend,, {Blind}{F3 down}{b}{F3 up}, % Format("ahk_pid {1}", this.pid)
-        FOVPresses := ceil((110-fov)*1.7875)
-        entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
-        ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, % Format("ahk_pid {1}", this.pid)
-    }
-
-    Lock(sound:=true, affinityChange:=true) {
-        this.LockFiles()
-        
-        this.LockOBS()
-        
-        this.SetLocked(true)
-        
-        if affinityChange
-            this.SetAffinity(lockBitMask)
-        
-        LockSound(sound)
-    }
-
-    Unlock(sound:=true) {
-        this.UnlockFiles()
-        
-        this.UnlockOBS()
-        
-        this.SetLocked(false)
-        
-        UnlockSound(sound)
-    }
-
-    GetLocked() {
-        return this.locked
-    }
-
-    SetLocked(lock) {
-        this.locked := lock
-    }
-
-    LockOBS() {
-        if (this.GetLocked()) {
-            return
-        }
-        if (obsControl == "C" && mode != "I") {
-            SendOBSCmd(GetCoverTypeObsCmd("Lock",true,[this]))
-        }
-    }
-
-    UnlockOBS() {
-        if (!this.GetLocked()) {
-            return
-        }
-        if (obsControl == "C" && mode != "I") {
-            SendOBSCmd(GetCoverTypeObsCmd("Lock",false,[this]))
-        }
-    }
-
-    LockFiles() {
-        if (this.GetLocked()) {
-            return
-        }
-        FileCopy, % GetLockImage(), % this.lockImage, 1
-        FileSetTime,, % this.lockImage, M
-        FileAppend,, % this.lockFile
-    }
-
-    UnlockFiles() {
-        if (!this.GetLocked()) {
-            return
-        }
-        if (obsControl != "C") {
-            FileCopy, A_ScriptDir\..\media\unlock.png, % this.lockImage, 1
-            FileSetTime,, % this.lockImage, M
-        }
-        FileDelete, % this.lockFile
-    }
-
-    SendReset() {
-        this.window.SendReset()
-        
-        DetectHiddenWindows, On
-        PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
-        DetectHiddenWindows, Off
-        resets++
-    }
-
-    SetAffinity(mask) {
-        hProc := DllCall("OpenProcess", "UInt", 0x0200, "Int", false, "UInt", this.pid, "Ptr")
-        DllCall("SetProcessAffinityMask", "Ptr", hProc, "Ptr", mask)
-        DllCall("CloseHandle", "Ptr", hProc)
-    }
-
-    KillResetManager() {
-        DetectHiddenWindows, On
-        WinClose, % Format("ahk_pid {1}", this.rmPID)
-        WinWaitClose, % Format("ahk_pid {1}", this.rmPID)
-        DetectHiddenWindows, Off
-        SetAffinity(this.pid, GetBitMask(threadCount))
-    }
-
-    CloseInstance() {
-        WinClose, % Format("ahk_pid {1}", this.pid)
-        this.KillResetManager()
-    }
-
-    GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
-
-        if (force) {
-            return true
-        }
-      
-        if (this.locked && !bypassLock) {
-            return false
-        }
-      
-        if (this.GetIsHeld()) {
-            return false
-        }
-
-        if (this.GetPreviewTime() < spawnProtection + extraProt) {
-            return false
-        }
-      
-        if (this.playing) {
-            return false
-        }
-      
-        return true
-    }
-
-    GetCanPlay() {
-        if (this.GetIsIdle() || mode == "C") {
-            return true
-        }
-        
-        return false
-    }
-
-    GetIsIdle() {
-        return FileExist(this.idleFile)
-    }
-
-    GetIsHeld() {
-        return FileExist(this.holdFile)
-    }
-
-    GetIsPreviewing() {
-        return FileExist(this.previewFile)
-    }
-
-    GetPreviewTime() {
-        FileRead, previewStartTime, % this.previewFile
-        previewStartTime += 0
-        previewTime := A_TickCount - previewStartTime
-        return previewTime
+        this.VerifyInstance(this.idx, this.pid, this.mcDir)
     }
 
     GetHwnd() {
         WinGet, hwnd, ID, % Format("ahk_pid {1}", this.pid)
         return StrReplace(hwnd, "ffffffff")
     }
+    
+    PrepareWindow() {
+        WinGetTitle, winTitle, % Format("ahk_pid {1}", this.pid)
+        if !InStr(winTitle, " - ") {
+            ControlClick, x0 y0, % Format("ahk_pid {1}", this.pid),, RIGHT
+            ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
+            WinMinimize, % Format("ahk_pid {1}", this.pid)
+            WinRestore, % Format("ahk_pid {1}", this.pid)
+        }
+        if (windowMode == "B") {
+            WinSet, Style, -0xC40000, % Format("ahk_pid {1}", this.pid)
+        } else {
+            WinSet, Style, +0xC40000, % Format("ahk_pid {1}", this.pid)
+        }
+        if (widthMultiplier) {
+            WinRestore, % Format("ahk_pid {1}", this.pid)
+            WinMove, % Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
+        }
+        WinSet, AlwaysOnTop, Off, % Format("ahk_pid {1}", this.pid)
 
-    GetFsKey() {
-        return this.fsKey
+        this.SetTitle()
+    }
+
+    SendReset() {
+        ControlSend, ahk_parent, % Format("{Blind}{{1}}{{2}}", this.lpKey, this.resetKey), % Format("ahk_pid {1}", this.pid)
+    }
+
+    SwitchTo() {
+        WinMinimize, % Format("ahk_id {1}", GetProjectorID())
+        
+        foreGroundWindow := DllCall("GetForegroundWindow")
+        windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint", foreGroundWindow, "uint", 0)
+        currentThreadId := DllCall("GetCurrentThreadId")
+        DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 1)
+        if (widthMultiplier && (windowMode == "W" || windowMode == "B"))
+            DllCall("SendMessage", "uint", this.hwnd, "uint", 0x0112, "uint", 0xF030, "int", 0) ; fast maximize
+        DllCall("SetForegroundWindow", "uint",this.hwnd) ; Probably only important in windowed, helps application take input without a Send Click
+        DllCall("BringWindowToTop", "uint", this.hwnd)
+        DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
+        
+        if (windowMode == "F" && CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "false") {
+            ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
+            sleep, %fullscreenDelay%
+        }
+    }
+    
+    SetTitle() {
+        WinSetTitle, % Format("ahk_pid {1}", this.pid), , % Format("Minecraft* - Instance {1}", this.idx)
     }
 
     VerifyInstance(idx, pid, mcDir) {

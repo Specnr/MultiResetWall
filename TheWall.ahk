@@ -5,7 +5,7 @@
 #SingleInstance Force
 Thread, NoTimers , True
 #Include %A_ScriptDir%\scripts\functions.ahk
-#Include %A_ScriptDir%\scripts\instance.ahk
+#Include %A_ScriptDir%\scripts\Instance.ahk
 #Include settings-Mach.ahk
 
 SetKeyDelay, 0
