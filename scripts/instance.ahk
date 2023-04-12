@@ -149,7 +149,6 @@ class Instance {
         Send {%obsKey% up}
     }
       
-    
     GhostPie() {
         if this.f1State
             ControlSend,, {Blind}{F1}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
@@ -209,47 +208,67 @@ class Instance {
     }
 
     Lock(sound:=true, affinityChange:=true) {
-        this.locked := true
-
         this.LockFiles()
-
+        
         this.LockOBS()
-
+        
+        this.SetLocked(true)
+        
         if affinityChange
             this.SetAffinity(lockBitMask)
-          
+        
         LockSound(sound)
     }
 
     Unlock(sound:=true) {
-        this.locked := false
-
         this.UnlockFiles()
-
+        
         this.UnlockOBS()
-
+        
+        this.SetLocked(false)
+        
         UnlockSound(sound)
     }
 
+    GetLocked() {
+        return this.locked
+    }
+
+    SetLocked(lock) {
+        this.locked := lock
+    }
+
     LockOBS() {
+        if (this.GetLocked()) {
+            return
+        }
         if (obsControl == "C" && mode != "I") {
             SendOBSCmd(GetCoverTypeObsCmd("Lock",true,[this]))
         }
     }
 
     UnlockOBS() {
+        if (!this.GetLocked()) {
+            return
+        }
         if (obsControl == "C" && mode != "I") {
             SendOBSCmd(GetCoverTypeObsCmd("Lock",false,[this]))
         }
     }
 
     LockFiles() {
+        if (this.GetLocked()) {
+            return
+        }
         FileCopy, % GetLockImage(), % this.lockImage, 1
         FileSetTime,, % this.lockImage, M
         FileAppend,, % this.lockFile
     }
 
     UnlockFiles() {
+        if (!this.GetLocked()) {
+            return
+        }
         if (obsControl != "C") {
             FileCopy, A_ScriptDir\..\media\unlock.png, % this.lockImage, 1
             FileSetTime,, % this.lockImage, M

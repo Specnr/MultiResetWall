@@ -612,17 +612,19 @@ GhostPie(idx) {
 }
 
 ResetAll(bypassLock:=false, extraProt:=0) {
-    resetable := GetResetableInstances(bypassLock, extraProt)
+    resetable := GetResetableInstances(GetFocusGridInstances(), bypassLock, extraProt)
+    lockedResetable := GetLockedInstances(resetable)
 
     if (obsControl == "C" && mode != "I") {
         SendOBSCmd(GetCoverTypeObsCmd("Cover", true, resetable))
-        SendOBSCmd(GetCoverTypeObsCmd("Lock", false, resetable))
+        SendOBSCmd(GetCoverTypeObsCmd("Lock", false, lockedResetable))
     }
 
     for i, instance in resetable {
         instance.SendReset()
         instance.SetAffinity(highBitMask)
-        instance.Unlock(false)
+        instance.SetLocked(false)
+        instance.UnlockFiles()
     }
     
     ; for i, instance in resetable {
@@ -650,16 +652,28 @@ ResetAll(bypassLock:=false, extraProt:=0) {
 ;     NotifyMovingController()
 }
 
-GetResetableInstances(bypassLock, extraProt) {
+GetResetableInstances(checkInstances, bypassLock:=false, extraProt:=0) {
     resetable := []
-    for i, instance in GetFocusGridInstances() {
+    for i, instance in checkInstances {
         if (instance.GetCanReset(bypassLock, extraProt))
             resetable.Push(instance)
     }
     return resetable
 }
 
+GetLockedInstances(checkInstances) {
+    locked := []
+    for i, instance in checkInstances {
+        if (instance.GetLocked())
+            locked.Push(instance)
+    }
+    return locked
+}
+
 GetCoverTypeObsCmd(type, render, selectInstances) {
+    if (!selectInstances.Length()) {
+        return
+    }
     cmd := ""
     for i, instance in selectInstances {
         cmd .= instance.idx . ","
@@ -1051,7 +1065,7 @@ CheckOBSPython() {
 }
 
 SendOBSCmd(cmd) {
-    if (obsControl != "C") {
+    if (obsControl != "C" || !cmd) {
         Return
     }
 
