@@ -94,6 +94,8 @@ class Instance {
         this.SwitchWindowToInstance()
   
         this.ManageJoinInstance(special)
+
+        this.SwitchToInstanceObs()
     }
     
     Exit(nextInst:=-1) {
@@ -129,6 +131,24 @@ class Instance {
       
         FileDelete, %sleepBgLock%
     }
+
+    SwitchToInstanceObs() {
+        obsKey := ""
+        if (obsControl == "C") {
+            SendOBSCmd("Play," . this.idx)
+            return
+        } else if (obsControl == "N") {
+            obsKey := "Numpad" . this.idx
+        } else if (obsControl == "F") {
+            obsKey := "F" . (this.idx+12)
+        } else if (obsControl == "ARR") {
+            obsKey := obsCustomKeyArray[this.idx]
+        }
+        Send {%obsKey% down}
+        Sleep, %obsDelay%
+        Send {%obsKey% up}
+    }
+      
     
     GhostPie() {
         if this.f1State

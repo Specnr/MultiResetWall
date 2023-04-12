@@ -761,21 +761,21 @@ SetTitles() {
 }
 
 ToWall(comingFrom) {
-  currentInstance := -1
-  FileDelete,data/instance.txt
-  FileAppend,0,data/instance.txt
+    currentInstance := -1
+    FileDelete,data/instance.txt
+    FileAppend,0,data/instance.txt
 
-  VerifyProjector()
-  WinMaximize, % Format("ahk_id {1}", GetProjectorID())
-  WinActivate, % Format("ahk_id {1}", GetProjectorID())
+    VerifyProjector()
+    WinMaximize, % Format("ahk_id {1}", GetProjectorID())
+    WinActivate, % Format("ahk_id {1}", GetProjectorID())
 
-  if (obsControl != "C") {
-    send {%obsWallSceneKey% down}
-    sleep, %obsDelay%
-    send {%obsWallSceneKey% up}
-  } else {
-    SendOBSCmd(Format("ToWall"))
-  }
+    if (obsControl != "C") {
+        send {%obsWallSceneKey% down}
+        sleep, %obsDelay%
+        send {%obsWallSceneKey% up}
+    } else {
+        SendOBSCmd(Format("ToWall"))
+    }
 }
 
 IsValidInstance(idx) {
