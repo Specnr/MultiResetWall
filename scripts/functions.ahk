@@ -34,33 +34,19 @@ Shutdown(ExitReason, ExitCode) {
 
 ; File safe function to increment overallAttemptsFile and dailyAttemptsFile each by 1
 CountAttempt() {
-    overallFile := FileOpen(overallAttemptsFile, "r -rwd")
-    dailyFile := FileOpen(dailyAttemptsFile, "r -rwd")
+    overallFile := FileOpen(overallAttemptsFile, "rw -rw")
+    dailyFile := FileOpen(dailyAttemptsFile, "rw -rw")
 
     if (!IsObject(overallFile) || !IsObject(dailyFile)) {
         SetTimer, CountAttempt, -10
         return
     }
 
-    overallAttempts := overallFile.Read()
-    dailyAttempts := dailyFile.Read()
+    overallAttemptCount := overallFile.Read() + 1
+    dailyAttemptCount := dailyFile.Read()  +1
 
-    overallAttempts++
-    dailyAttempts++
-    
-    overallFile.Close()
-    dailyFile.Close()
-
-    overallFile := FileOpen(overallAttemptsFile, "w -rwd")
-    dailyFile := FileOpen(dailyAttemptsFile, "w -rwd")
-
-    if (!IsObject(overallFile) || !IsObject(dailyFile)) {
-        SetTimer, CountAttempt, -10
-        return
-    }
-    
-    overallFile.Write(overallAttempts)
-    dailyFile.Write(dailyAttempts)
+    overallFile.Write(overallAttemptCount)
+    dailyFile.Write(dailyAttemptCount)
 
     overallFile.Close()
     dailyFile.Close()
