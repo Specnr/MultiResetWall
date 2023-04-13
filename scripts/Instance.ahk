@@ -134,7 +134,7 @@ class Instance {
     }
 
     LockFiles() {
-        if (this.GetLocked()) {
+        if (this.locked) {
             return
         }
         FileCopy, % GetLockImage(), % this.lockImage, 1
@@ -143,7 +143,7 @@ class Instance {
     }
 
     UnlockFiles() {
-        if (!this.GetLocked()) {
+        if (!this.locked) {
             return
         }
         if (obsControl != "C") {
