@@ -1,4 +1,4 @@
-; All Instance class basic getter functions
+; All Instance class basic getter methods, methods simply returning an instance variable are only called outside of the class
 
 GetIdx() {
     return this.idx
