@@ -50,32 +50,26 @@ GetCanPlay() {
 }
 
 GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
-
+    
     if (force) {
-        SendLog(LOG_LEVEL_INFO, "forced")
         return true
     }
   
     if (this.GetLocked() && !bypassLock) {
-        SendLog(LOG_LEVEL_INFO, "locked (with no bypass)")
         return false
     }
   
     if (this.GetHeld()) {
-        SendLog(LOG_LEVEL_INFO, "held")
         return false
     }
 
     if (this.GetPreviewTime() < spawnProtection + extraProt) {
-        SendLog(LOG_LEVEL_INFO, "protected")
         return false
     }
   
     if (this.GetPlaying()) {
-        SendLog(LOG_LEVEL_INFO, "playing")
         return false
     }
   
-    SendLog(LOG_LEVEL_INFO, "good")
     return true
 }
