@@ -1,3 +1,5 @@
+; All Instance class basic getter functions
+
 GetIdx() {
     return this.idx
 }

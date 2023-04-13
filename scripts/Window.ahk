@@ -28,10 +28,7 @@ Class Window {
         } else {
             WinSet, Style, +0xC40000, % Format("ahk_pid {1}", this.pid)
         }
-        if (widthMultiplier) {
-            WinRestore, % Format("ahk_pid {1}", this.pid)
-            WinMove, % Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
-        }
+        this.Widen()
         WinSet, AlwaysOnTop, Off, % Format("ahk_pid {1}", this.pid)
 
         this.SetTitle()
@@ -39,7 +36,7 @@ Class Window {
 
     SendResetInput() {
         ControlSend, ahk_parent, % Format("{Blind}{{1}}{{2}}", this.lpKey, this.resetKey), % Format("ahk_pid {1}", this.pid)
-        resets++
+        CountAttempt()
     }
 
     SwitchTo() {
@@ -96,8 +93,11 @@ Class Window {
     }
 
     Widen() {
-        if widthMultiplier
+        static newHeight := Floor(A_ScreenHeight / widthMultiplier)
+        if widthMultiplier {
+            WinRestore, % Format("ahk_pid {1}", this.pid)
             WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
+        }
     }
 
     SendBack() {

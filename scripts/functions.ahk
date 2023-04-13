@@ -1,34 +1,69 @@
 SendLog(logLevel, logMsg) {
-  timeStamp := A_TickCount
-  macroLogFile := FileOpen("data/log.log", "a -rw")
-  if (!IsObject(macroLogFile)) {
-    logQueue := Func("SendLog").Bind(logLevel, logMsg, timeStamp)
-    SetTimer, %logQueue%, -10
-    return
-  }
-  macroLogFile.Close()
-  FileAppend, % Format("[{3}] [{4}-{5}-{6} {7}:{8}:{9}] [SYS-{2}] {1}`n", logMsg, logLevel, timeStamp, A_YYYY, A_MM, A_DD, A_Hour, A_Min, A_Sec), data/log.log
+    timeStamp := A_TickCount
+    macroLogFile := FileOpen("data/log.log", "a -rwd")
+    if (!IsObject(macroLogFile)) {
+        logQueue := Func("SendLog").Bind(logLevel, logMsg, timeStamp)
+        SetTimer, %logQueue%, -10
+        return
+    }
+    macroLogFile.Write(Format("[{3}] [{4}-{5}-{6} {7}:{8}:{9}] [SYS-{2}] {1}`r`n", logMsg, logLevel, timeStamp, A_YYYY, A_MM, A_DD, A_Hour, A_Min, A_Sec))
+    macroLogFile.Close()
 }
 
-CountAttempts() {
+Shutdown(ExitReason, ExitCode) {
+    if (ExitReason == "Logoff" || ExitReason == "Shutdown") {
+        return
+    }
 
-  FileRead, WorldNumber, %overallAttemptsFile%
-  if (ErrorLevel)
-    WorldNumber := resets
-  else
-    FileDelete, %overallAttemptsFile%
-  WorldNumber += resets
-  FileAppend, %WorldNumber%, %overallAttemptsFile%
+    if (ExitReason != "Reload") {
+        MsgBox, 4, Close Instances?, Would you like to close your instances?
+        IfMsgBox, Yes
+            CloseInstances(false)
+        MsgBox, 4, Delete Worlds?, Would you like to delete your old worlds?
+        IfMsgBox, Yes
+            WorldBop(false)
+    }
 
-  FileRead, WorldNumber, %dailyAttemptsFile%
-  if (ErrorLevel)
-    WorldNumber := resets
-  else
-    FileDelete, %dailyAttemptsFile%
-  WorldNumber += resets
-  FileAppend, %WorldNumber%, %dailyAttemptsFile%
+    FileDelete, data/obs.txt
+    DetectHiddenWindows, On
+    for i, instance in instances {
+        instance.KillResetManager()
+    }
+    return
+}
 
-  resets := 0
+; File safe function to increment overallAttemptsFile and dailyAttemptsFile each by 1
+CountAttempt() {
+    overallFile := FileOpen(overallAttemptsFile, "r -rwd")
+    dailyFile := FileOpen(dailyAttemptsFile, "r -rwd")
+
+    if (!IsObject(overallFile) || !IsObject(dailyFile)) {
+        SetTimer, CountAttempt, -10
+        return
+    }
+
+    overallAttempts := overallFile.Read()
+    dailyAttempts := dailyFile.Read()
+
+    overallAttempts++
+    dailyAttempts++
+    
+    overallFile.Close()
+    dailyFile.Close()
+
+    overallFile := FileOpen(overallAttemptsFile, "w -rwd")
+    dailyFile := FileOpen(dailyAttemptsFile, "w -rwd")
+
+    if (!IsObject(overallFile) || !IsObject(dailyFile)) {
+        SetTimer, CountAttempt, -10
+        return
+    }
+    
+    overallFile.Write(overallAttempts)
+    dailyFile.Write(dailyAttempts)
+
+    overallFile.Close()
+    dailyFile.Close()
 }
 
 GetOldestPreview() {
@@ -192,8 +227,7 @@ MousePosToInstNumber() {
   return 1
 }
 
-RunHide(Command)
-{
+RunHide(Command) {
   dhw := A_DetectHiddenWindows
   DetectHiddenWindows, On
   Run, %ComSpec%,, Hide, cPid
@@ -210,8 +244,7 @@ RunHide(Command)
   Return Result
 }
 
-GetMcDir(pid)
-{
+GetMcDir(pid) {
   command := Format("powershell.exe $x = Get-WmiObject Win32_Process -Filter \""ProcessId = {1}\""; $x.CommandLine", pid)
   rawOut := RunHide(command)
   if (InStr(rawOut, "--gameDir")) {
@@ -310,8 +343,7 @@ GetMcDirFromFile(idx) {
   }
 }
 
-GetAllPIDs()
-{
+GetAllPIDs() {
   SendLog(LOG_LEVEL_INFO, "Getting all Minecraft directory and PID data")
   rawPIDs := GetInstanceTotal()
   ; if !instances {
@@ -353,6 +385,10 @@ GetAllPIDs()
   ;     McDirectories[A_Index] := mcdir
   ;   }
   ; }
+
+  if (!rawPIDs) {
+    LaunchInstances()
+  }
 
   rawNumToMcDir := {}
   for i, rawPID in rawPIDs {
@@ -435,6 +471,38 @@ VerifyProjector() {
     GetProjectorID()
 }
 
+CheckAHKVersion() {
+    ; Yell if wrong AHK version
+    if (SubStr(A_AhkVersion, 1, 3) != "1.1") {
+        SendLog(LOG_LEVEL_INFO, "Wrong AHK version detected, exiting")
+        MsgBox, Wrong AHK version, get version 1.1
+        ExitApp
+    }
+}
+
+CheckLaunchAudioGUI() {
+    if audioGui {
+        Gui, New
+        Gui, Show,, The Wall Audio
+    }
+}
+
+BindTrayIconFunctions() {
+    Menu, Tray, Add, Delete Worlds, WorldBop
+
+    Menu, Tray, Add, Close Instances, CloseInstances
+
+    Menu, Tray, Add, Launch Instances, LaunchInstances
+}
+
+CheckOBSRunLevel() {
+    WinGet, obsPid, PID, OBS
+    if IsProcessElevated(obsPid) {
+        MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
+        SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work")
+    }
+}
+
 GetProjectorID() {
     static projectorID := 0
     if (WinExist("ahk_id " . projectorID))
@@ -457,96 +525,8 @@ HwndIsFullscreen(hwnd) { ; ahk_id or ID is HWND
     return (w == A_ScreenWidth && h == A_ScreenHeight)
 }
 
-SwitchInstance(idx, special:=False)
-{
+SwitchInstance(idx, special:=False) {
     instances[idx].Switch(special)
-;   if (idx == -1) {
-;     ToWall(0)
-;     return
-;   }
-
-;   if (mode == "I" && locked[idx])
-;     NotifyMovingController()
-;   else if (!locked[idx])
-;     LockInstance(idx, False, False)
-
-;   if !GetCanPlay(idx) && smartSwitch {
-;     SwitchInstance(FindBypassInstance())
-;     return
-;   } else if !GetCanPlay(idx) {
-;     return
-;   }
-
-;   currentInstance := idx
-
-;   holdFile := McDirectories[idx] . "hold.tmp"
-;   FileAppend,,%holdFile%
-;   killFile := McDirectories[idx] . "kill.tmp"
-;   FileAppend,,%killFile%
-;   FileDelete,data/instance.txt
-;   FileAppend,%idx%,data/instance.txt
-;   FileAppend,, %sleepBgLock%
-  
-;   SetAffinities(idx)
-  
-;   SwitchWindowToInstance(idx)
-  
-;   ManageJoinInstance(idx, special)
-
-;   SwitchToInstanceObs(idx)
-}
-
-SwitchToInstanceObs(idx) {
-  obsKey := ""
-  if (obsControl == "C") {
-    SendOBSCmd("Play," . idx)
-    return
-  } else if (obsControl == "N") {
-    obsKey := "Numpad" . idx
-  } else if (obsControl == "F") {
-    obsKey := "F" . (idx+12)
-  } else if (obsControl == "ARR") {
-    obsKey := obsCustomKeyArray[idx]
-  }
-  Send {%obsKey% down}
-  Sleep, %obsDelay%
-  Send {%obsKey% up}
-}
-
-ManageJoinInstance(idx, special:=false) {
-  pid := PIDs[idx]
-  ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-  if (f1States[idx] == 2)
-    ControlSend,, {Blind}{F1}, ahk_pid %pid%
-  if (special)
-    OnJoinSettingsChange(pid)
-  if (coop)
-    ControlSend,, {Blind}{Esc}{Tab 7}{Enter}{Tab 4}{Enter}{Tab}{Enter}, ahk_pid %pid%
-  if !unpauseOnSwitch
-    ControlSend,, {Blind}{Esc}, ahk_pid %pid%
-}
-
-SwitchWindowToInstance(idx) {
-  hwnd := hwnds[idx]
-  pid := PIDs[idx]
-  GetProjectorID()
-  WinMinimize, ahk_id %projectorID%
-
-  foreGroundWindow := DllCall("GetForegroundWindow")
-  windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint", foreGroundWindow, "uint", 0)
-  currentThreadId := DllCall("GetCurrentThreadId")
-  DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 1)
-  if (widthMultiplier && (windowMode == "W" || windowMode == "B"))
-    DllCall("SendMessage", "uint", hwnd, "uint", 0x0112, "uint", 0xF030, "int", 0) ; fast maximize
-  DllCall("SetForegroundWindow", "uint",hwnd) ; Probably only important in windowed, helps application take input without a Send Click
-  DllCall("BringWindowToTop", "uint", hwnd)
-  DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
-
-  if (windowMode == "F" && CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "false") {
-    fsKey := fsKeys[idx]
-    ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
-    sleep, %fullscreenDelay%
-  }
 }
 
 GetActiveInstanceNum() {
@@ -560,39 +540,6 @@ GetActiveInstanceNum() {
 
 ExitWorld(nextInst:=-1) {
     instances[GetActiveInstanceNum()].Exit(nextInst)
-;   idx := GetActiveInstanceNum()
-;   pid := PIDs[idx]
-;   if (!IsValidInstance(idx)) {
-;     return
-;   }
-
-;   GhostPie(idx)
-
-;   if (CheckOptionsForValue(McDirectories[idx] . "options.txt", "fullscreen:", "false") == "true") {
-;     fsKey := fsKeys[idx]
-;     ControlSend,, {Blind}{%fsKey%}, ahk_pid %pid%
-;     sleep, %fullscreenDelay%
-;   }
-
-;   holdFile := McDirectories[idx] . "hold.tmp"
-;   killFile := McDirectories[idx] . "kill.tmp"
-;   FileDelete,%holdFile%
-;   FileDelete, %killFile%
-  
-;   WinRestore, ahk_pid %pid%
-
-;   SetAffinities(GetNextInstance(idx, nextInst))
-
-;   ResetInstance(idx,,,true)
-  
-;   SwitchInstance(GetNextInstance(idx, nextInst))
-  
-;   if widthMultiplier
-;     WinMove, ahk_pid %pid%,,0,0,%A_ScreenWidth%,%newHeight%
-;   Winset, Bottom,, ahk_pid %pid%
-;   isWide := False
-
-;   FileDelete, %sleepBgLock%
 }
 
 GetNextInstance(idx, nextInst) {
@@ -601,14 +548,6 @@ GetNextInstance(idx, nextInst) {
   else if ((mode == "B" || mode == "M") && nextInst == -1)
     return FindBypassInstance()
   return nextInst
-}
-
-GhostPie(idx) {
-  pid := PIDs[idx]
-  if f1States[idx]
-    ControlSend,, {Blind}{F1}{F3}{Esc 3}, ahk_pid %pid%
-  else
-    ControlSend,, {Blind}{F3}{Esc 3}, ahk_pid %pid%
 }
 
 ResetAll(bypassLock:=false, extraProt:=0) {
@@ -626,30 +565,6 @@ ResetAll(bypassLock:=false, extraProt:=0) {
         instance.SetLocked(false)
         instance.UnlockFiles()
     }
-    
-    ; for i, instance in resetable {
-    ;     instance.SetAffinity(highBitMask)
-    ;     instance.Unlock(false)
-    ; }
-    ; for i, instance in resetable {
-    ;     instance.SendReset()
-    ; }
-
-;   if (obsControl == "C" && mode != "I") {
-;     SendOBSCmd(GetCoverTypeObsCmd("Cover","1", resetable))
-;     SendOBSCmd(GetCoverTypeObsCmd("Lock","0", resetable))
-;   }
-  
-;   if bypassLock
-;     UnlockAll(false)
-;   else {
-;     for i, idx in resetable {
-;       UnlockInstance(idx,false)
-;     }
-;   }
-
-;   if (mode == "I")
-;     NotifyMovingController()
 }
 
 GetResetableInstances(checkInstances, bypassLock:=false, extraProt:=0) {
@@ -681,75 +596,8 @@ GetCoverTypeObsCmd(type, render, selectInstances) {
     return Format("{1},{2},{3}", type, render, RTrim(cmd, ","))
 }
 
-SendReset(idx) {
-  pid := PIDs[idx]
-  rmpid := RM_PIDs[idx]
-  resetKey := resetKeys[idx]
-  lpKey := lpKeys[idx]
-  ControlSend, ahk_parent, {Blind}{%lpKey%}{%resetKey%}, ahk_pid %pid%
-  DetectHiddenWindows, On
-  PostMessage, MSG_RESET,,,, ahk_pid %rmpid%
-  DetectHiddenWindows, Off
-  timeSinceReset[idx] := A_TickCount
-  resets++
-}
-
-TESTReset(idx) {
-  SendLog(LOG_LEVEL_INFO, Format("Instance {1} valid reset triggered", idx))
-  instances[idx].Reset(bypassLock, extraProt)
-}
-
 ResetInstance(idx, bypassLock:=true, extraProt:=0, force:=false) {
     instances[idx].Reset(bypassLock, extraProt, force)
-
-;   if (mode == "I")
-;     MoveResetInstance(idx)
-;   else if (obsControl == "C")
-;     SendOBSCmd(GetCoverTypeObsCmd("Cover","1",[idx]))
-
-;   UnlockInstance(idx,false)
-;   if (mode == "I")
-;     NotifyMovingController()
-}
-
-GetCanReset(idx, bypassLock:=true, extraProt:=0) {
-  if (!IsValidInstance(idx)) {
-    return false
-  }
-
-  if (locked[idx] && !bypassLock) {
-    return false
-  }
-
-  holdFile := McDirectories[idx] . "hold.tmp"
-  if (FileExist(holdFile)) {
-    return false
-  }
-
-  spawnProt := spawnProtection + extraProt
-  previewTime := GetPreviewTime(idx)
-  if (A_TickCount <= (previewTime + spawnProt)) {
-    return false
-  }
-
-  if (idx == GetActiveInstanceNum() || idx == currentInstance) {
-    return false
-  }
-
-  return true
-}
-
-GetCanPlay(idx) {
-  if (!IsValidInstance(idx)) {
-    return false
-  }
-
-  idleFile := McDirectories[idx] . "idle.tmp"
-  if (!FileExist(idleFile) && mode != "C") {
-    return false
-  }
-
-  return true
 }
 
 MoveResetInstance(idx) {
@@ -769,9 +617,9 @@ MoveLockedResetInstance(idx) {
 }
 
 SetTitles() {
-  for i, pid in PIDs {
-    WinSetTitle, ahk_pid %pid%, , Minecraft* - Instance %i%
-  }
+    for i, instance in instances {
+        instance.window.SetTitle()
+    }
 }
 
 ToWall(comingFrom) {
@@ -792,15 +640,8 @@ ToWall(comingFrom) {
     }
 }
 
-IsValidInstance(idx) {
-  if (idx > 0 && idx <= instances.MaxIndex())
-    return true
-  return false
-}
-
 FocusReset(focusInstance, bypassLock:=false, special:=false) {
     SwitchInstance(focusInstance, special)
-    
     ResetAll(bypassLock, spawnProtection)
 }
 
@@ -822,40 +663,10 @@ GetLockImage() {
 
 LockInstance(idx, sound:=true, affinityChange:=true) {
     instances[idx].Lock(sound, affinityChange)
-    ; if (!IsValidInstance(idx))
-    ;     return
-
-    ; LockFiles(idx)
-
-    ; LockOBS(idx)
-
-    ; locked[idx] := true
-
-    ; if (mode == "I") {
-    ;     NotifyMovingController()
-    ; }
-
-    ; if affinityChange
-    ;     SetAffinity(PIDs[idx], lockBitMask)
-
-    ; LockSound(sound)
 }
 
-LockFiles(idx) {
-  lockDest := McDirectories[idx] . "lock.png"
-  lockSource := GetLockImage()
-  FileCopy, %lockSource%, %lockDest%, 1
-  FileSetTime,,%lockDest%,M
-  lockDest := McDirectories[idx] . "lock.tmp"
-  FileAppend,, %lockDest%
-}
-
-LockOBS(idx) {
-  if (obsControl == "C" && mode != "I" && !locked[idx]) {
-    SendOBSCmd(GetCoverTypeObsCmd("Lock","1",[idx]))
-  } else if (mode == "I") {
-    SwapPositions(GetGridIndexFromInstanceNumber(idx), GetFirstPassive())
-  }
+UnlockInstance(idx, sound:=true) {
+    instances[idx].Unlock(sound)
 }
 
 LockSound(sound) {
@@ -869,36 +680,6 @@ LockSound(sound) {
     }
 }
 
-UnlockInstance(idx, sound:=true) {
-    instances[idx].Unlock(sound)
-    ; if (!IsValidInstance(idx))
-    ;     return
-    
-    ; UnlockFiles(idx)
-    
-    ; UnlockOBS(idx)
-    
-    ; locked[idx] := false
-
-    ; UnlockSound(sound)
-}
-
-UnlockFiles(idx) {
-  if (obsControl != "C" && locked[idx]) {
-    lockDest := McDirectories[idx] . "lock.png"
-    FileCopy, A_ScriptDir\..\media\unlock.png, %lockDest%, 1
-    FileSetTime,,%lockDest%,M
-  }
-  lockDest := McDirectories[idx] . "lock.tmp"
-  FileDelete, %lockDest%
-}
-
-UnlockOBS(idx) {
-  if (obsControl == "C" && locked[idx]) {
-    SendOBSCmd(GetCoverTypeObsCmd("Lock","0",[idx]))
-  }
-}
-
 UnlockSound(sound) {
   if (sound && (sounds == "A" || sounds == "F" || sound == "L")) {
     SoundPlay, A_ScriptDir\..\media\unlock.wav
@@ -908,15 +689,6 @@ UnlockSound(sound) {
       send {%obsUnlockMediaKey% up}
     }
   }
-}
-
-GetInstancesArray(insts) {
-  instanceArray := []
-  loop, %insts% {
-    inst := mode == "I" ? instancePosition[A_Index] : A_Index
-    instanceArray.push(inst)
-  }
-  return instanceArray
 }
 
 GetFocusGridInstances() {
@@ -969,36 +741,40 @@ PlayNextLock(focusReset:=false, bypassLock:=false, special:=false) {
     }
 }
 
-WorldBop() {
-  MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
-  IfMsgBox No
-  Return
-  if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
-    cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
-    SendLog(LOG_LEVEL_INFO, "Running worldBopper9000x.py to clear worlds")
-    RunWait,%cmd%, %A_ScriptDir%\scripts ,Hide
-  } else {
-    SendLog(LOG_LEVEL_INFO, "Running slowBopper2000,ahk to clear worlds")
-    RunWait, "%A_ScriptDir%\scripts\slowBopper2000.ahk", %A_ScriptDir%
-  }
-  MsgBox, Completed World Bopping!
+WorldBop(confirm:=true) {
+    if (confirm) {
+        MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
+        IfMsgBox No
+        Return
+    }
+    if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
+        cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
+        SendLog(LOG_LEVEL_INFO, "Running worldBopper9000x.py to clear worlds")
+        RunWait,%cmd%, %A_ScriptDir%\scripts ,Hide
+    } else {
+        SendLog(LOG_LEVEL_INFO, "Running slowBopper2000,ahk to clear worlds")
+        RunWait, "%A_ScriptDir%\scripts\slowBopper2000.ahk", %A_ScriptDir%
+    }
+    MsgBox, Completed World Bopping!
 }
 
-CloseInstances() {
-  MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
-  IfMsgBox No
-  Return
-  for i, instance in instances {
-    instance.CloseInstance()
-  }
-  instances := []
+CloseInstances(confirm:=true) {
+    if (confirm) {
+        MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
+        IfMsgBox No
+        Return
+    }
+    for i, instance in instances {
+        instance.CloseInstance()
+    }
+    instances := []
 }
 
 LaunchInstances() {
-  MsgBox, 4, Launch Instances?, Launch all of your instances?
-  IfMsgBox No
-  Return
-  Run, "%A_ScriptDir%\utils\startup.ahk", %A_ScriptDir%
+    MsgBox, 4, Launch Instances?, Launch all of your instances?
+    IfMsgBox No
+    Return
+    Run, "%A_ScriptDir%\utils\startup.ahk", %A_ScriptDir%
 }
 
 GetLineCount(file) {
