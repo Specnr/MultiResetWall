@@ -57,7 +57,7 @@ GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
         return true
     }
   
-    if (this.GetLocked() && !bypassLock) {
+    if (this.locked && !bypassLock) {
         return false
     }
   
@@ -69,7 +69,7 @@ GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
         return false
     }
   
-    if (this.GetPlaying()) {
+    if (this.playing) {
         return false
     }
   
