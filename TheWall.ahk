@@ -1,5 +1,5 @@
 ; A Wall-Style Multi-Instance macro for Minecraft
-; By Specnr
+; By Specnr and Machliah
 
 #NoEnv
 #Persistent
