@@ -59,7 +59,7 @@ class Instance {
     }
 
     Switch(special:=false) {
-        if (!this.GetLocked()) {
+        if (!this.locked) {
             this.Lock(false, false)
         }
 
@@ -115,7 +115,7 @@ class Instance {
         
         this.LockOBS()
         
-        this.SetLocked(true)
+        this.locked := true
         
         if affinityChange
             this.window.SetAffinity(lockBitMask)
@@ -128,7 +128,7 @@ class Instance {
         
         this.UnlockOBS()
         
-        this.SetLocked(false)
+        this.locked := false
         
         UnlockSound(sound)
     }
