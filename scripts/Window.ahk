@@ -8,6 +8,8 @@ Class Window {
         this.hwnd := this.GetHwnd()
 
         this.VerifyInstance(this.idx, this.pid, this.mcDir)
+
+        this.PrepareWindow()
     }
 
     GetHwnd() {
@@ -93,10 +95,10 @@ Class Window {
     }
 
     Widen() {
-        static newHeight := Floor(A_ScreenHeight / widthMultiplier)
+        newHeight := Floor(A_ScreenHeight / widthMultiplier)
         if widthMultiplier {
             WinRestore, % Format("ahk_pid {1}", this.pid)
-            WinMove, Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
+            WinMove, % Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
         }
     }
 

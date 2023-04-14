@@ -28,12 +28,10 @@ class Instance {
         DetectHiddenWindows, Off
 
         this.window := New this.Window(this.idx, this.pid, this.mcDir)
-        
-        this.window.PrepareWindow()
 
         this.window.SetAffinity(highBitMask)
         
-        SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", i))
+        SendLog(LOG_LEVEL_INFO, Format("Instance {1} ready for resetting", this.idx))
     }
 
     __Delete() {
