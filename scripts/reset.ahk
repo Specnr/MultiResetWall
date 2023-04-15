@@ -5,8 +5,10 @@
 #SingleInstance, off
 
 SetKeyDelay, 0
+SetBatchLines, -1
 
 global MSG_RESET := 0x04E20
+global MSG_KILL := 0x04E21
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
@@ -48,6 +50,7 @@ FileDelete, %killFile%
 SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
 
 OnMessage(MSG_RESET, "Reset")
+OnMessage(MSG_KILL, "Kill")
 
 Reset() {
     if ((state == "resetting" && mode != "C") || state == "kill" || FileExist(killFile)) {
@@ -72,6 +75,12 @@ Reset() {
             send {%obsResetMediaKey% up}
         }
     }
+}
+
+Kill() {
+    Critical, On
+    SetAffinity(pid, GetBitMask(THREAD_COUNT))
+    ExitApp
 }
 
 ManageReset() {

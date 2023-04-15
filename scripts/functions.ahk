@@ -38,7 +38,7 @@ CountAttempt() {
     dailyFile := FileOpen(dailyAttemptsFile, "rw -rw")
     
     if (!IsObject(overallFile) || !IsObject(dailyFile)) {
-        SetTimer, CountAttempt, -10
+        SetTimer, CountAttempt, -100
         return
     }
     
@@ -375,7 +375,7 @@ GetAllPIDs() {
     ;   }
     ; }
     
-    if (!rawPIDs) {
+    if (!rawPIDs.Length()) {
         LaunchInstances()
     }
     

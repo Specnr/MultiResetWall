@@ -11,12 +11,14 @@
 SetKeyDelay, 0
 SetWinDelay, 1
 SetTitleMatchMode, 2
+SetBatchLines, -1
 Thread, NoTimers , True
 
 EnvGet, THREAD_COUNT, NUMBER_OF_PROCESSORS
 EnvGet, USER_PROFILE, USERPROFILE
 
 global MSG_RESET := 0x04E20
+global MSG_KILL := 0x04E21
 global LOG_LEVEL_INFO := "INFO"
 global LOG_LEVEL_WARNING := "WARN"
 global LOG_LEVEL_ERROR := "ERR"
