@@ -56,22 +56,22 @@ GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
     if (force) {
         return true
     }
-  
+    
     if (this.locked && !bypassLock) {
         return false
     }
-  
+    
     if (this.GetHeld()) {
         return false
     }
-
+    
     if (this.GetPreviewTime() < spawnProtection + extraProt) {
         return false
     }
-  
+    
     if (this.playing) {
         return false
     }
-  
+    
     return true
 }
