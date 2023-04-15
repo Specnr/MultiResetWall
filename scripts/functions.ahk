@@ -1,3 +1,9 @@
+test(param1, param2) {
+    msg := param1 == "1" ? "preview found" : "instance loaded"
+    time := param2
+    MsgBox,,, % Format("{1} at {2}", msg, time)
+}
+
 SendLog(logLevel, logMsg) {
     timeStamp := A_TickCount
     macroLogFile := FileOpen("data/log.log", "a -rwd")

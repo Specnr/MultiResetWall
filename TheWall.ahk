@@ -16,9 +16,14 @@ Thread, NoTimers , True
 
 EnvGet, THREAD_COUNT, NUMBER_OF_PROCESSORS
 EnvGet, USER_PROFILE, USERPROFILE
+DetectHiddenWindows, On
+WinGet, scriptPID, PID, %A_ScriptFullPath% - AutoHotkey v
+DetectHiddenWindows, Off
+global mainPID := scriptPID
 
 global MSG_RESET := 0x04E20
 global MSG_KILL := 0x04E21
+global MSG_TEST := 0x04E22
 global LOG_LEVEL_INFO := "INFO"
 global LOG_LEVEL_WARNING := "WARN"
 global LOG_LEVEL_ERROR := "ERR"
@@ -42,6 +47,8 @@ global instances := []
 FileDelete, data/log.log
 
 SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.2")
+
+OnMessage(MSG_TEST, "test")
 
 CheckAHKVersion()
 

@@ -160,8 +160,8 @@ class Instance {
     }
     
     LaunchResetManager() {
-        SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4}", this.idx, this.pid, this.doubleCheckUnexpectedLoads, this.mcDir))
-        Run, % Format("""{1}`\scripts`\reset.ahk"" {2} {3} {4} ""{5}", A_ScriptDir, this.idx, this.pid, this.doubleCheckUnexpectedLoads, this.mcDir), %A_ScriptDir%,, rmPID
+        SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5}", this.idx, this.pid, this.doubleCheckUnexpectedLoads, mainPID, this.mcDir))
+        Run, % Format("""{1}`\scripts`\reset.ahk"" {2} {3} {4} {5} ""{6}", A_ScriptDir, this.idx, this.pid, this.doubleCheckUnexpectedLoads, mainPID, this.mcDir), %A_ScriptDir%,, rmPID
         this.rmPID := rmPID
         DetectHiddenWindows, On
         WinWait, % Format("ahk_pid {1}", this.rmPID)

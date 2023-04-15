@@ -9,14 +9,18 @@ SetBatchLines, -1
 
 global MSG_RESET := 0x04E20
 global MSG_KILL := 0x04E21
+global MSG_TEST := 0x04E22
 global LOG_LEVEL_INFO = "INFO"
 global LOG_LEVEL_WARNING = "WARN"
 global LOG_LEVEL_ERROR = "ERR"
+global PREVIEW_FOUND := 1
+global INSTANCE_LOADED := 2
 
 global idx := A_Args[1]
 global pid := A_Args[2]
 global doubleCheckUnexpectedLoads := A_Args[3]
-global mcDir := A_Args[4]
+global mainPID := A_Args[4]
+global mcDir := A_Args[5]
 
 global logFile := Format("{1}logs\latest.log", mcDir)
 global idleFile := Format("{1}idle.tmp", mcDir)
@@ -107,6 +111,9 @@ ManageReset() {
                 FileDelete, %previewFile%
                 FileAppend, %A_TickCount%, %previewFile%
                 SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
+                DetectHiddenWindows, On
+                PostMessage, MSG_TEST, PREVIEW_FOUND, A_TickCount,, % Format("ahk_pid {1}", mainPID)
+                DetectHiddenWindows, Off
                 SetTimer, ManageThisAffinity, -%previewBurstLength% ; turn down previewBurstLength after preview detected
                 Continue 2
             } else if (state != "idle" && InStr(A_LoopReadLine, "advancements") && !InStr(A_LoopReadLine, "927 advancements")) {
@@ -124,6 +131,9 @@ ManageReset() {
                     SetTimer, ManageReset, -%resetManagementLoopDelay%
                 } else {
                     SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
+                    DetectHiddenWindows, On
+                    PostMessage, MSG_TEST, INSTANCE_LOADED, A_TickCount,, % Format("ahk_pid {1}", mainPID)
+                    DetectHiddenWindows, Off
                     state := "idle"
                     FileRead, activeInstance, data/instance.txt
                     if (idx == activeInstance || !activeInstance)
