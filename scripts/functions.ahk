@@ -280,14 +280,16 @@ GetMcDir(pid) {
 GetRawInstanceNumberFromMcDir(mcDir) {
     cfg := Format("{1}instance.cfg", SubStr(mcDir, 1, StrLen(mcDir) - 11))
     total := 0
-    loop, Read, %cfg% {
+    loop, Read, %cfg%
+    {
         if (!InStr(A_LoopReadLine, "name=")) {
             Continue
         }
         
         pos := 1
-        While pos := RegExMatch(A_LoopReadLine, "\d+", number, pos + StrLen(number))
+        While pos := RegExMatch(A_LoopReadLine, "\d+", number, pos + StrLen(number)) {
             total += number
+        }
     }
     return total
 }
@@ -410,8 +412,8 @@ CreateInstanceArray() {
     }
     
     Critical, On
-    for i, mcDir in rawNumMcDirs {
-        instances.Push(new Instance(i, GetPIDFromMcDir(mcDir), mcDir))
+    for idx, mcDir in rawNumMcDirs {
+        instances.Push(new Instance(idx, GetPIDFromMcDir(mcDir), mcDir))
     }
     Critical, Off
     
