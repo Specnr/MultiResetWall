@@ -38,6 +38,24 @@ Shutdown(ExitReason, ExitCode) {
     return
 }
 
+GetScriptPID() {
+    DetectHiddenWindows, On
+    WinGet, scriptPID, PID, %A_ScriptFullPath% - AutoHotkey v
+    DetectHiddenWindows, Off
+    return scriptPID
+}
+
+AssignResetManagerPID(idx, rmPID) {
+    ; MsgBox,,, % Format("{1} instance rm pid is {2}", idx, rmPID)
+    SendLog(LOG_LEVEL_INFO, Format("Set instance {1} rmPID to {2}", idx, rmPID))
+    instances[idx].SetRMPID(rmPID)
+    ; instances[idx].SetRMPID(rmPID)
+}
+
+ConfirmRM(idx) {
+    instances[idx].rmLaunched := true
+}
+
 ; File safe function to increment overallAttemptsFile and dailyAttemptsFile each by 1
 CountAttempt() {
     overallFile := FileOpen(overallAttemptsFile, "rw -rw")
@@ -259,16 +277,17 @@ GetMcDir(pid) {
     }
 }
 
-GetRawInstanceNumberFromMcDir(mcdir) {
-    cfg := SubStr(mcdir, 1, StrLen(mcdir) - 11) . "instance.cfg"
-    loop, Read, %cfg%
-    {
-        if (InStr(A_LoopReadLine, "name=")) {
-            Pos := 1
-            total := 0
-            While Pos := RegExMatch(A_LoopReadLine, "\d+", m, Pos + StrLen(m))
-                total += m
+GetRawInstanceNumberFromMcDir(mcDir) {
+    cfg := Format("{1}instance.cfg", SubStr(mcDir, 1, StrLen(mcDir) - 11))
+    total := 0
+    loop, Read, %cfg% {
+        if (!InStr(A_LoopReadLine, "name=")) {
+            Continue
         }
+        
+        pos := 1
+        While pos := RegExMatch(A_LoopReadLine, "\d+", number, pos + StrLen(number))
+            total += number
     }
     return total
 }
@@ -302,17 +321,15 @@ GetPIDFromMcDir(mcdir) {
     return -1
 }
 
-GetInstanceTotal() {
-    idx := 1
+GetRawPIDs() {
     rawPIDs := []
     WinGet, all, list
     Loop, %all%
     {
-        WinGet, pid, PID, % "ahk_id " all%A_Index%
-        WinGetTitle, title, ahk_pid %pid%
+        WinGet, pid, PID, % Format("ahk_id {1}", all%A_Index%)
+        WinGetTitle, title, % Format("ahk_pid {1}", pid)
         if (InStr(title, "Minecraft*")) {
-            rawPIDs[idx] := pid
-            idx += 1
+            rawPIDs.Push(pid)
         }
     }
     return rawPIDs
@@ -338,9 +355,9 @@ GetMcDirFromFile(idx) {
     }
 }
 
-GetAllPIDs() {
-    SendLog(LOG_LEVEL_INFO, "Getting all Minecraft directory and PID data")
-    rawPIDs := GetInstanceTotal()
+CreateInstanceArray() {
+    SendLog(LOG_LEVEL_INFO, "Populating Minecraft instance data")
+    rawPIDs := GetRawPIDs()
     ; if !instances {
     ;   MsgBox, No open instances detected.
     ;   SendLog(LOG_LEVEL_WARNING, "No open instances detected, and make sure that fabric is installed.")
@@ -385,15 +402,18 @@ GetAllPIDs() {
         LaunchInstances()
     }
     
-    rawNumToMcDir := {}
+    rawNumMcDirs := {}
     for i, rawPID in rawPIDs {
         mcDir := GetMcDir(rawPID)
         rawNum := GetRawInstanceNumberFromMcDir(mcDir)
-        rawNumToMcDir[rawNum] := mcDir
+        rawNumMcDirs[rawNum] := mcDir
     }
-    for i, mcDir in rawNumToMcDir {
+    
+    Critical, On
+    for i, mcDir in rawNumMcDirs {
         instances.Push(new Instance(i, GetPIDFromMcDir(mcDir), mcDir))
     }
+    Critical, Off
     
     ; Loop, %instances% {
     ;   mcdir := GetMcDir(rawPIDs[A_Index])

@@ -98,7 +98,7 @@ class Instance {
         
         this.window.Widen()
         
-        this.window.SendBack()
+        this.window.SendToBack()
         
         this.playing := false
     }
@@ -147,6 +147,10 @@ class Instance {
     }
     
     SendReset() {
+        if (!this.rmPID) {
+            return
+        }
+        
         this.window.SendResetInput()
         
         DetectHiddenWindows, On
@@ -161,11 +165,12 @@ class Instance {
     
     LaunchResetManager() {
         SendLog(LOG_LEVEL_INFO, Format("Running a reset manager: {1} {2} {3} {4} {5}", this.idx, this.pid, this.doubleCheckUnexpectedLoads, mainPID, this.mcDir))
-        Run, % Format("""{1}`\scripts`\reset.ahk"" {2} {3} {4} {5} ""{6}", A_ScriptDir, this.idx, this.pid, this.doubleCheckUnexpectedLoads, mainPID, this.mcDir), %A_ScriptDir%,, rmPID
-        this.rmPID := rmPID
-        DetectHiddenWindows, On
-        WinWait, % Format("ahk_pid {1}", this.rmPID)
-        DetectHiddenWindows, Off
+        Run, % Format("""{1}`\scripts`\reset.ahk"" {2} {3} {4} {5} ""{6}", A_ScriptDir, this.idx, this.pid, this.doubleCheckUnexpectedLoads, mainPID, this.mcDir), %A_ScriptDir%
+        ; Run, % Format("""{1}`\scripts`\reset.ahk"" {2} {3} {4} {5} ""{6}", A_ScriptDir, this.idx, this.pid, this.doubleCheckUnexpectedLoads, mainPID, this.mcDir), %A_ScriptDir%,, rmPID
+        ; this.rmPID := rmPID
+        ; DetectHiddenWindows, On
+        ; WinWait, % Format("ahk_pid {1}", this.rmPID)
+        ; DetectHiddenWindows, Off
     }
     
     KillResetManager() {

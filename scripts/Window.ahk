@@ -102,7 +102,7 @@ Class Window {
         }
     }
     
-    SendBack() {
+    SendToBack() {
         Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
     }
     

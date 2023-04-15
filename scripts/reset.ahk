@@ -2,25 +2,18 @@
 #NoTrayIcon
 #Include settings-Mach.ahk
 #Include %A_ScriptDir%\functions.ahk
+#Include %A_ScriptDir%\GlobalConstants.ahk
 #SingleInstance, off
 
 SetKeyDelay, 0
 SetBatchLines, -1
-
-global MSG_RESET := 0x04E20
-global MSG_KILL := 0x04E21
-global MSG_TEST := 0x04E22
-global LOG_LEVEL_INFO = "INFO"
-global LOG_LEVEL_WARNING = "WARN"
-global LOG_LEVEL_ERROR = "ERR"
-global PREVIEW_FOUND := 1
-global INSTANCE_LOADED := 2
 
 global idx := A_Args[1]
 global pid := A_Args[2]
 global doubleCheckUnexpectedLoads := A_Args[3]
 global mainPID := A_Args[4]
 global mcDir := A_Args[5]
+global rmPID := GetScriptPID()
 
 global logFile := Format("{1}logs\latest.log", mcDir)
 global idleFile := Format("{1}idle.tmp", mcDir)
@@ -29,7 +22,6 @@ global previewFile := Format("{1}preview.tmp", mcDir)
 global lockFile := Format("{1}lock.tmp", mcDir)
 global killFile := Format("{1}kill.tmp", mcDir)
 
-EnvGet, THREAD_COUNT, NUMBER_OF_PROCESSORS
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : THREAD_COUNT ; total threads unless override
 global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : THREAD_COUNT ; total threads unless override
 global highThreads := highThreadsOverride > 0 ? highThreadsOverride : affinityType != "N" ? Ceil(THREAD_COUNT * 0.95) : THREAD_COUNT ; 95% or 2 less than max threads, whichever is higher unless override or none
@@ -53,8 +45,16 @@ FileDelete, %holdFile%
 FileDelete, %killFile%
 SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, killFile, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
 
+DetectHiddenWindows, On
+; PostMessage, MSG_CONFIRM_RM, idx,,, % Format("ahk_pid {1}", mainPID)
+; PostMessage, MSG_TEST, PREVIEW_FOUND, A_TickCount,, % Format("ahk_pid {1}", mainPID)
+PostMessage, MSG_ASSIGN_RMPID, idx, rmPID,, % Format("ahk_pid {1}", mainPID)
+DetectHiddenWindows, Off
+
 OnMessage(MSG_RESET, "Reset")
 OnMessage(MSG_KILL, "Kill")
+
+SetTimer, CheckMain, 5000
 
 Reset() {
     if ((state == "resetting" && mode != "C") || state == "kill" || FileExist(killFile)) {
@@ -112,7 +112,7 @@ ManageReset() {
                 FileAppend, %A_TickCount%, %previewFile%
                 SendLog(LOG_LEVEL_INFO, Format("Instance {1} found preview on log line: {2}", idx, A_Index))
                 DetectHiddenWindows, On
-                PostMessage, MSG_TEST, PREVIEW_FOUND, A_TickCount,, % Format("ahk_pid {1}", mainPID)
+                ; PostMessage, MSG_TEST, PREVIEW_FOUND, A_TickCount,, % Format("ahk_pid {1}", mainPID)
                 DetectHiddenWindows, Off
                 SetTimer, ManageThisAffinity, -%previewBurstLength% ; turn down previewBurstLength after preview detected
                 Continue 2
@@ -132,7 +132,7 @@ ManageReset() {
                 } else {
                     SendLog(LOG_LEVEL_INFO, Format("Instance {1} found save on log line: {2}", idx, A_Index))
                     DetectHiddenWindows, On
-                    PostMessage, MSG_TEST, INSTANCE_LOADED, A_TickCount,, % Format("ahk_pid {1}", mainPID)
+                    ; PostMessage, MSG_TEST, INSTANCE_LOADED, A_TickCount,, % Format("ahk_pid {1}", mainPID)
                     DetectHiddenWindows, Off
                     state := "idle"
                     FileRead, activeInstance, data/instance.txt
@@ -198,4 +198,13 @@ Pause() {
     if (state == "kill" || state == "resetting")
         return
     ControlSend,, {Blind}{F3 Down}{Esc}{F3 Up}, ahk_pid %pid%
+}
+
+CheckMain() {
+    DetectHiddenWindows, On
+    if (!WinExist(Format("ahk_pid {1}", mainPID))) {
+        SendLog(LOG_LEVEL_INFO, Format("rm {1} didnt find {2}, killing", idx, mainPID))
+        Kill()
+    }
+    DetectHiddenWindows, Off
 }

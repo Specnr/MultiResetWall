@@ -53,6 +53,10 @@ GetCanPlay() {
 
 GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
     
+    if (!this.rmPID) {
+        return false
+    }
+    
     if (force) {
         return true
     }

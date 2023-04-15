@@ -6,6 +6,7 @@
 #SingleInstance Force
 #Include %A_ScriptDir%\scripts\functions.ahk
 #Include %A_ScriptDir%\scripts\Instance.ahk
+#Include %A_ScriptDir%\scripts\GlobalConstants.ahk
 #Include settings-Mach.ahk
 
 SetKeyDelay, 0
@@ -13,20 +14,6 @@ SetWinDelay, 1
 SetTitleMatchMode, 2
 SetBatchLines, -1
 Thread, NoTimers , True
-
-EnvGet, THREAD_COUNT, NUMBER_OF_PROCESSORS
-EnvGet, USER_PROFILE, USERPROFILE
-DetectHiddenWindows, On
-WinGet, scriptPID, PID, %A_ScriptFullPath% - AutoHotkey v
-DetectHiddenWindows, Off
-global mainPID := scriptPID
-
-global MSG_RESET := 0x04E20
-global MSG_KILL := 0x04E21
-global MSG_TEST := 0x04E22
-global LOG_LEVEL_INFO := "INFO"
-global LOG_LEVEL_WARNING := "WARN"
-global LOG_LEVEL_ERROR := "ERR"
 
 global playThreads := playThreadsOverride > 0 ? playThreadsOverride : THREAD_COUNT ; total threads unless override
 global lockThreads := lockThreadsOverride > 0 ? lockThreadsOverride : THREAD_COUNT ; total threads unless override
@@ -43,16 +30,19 @@ global lowBitMask := GetBitMask(lowThreads)
 global bgLoadBitMask := GetBitMask(bgLoadThreads)
 
 global instances := []
+global mainPID := GetScriptPID()
 
 FileDelete, data/log.log
 
 SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.2")
 
+OnMessage(MSG_CONFIRM_RM, "ConfirmRM")
+OnMessage(MSG_ASSIGN_RMPID, "AssignResetManagerPID")
 OnMessage(MSG_TEST, "test")
 
 CheckAHKVersion()
 
-GetAllPIDs()
+CreateInstanceArray()
 
 SetTheme(theme)
 
