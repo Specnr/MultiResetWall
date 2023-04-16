@@ -4,6 +4,12 @@ test(param1, param2) {
     MsgBox,,, % Format("{1} at {2}", msg, time)
 }
 
+bwuaaa(param1, param2) {
+    length := NumGet(param1,, UInt)
+    mcDir := StrGet(param2, length)
+    MsgBox,,, idx is %idx% directory is %mcDir%
+}
+
 SendLog(logLevel, logMsg) {
     timeStamp := A_TickCount
     macroLogFile := FileOpen("data/log.log", "a -rwd")
@@ -46,7 +52,6 @@ GetScriptPID() {
 }
 
 AssignResetManagerPID(idx, rmPID) {
-    ; MsgBox,,, % Format("{1} instance rm pid is {2}", idx, rmPID)
     SendLog(LOG_LEVEL_INFO, Format("Set instance {1} rmPID to {2}", idx, rmPID))
     instances[idx].SetRMPID(rmPID)
     ; instances[idx].SetRMPID(rmPID)

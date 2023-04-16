@@ -48,6 +48,7 @@ SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} 
 DetectHiddenWindows, On
 ; PostMessage, MSG_CONFIRM_RM, idx,,, % Format("ahk_pid {1}", mainPID)
 ; PostMessage, MSG_TEST, PREVIEW_FOUND, A_TickCount,, % Format("ahk_pid {1}", mainPID)
+; PostMessage, MSG_TEST_RESET, StrLen(mcDir), &mcDir,, % Format("ahk_pid {1}", mainPID)
 PostMessage, MSG_ASSIGN_RMPID, idx, rmPID,, % Format("ahk_pid {1}", mainPID)
 DetectHiddenWindows, Off
 
@@ -62,6 +63,7 @@ Reset() {
         SendLog(LOG_LEVEL_INFO, Format("Instance {1} discarding reset management, state: {2}", idx, state))
         return
     }
+    ; ControlSend, ahk_parent, {Blind}{Home}, % Format("ahk_pid {1}", pid)
     state := "kill"
     previewLoaded := false
     covered := true

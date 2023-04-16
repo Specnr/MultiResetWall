@@ -39,6 +39,7 @@ SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.2")
 OnMessage(MSG_CONFIRM_RM, "ConfirmRM")
 OnMessage(MSG_ASSIGN_RMPID, "AssignResetManagerPID")
 OnMessage(MSG_TEST, "test")
+; OnMessage(MSG_TEST_RESET, "bwuaaa")
 
 CheckAHKVersion()
 
