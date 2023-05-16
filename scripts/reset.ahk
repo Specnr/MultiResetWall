@@ -15,7 +15,6 @@ global mainPID := A_Args[4]
 global mcDir := A_Args[5]
 global rmPID := GetScriptPID()
 
-global logFile := Format("{1}logs\latest.log", mcDir)
 global idleFile := Format("{1}idle.tmp", mcDir)
 global holdFile := Format("{1}hold.tmp", mcDir)
 global previewFile := Format("{1}preview.tmp", mcDir)
@@ -38,12 +37,11 @@ global bgLoadBitMask := GetBitMask(bgLoadThreads)
 
 global covered := false
 global state := "unknown"
-global lastImportantLine := GetLineCount(logFile)
 global previewLoaded := true
 
 FileDelete, %holdFile%
 FileDelete, %killFile%
-SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}", idx, pid, logFile, idleFile, holdFile, previewFile, lockFile, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
+SendLog(LOG_LEVEL_INFO, Format("Instance {1} reset manager started: {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}", idx, pid, idleFile, holdFile, previewFile, lockFile, playBitMask, lockBitMask, highBitMask, midBitMask, lowBitMask, bgLoadBitMask, doubleCheckUnexpectedLoads))
 
 DetectHiddenWindows, On
 ; PostMessage, MSG_CONFIRM_RM, idx,,, % Format("ahk_pid {1}", mainPID)
