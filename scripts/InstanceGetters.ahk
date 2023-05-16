@@ -44,38 +44,31 @@ GetPreviewTime() {
 }
 
 GetCanPlay() {
-    if (this.GetIdle() || mode == "C") {
+    if (this.GetIdle() || mode == "C")
         return true
-    }
-    
+
     return false
 }
 
 GetCanReset(bypassLock:=true, extraProt:=0, force:=false) {
-    
-    if (!this.rmPID) {
+
+    if (!this.rmPID)
         return false
-    }
-    
-    if (force) {
+
+    if (force)
         return true
-    }
-    
-    if (this.locked && !bypassLock) {
+
+    if (this.locked && !bypassLock)
         return false
-    }
-    
-    if (this.GetHeld()) {
+
+    if (this.GetHeld())
         return false
-    }
-    
-    if (this.GetPreviewTime() < spawnProtection + extraProt) {
+
+    if (this.GetPreviewTime() < spawnProtection + extraProt)
         return false
-    }
-    
-    if (this.playing) {
+
+    if (this.playing)
         return false
-    }
-    
+
     return true
 }

@@ -7,7 +7,7 @@
 #Include %A_ScriptDir%\scripts\functions.ahk
 #Include %A_ScriptDir%\scripts\Instance.ahk
 #Include %A_ScriptDir%\scripts\GlobalConstants.ahk
-#Include settings-Mach.ahk
+#Include settings.ahk
 
 SetKeyDelay, 0
 SetWinDelay, 1
@@ -38,8 +38,6 @@ SendLog(LOG_LEVEL_INFO, "Starting MultiResetWall v1.2")
 
 OnMessage(MSG_CONFIRM_RM, "ConfirmRM")
 OnMessage(MSG_ASSIGN_RMPID, "AssignResetManagerPID")
-OnMessage(MSG_TEST, "test")
-; OnMessage(MSG_TEST_RESET, "bwuaaa")
 
 CheckAHKVersion()
 
@@ -64,8 +62,8 @@ ToWall(0)
 FileAppend,,data/macro.reload
 SendLog(LOG_LEVEL_INFO, "Wall setup done")
 if (!disableTTS)
-    ComObjCreate("SAPI.SpVoice").Speak("Ready")
+  ComObjCreate("SAPI.SpVoice").Speak(readyTTS)
 
 OnExit("Shutdown")
 
-#Include hotkeys-Mach.ahk
+#Include hotkeys.ahk

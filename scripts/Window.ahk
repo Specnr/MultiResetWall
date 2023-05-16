@@ -6,17 +6,17 @@ Class Window {
         this.f1State := 0
         this.unpauseOnSwitch := true
         this.hwnd := this.GetHwnd()
-        
+
         this.VerifyInstance(this.idx, this.pid, this.mcDir)
-        
+
         this.PrepareWindow()
     }
-    
+
     GetHwnd() {
         WinGet, hwnd, ID, % Format("ahk_pid {1}", this.pid)
         return StrReplace(hwnd, "ffffffff")
     }
-    
+
     PrepareWindow() {
         WinGetTitle, winTitle, % Format("ahk_pid {1}", this.pid)
         if !InStr(winTitle, " - ") {
@@ -32,18 +32,18 @@ Class Window {
         }
         this.Widen()
         WinSet, AlwaysOnTop, Off, % Format("ahk_pid {1}", this.pid)
-        
+
         this.SetTitle()
     }
-    
+
     SendResetInput() {
         ControlSend, ahk_parent, % Format("{Blind}{{1}}{{2}}", this.lpKey, this.resetKey), % Format("ahk_pid {1}", this.pid)
         CountAttempt()
     }
-    
+
     SwitchTo() {
         WinMinimize, % Format("ahk_id {1}", GetProjectorID())
-        
+
         foreGroundWindow := DllCall("GetForegroundWindow")
         windowThreadProcessId := DllCall("GetWindowThreadProcessId", "uint", foreGroundWindow, "uint", 0)
         currentThreadId := DllCall("GetCurrentThreadId")
@@ -53,12 +53,12 @@ Class Window {
         DllCall("SetForegroundWindow", "uint",this.hwnd) ; Probably only important in windowed, helps application take input without a Send Click
         DllCall("BringWindowToTop", "uint", this.hwnd)
         DllCall("AttachThreadInput", "uint", windowThreadProcessId, "uint", currentThreadId, "int", 0)
-        
+
         if (windowMode == "F") {
             this.ToggleFullscreen(true)
         }
     }
-    
+
     JoinInstance(special:=false) {
         ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
         if (this.f1State == 2)
@@ -70,7 +70,7 @@ Class Window {
         if (!this.unpauseOnSwitch)
             ControlSend,, {Blind}{Esc}, % Format("ahk_pid {1}", this.pid)
     }
-    
+
     OnJoinSettingsChange() {
         rdPresses := renderDistance - 2
         ControlSend,, {Blind}{Shift down}{F3 down}{f 30}{Shift up}{f %rdPresses%}{F3 up}, % Format("ahk_pid {1}", this.pid)
@@ -82,18 +82,18 @@ Class Window {
         entityPresses := (5 - (entityDistance*.01)) * 143 / 4.5
         ControlSend,, {Blind}{F3 down}{d}{F3 up}{Esc}{Tab 6}{Enter}{Tab 1}{Right 150}{Left %FOVPresses%}{Tab 5}{Enter}{Tab 17}{Right 150}{Left %entityPresses%}{Esc 2}, % Format("ahk_pid {1}", this.pid)
     }
-    
+
     GhostPie() {
         if this.f1State
             ControlSend,, {Blind}{F1}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
         else
             ControlSend,, {Blind}{F3}{Esc 3}, % Format("ahk_pid {1}", this.pid)
     }
-    
+
     Restore() {
         WinRestore, % Format("ahk_pid {1}", this.pid)
     }
-    
+
     Widen() {
         newHeight := Floor(A_ScreenHeight / widthMultiplier)
         if widthMultiplier {
@@ -101,28 +101,29 @@ Class Window {
             WinMove, % Format("ahk_pid {1}", this.pid),,0,0,%A_ScreenWidth%,%newHeight%
         }
     }
-    
+
     SendToBack() {
         Winset, Bottom,, % Format("ahk_pid {1}", this.pid)
     }
-    
-    ToggleFullscreen(toggle) {
-        if (CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") != toggle) {
+
+    ToggleFullscreen(switching) {
+        isFs := CheckOptionsForValue(this.mcDir . "options.txt", "fullscreen:", "false") == "true"
+        if (switching || (isFs && !switching)) {
             ControlSend, ahk_parent, % Format("{Blind}{{1}}", this.fsKey), % Format("ahk_pid {1}", this.pid)
             sleep, %fullscreenDelay%
         }
     }
-    
+
     SetAffinity(mask) {
         hProc := DllCall("OpenProcess", "UInt", 0x0200, "Int", false, "UInt", this.pid, "Ptr")
         DllCall("SetProcessAffinityMask", "Ptr", hProc, "Ptr", mask)
         DllCall("CloseHandle", "Ptr", hProc)
     }
-    
+
     SetTitle() {
         WinSetTitle, % Format("ahk_pid {1}", this.pid), , % Format("Minecraft* - Instance {1}", this.idx)
     }
-    
+
     VerifyInstance(idx, pid, mcDir) {
         moddir := mcDir . "mods\"
         optionsFile := mcDir . "options.txt"
@@ -204,7 +205,7 @@ Class Window {
             if (windowMode == "F") {
                 if (InStr(settings, "key_key.fullscreen:key.keyboard.unknown")) {
                     MsgBox, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Please set it in your hotkeys and THEN press OK to continue
-                    SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile))
+                        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Fullscreen key set. User was informed. (In file: {2})", idx, optionsFile))
                 }
                 this.fsKey := CheckOptionsForValue(optionsFile, "key_key.fullscreen", "F11")
                 fsKeys[idx] := fsKey
@@ -235,7 +236,7 @@ Class Window {
                     Loop, 1 {
                         MsgBox, 4, Create New World Key, Instance %idx% has no Create New World hotkey set. Would you like to set this back to default (F6)?`n(In file: %standardSettingsFile%)
                         IfMsgBox No
-                            break
+                        break
                         ssettings := StrReplace(ssettings, "key_Create New World:key.keyboard.unknown", "key_Create New World:key.keyboard.f6")
                         resetKeys[idx] := "F6"
                         SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Create New World key set and chose to let it be automatically set to f6. (In file: {2})", idx, standardSettingsFile))
@@ -259,7 +260,7 @@ Class Window {
                     resetKeys[idx] := "F6"
                 } else if (InStr(settings, "key_Create New World:key.keyboard.unknown") && atum) {
                     MsgBox, Instance %idx% has no required hotkey set for Create New World. Please set it in your hotkeys and THEN press OK to continue
-                    SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile))
+                        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Create New World key set. User was informed. (In file: {2})", idx, optionsFile))
                     if (this.resetKey := CheckOptionsForValue(optionsFile, "key_Create New World", "F6")) {
                         resetKeys[idx] := resetKey
                         SendLog(LOG_LEVEL_INFO, Format("Found reset key: {1} for instance {2} from {3}", resetKey, idx, optionsFile))
@@ -290,7 +291,7 @@ Class Window {
                     Loop, 1 {
                         MsgBox, 4, Leave Preview Key, Instance %idx% has no Leave Preview hotkey set. Would you like to set this back to default (h)?`n(In file: %standardSettingsFile%)
                         IfMsgBox No
-                            break
+                        break
                         ssettings := StrReplace(ssettings, "key_Leave Preview:key.keyboard.unknown", "key_Leave Preview:key.keyboard.h")
                         this.lpKeys[idx] := "h"
                         SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Leave Preview key set and chose to let it be automatically set to 'h'. (In file: {2})", idx, standardSettingsFile))
@@ -314,7 +315,7 @@ Class Window {
                     lpKeys[idx] := "h"
                 } else if (InStr(settings, "key_Leave Preview:key.keyboard.unknown") && wp) {
                     MsgBox, Instance %idx% has no recommended hotkey set for Leave Preview. Please set it in your hotkeys and THEN press OK to continue
-                    SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile))
+                        SendLog(LOG_LEVEL_ERROR, Format("Instance {1} had no Leave Preview key set. User was informed. (In file: {2})", idx, optionsFile))
                     if (this.lpKey := CheckOptionsForValue(optionsFile, "key_Leave Preview", "h")) {
                         resetKeys[idx] := resetKey
                         SendLog(LOG_LEVEL_INFO, Format("Found Leave Preview key: {1} for instance {2} from {3}", lpKey, idx, optionsFile))
@@ -344,8 +345,8 @@ Class Window {
                 if (InStr(ssettings, "key_key.fullscreen:key.keyboard.unknown") && windowMode == "F") {
                     Loop, 1 {
                         MsgBox, 4, Fullscreen Key, Instance %idx% missing required hotkey for fullscreen mode: Fullscreen. Would you like to set this back to default (f11)?`n(In file: %standardSettingsFile%)
-                        IfMsgBox No
-                            break
+                            IfMsgBox No
+                        break
                         ssettings := StrReplace(ssettings, "key_key.fullscreen:key.keyboard.unknown", "key_key.fullscreen:key.keyboard.f11")
                         this.fsKey := "F11"
                         SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no Fullscreen key set and chose to let it be automatically set to 'f11'. (In file: {2})", idx, standardSettingsFile))
@@ -364,7 +365,7 @@ Class Window {
                     Loop, 1 {
                         MsgBox, 4, Command Key, Instance %idx% missing recommended command hotkey. Would you like to set this back to default (/)?`n(In file: %standardSettingsFile%)
                         IfMsgBox No
-                            break
+                        break
                         ssettings := StrReplace(ssettings, "key_key.command:key.keyboard.unknown", "key_key.command:key.keyboard.slash")
                         commandkeys[idx] := "/"
                         SendLog(LOG_LEVEL_WARNING, Format("Instance {1} had no command key set and chose to let it be automatically set to '/'. (In file: {2})", idx, standardSettingsFile))

@@ -1,15 +1,3 @@
-test(param1, param2) {
-    msg := param1 == "1" ? "preview found" : "instance loaded"
-    time := param2
-    MsgBox,,, % Format("{1} at {2}", msg, time)
-}
-
-bwuaaa(param1, param2) {
-    length := NumGet(param1,, UInt)
-    mcDir := StrGet(param2, length)
-    MsgBox,,, idx is %idx% directory is %mcDir%
-}
-
 SendLog(logLevel, logMsg) {
     timeStamp := A_TickCount
     macroLogFile := FileOpen("data/log.log", "a -rwd")
@@ -26,16 +14,16 @@ Shutdown(ExitReason, ExitCode) {
     if (ExitReason == "Logoff" || ExitReason == "Shutdown") {
         return
     }
-    
+
     if (ExitReason != "Reload") {
         MsgBox, 4, Close Instances?, Would you like to close your instances?
         IfMsgBox, Yes
-            CloseInstances(false)
+        CloseInstances(false)
         MsgBox, 4, Delete Worlds?, Would you like to delete your old worlds?
         IfMsgBox, Yes
-            WorldBop(false)
+        WorldBop(false)
     }
-    
+
     FileDelete, data/obs.txt
     DetectHiddenWindows, On
     for i, instance in instances {
@@ -65,21 +53,21 @@ ConfirmRM(idx) {
 CountAttempt() {
     overallFile := FileOpen(overallAttemptsFile, "rw -rw")
     dailyFile := FileOpen(dailyAttemptsFile, "rw -rw")
-    
+
     if (!IsObject(overallFile) || !IsObject(dailyFile)) {
         SetTimer, CountAttempt, -100
         return
     }
-    
+
     overallAttemptCount := overallFile.Read() + 1
     dailyAttemptCount := dailyFile.Read() + 1
-    
+
     overallFile.Pos := 0
     dailyFile.Pos := 0
-    
+
     overallFile.Write(overallAttemptCount)
     dailyFile.Write(dailyAttemptCount)
-    
+
     overallFile.Close()
     dailyFile.Close()
 }
@@ -185,7 +173,7 @@ GetOldestInstanceIndexOutsideGrid() {
     loop, %passiveCount% {
         idx := gridCount + lockedCount + A_Index
         inst := instancePosition[idx]
-        
+
         previewTime := GetPreviewTime(inst)
         if (!locked[inst] && previewTime != 0 && previewTime <= oldestPreviewTime){
             oldestPreviewTime := previewTime
@@ -218,7 +206,7 @@ MousePosToInstNumber() {
         return -1
     if (mode != "I")
         return (Floor(mY / instHeight) * cols) + Floor(mX / instWidth) + 1
-    
+
     lockedCount := GetLockedGridInstanceCount()
     gridCount := GetFocusGridInstanceCount(), passiveCount := GetPassiveGridInstanceCount()
     ; Inside Focus Grid
@@ -252,11 +240,11 @@ RunHide(Command) {
     WinWait, ahk_pid %cPid%
     DetectHiddenWindows, %dhw%
     DllCall("AttachConsole", "uint", cPid)
-    
+
     Shell := ComObjCreate("WScript.Shell")
     Exec := Shell.Exec(Command)
     Result := Exec.StdOut.ReadAll()
-    
+
     DllCall("FreeConsole")
     Process, Close, %cPid%
     Return Result
@@ -290,7 +278,7 @@ GetRawInstanceNumberFromMcDir(mcDir) {
         if (!InStr(A_LoopReadLine, "name=")) {
             Continue
         }
-        
+
         pos := 1
         While pos := RegExMatch(A_LoopReadLine, "\d+", number, pos + StrLen(number)) {
             total += number
@@ -365,79 +353,23 @@ GetMcDirFromFile(idx) {
 CreateInstanceArray() {
     SendLog(LOG_LEVEL_INFO, "Populating Minecraft instance data")
     rawPIDs := GetRawPIDs()
-    ; if !instances {
-    ;   MsgBox, No open instances detected.
-    ;   SendLog(LOG_LEVEL_WARNING, "No open instances detected, and make sure that fabric is installed.")
-    ;   Return
-    ; }
-    ; SendLog(LOG_LEVEL_INFO, Format("{1} Instances detected", instances))
-    ; If there are more/less instances than usual, rebuild cache
-    ; if hasMcDirCache && GetLineCount("data/mcdirs.txt") != instances {
-    ;   FileDelete,data/mcdirs.txt
-    ;   hasMcDirCache := False
-    ; }
-    ; Generate mcdir and order PIDs
-    ; if hasMcDirCache {
-    ;   Loop, %instances% {
-    ;     mcdir := GetMcDirFromFile(A_Index)
-    ;     PIDs[A_Index] := GetPIDFromMcDir(mcdir)
-    ;     ; If it already exists then theres a dupe instNum
-    ;     pastMcDir := McDirectories[A_Index]
-    ;     if (pastMcDir) {
-    ;       FileDelete,data/mcdirs.txt
-    ;       MsgBox, Instance Number %A_Index% was found twice, rename your instances correctly and relaunch.
-    ;       ExitApp
-    ;     }
-    ;     McDirectories[A_Index] := mcdir
-    ;   }
-    ; } else {
-    ;   rawNumToMcDir := {}
-    ;   Loop, %instances% {
-    ;     mcdir := GetMcDir(rawPIDs[A_Index])
-    ;     rawNum := GetRawInstanceNumberFromMcDir(mcdir)
-    ;     ; Putting them in an object like this sorts them by rawNum
-    ;     rawNumToMcDir[rawNum] := mcdir
-    ;   }
-    ;   for i, mcdir in rawNumToMcDir {
-    ;     FileAppend,%A_Index%~%mcdir%`n,data/mcdirs.txt
-    ;     PIDs[A_Index] := GetPIDFromMcDir(mcdir)
-    ;     McDirectories[A_Index] := mcdir
-    ;   }
-    ; }
-    
+
     if (!rawPIDs.Length()) {
         LaunchInstances()
     }
-    
+
     rawNumMcDirs := {}
     for i, rawPID in rawPIDs {
         mcDir := GetMcDir(rawPID)
         rawNum := GetRawInstanceNumberFromMcDir(mcDir)
         rawNumMcDirs[rawNum] := mcDir
     }
-    
+
     Critical, On
     for idx, mcDir in rawNumMcDirs {
         instances.Push(new Instance(idx, GetPIDFromMcDir(mcDir), mcDir))
     }
     Critical, Off
-    
-    ; Loop, %instances% {
-    ;   mcdir := GetMcDir(rawPIDs[A_Index])
-    ;   if (num := GetInstanceNumberFromMcDir(mcdir)) == -1
-    ;     ExitApp
-    ;   if !hasMcDirCache {
-    ;     FileAppend,%num%~%mcdir%`n,data/mcdirs.txt
-    ;     pid := rawPIDs[A_Index]
-    ;     PIDs[num] := rawPIDs[A_Index] ; TODELETE
-    ;   } else {
-    ;     pid := GetPIDFromMcDir(mcdir)
-    ;     PIDs[num] := GetPIDFromMcDir(mcdir) ; TODELETE
-    ;   }
-    ;   McDirectories[num] := mcdir
-    
-    ;   inMemoryInstances.Push(new Instance(pid,mcdir,num))
-    ; }
 }
 
 getHwndForPid(pid) {
@@ -511,9 +443,9 @@ CheckLaunchAudioGUI() {
 
 BindTrayIconFunctions() {
     Menu, Tray, Add, Delete Worlds, WorldBop
-    
+
     Menu, Tray, Add, Close Instances, CloseInstances
-    
+
     Menu, Tray, Add, Launch Instances, LaunchInstances
 }
 
@@ -521,7 +453,7 @@ CheckOBSRunLevel() {
     WinGet, obsPid, PID, OBS
     if IsProcessElevated(obsPid) {
         MsgBox, Your OBS was run as admin which may cause wall hotkeys to not work. If this happens restart OBS and launch it normally.
-        SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work")
+            SendLog(LOG_LEVEL_WARNING, "OBS was run as admin which may cause wall hotkeys to not work")
     }
 }
 
@@ -575,12 +507,12 @@ GetNextInstance(idx, nextInst) {
 ResetAll(bypassLock:=false, extraProt:=0) {
     resetable := GetResetableInstances(GetFocusGridInstances(), bypassLock, extraProt)
     lockedResetable := GetLockedInstances(resetable)
-    
+
     if (obsControl == "C" && mode != "I") {
         SendOBSCmd(GetCoverTypeObsCmd("Cover", true, resetable))
         SendOBSCmd(GetCoverTypeObsCmd("Lock", false, lockedResetable))
     }
-    
+
     for i, instance in resetable {
         instance.SendReset()
         instance.window.SetAffinity(highBitMask)
@@ -625,9 +557,9 @@ ResetInstance(idx, bypassLock:=true, extraProt:=0, force:=false) {
 MoveResetInstance(idx) {
     if (!locked[idx])
         if (GetPassiveGridInstanceCount() > 0)
-            SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
-        else
-            MoveLockedResetInstance(idx)
+        SwapPositions(GetGridIndexFromInstanceNumber(idx), GetOldestInstanceIndexOutsideGrid())
+    else
+        MoveLockedResetInstance(idx)
 }
 
 MoveLockedResetInstance(idx) {
@@ -648,11 +580,11 @@ ToWall(comingFrom) {
     currentInstance := -1
     FileDelete,data/instance.txt
     FileAppend,0,data/instance.txt
-    
+
     VerifyProjector()
     WinMaximize, % Format("ahk_id {1}", GetProjectorID())
     WinActivate, % Format("ahk_id {1}", GetProjectorID())
-    
+
     if (obsControl != "C") {
         send {%obsWallSceneKey% down}
         sleep, %obsDelay%
@@ -676,10 +608,10 @@ GetLockImage() {
         }
         SendLog(LOG_LEVEL_INFO, Format("Theme lock count found to be {1}", lockImages.MaxIndex()))
     }
-    
+
     Random, randLock, 1, % lockImages.MaxIndex()
     SendLog(LOG_LEVEL_INFO, Format("{1} being used as lock", lockImages[randLock]))
-    
+
     return lockImages[randLock]
 }
 
@@ -725,29 +657,29 @@ GetFocusGridInstances() {
 
 LockAll(sound:=true, affinityChange:=true) {
     lockable := GetFocusGridInstances()
-    
+
     SendOBSCmd(GetCoverTypeObsCmd("Lock",true, lockable))
-    
+
     for i, instance in lockable {
         instance.SetLocked(true)
         instance.LockFiles()
         if affinityChange
             instance.window.SetAffinity(lockBitMask)
     }
-    
+
     LockSound(sound)
 }
 
 UnlockAll(sound:=true) {
     unlockable := GetFocusGridInstances()
-    
+
     SendOBSCmd(GetCoverTypeObsCmd("Lock",false, unlockable))
-    
+
     for i, instance in unlockable {
         instance.SetLocked(false)
         instance.UnlockFiles()
     }
-    
+
     UnlockSound(sound)
 }
 
@@ -767,7 +699,7 @@ WorldBop(confirm:=true) {
     if (confirm) {
         MsgBox, 4, Delete Worlds?, Are you sure you want to delete all of your worlds?
         IfMsgBox No
-            Return
+        Return
     }
     if (SubStr(RunHide("python.exe --version"), 1, 6) == "Python") {
         cmd := "python.exe """ . A_ScriptDir . "\scripts\worldBopper9000x.py"""
@@ -784,7 +716,7 @@ CloseInstances(confirm:=true) {
     if (confirm) {
         MsgBox, 4, Close Instances?, Are you sure you want to close all of your instances?
         IfMsgBox No
-            Return
+        Return
     }
     for i, instance in instances {
         instance.CloseInstance()
@@ -795,7 +727,7 @@ CloseInstances(confirm:=true) {
 LaunchInstances() {
     MsgBox, 4, Launch Instances?, Launch all of your instances?
     IfMsgBox No
-        Return
+    Return
     Run, "%A_ScriptDir%\utils\startup.ahk", %A_ScriptDir%
 }
 
@@ -841,22 +773,22 @@ CheckOBSPython() {
     if (obsControl != "C") {
         Return
     }
-    
+
     EnvGet, userProfileDir, USERPROFILE
     obsIni = %userProfileDir%\AppData\Roaming\obs-studio\global.ini
     IniRead, pyDir, %obsIni%, Python, Path64bit, N
-    
+
     if (FileExist(Format("{1}\python.exe", pyDir))) {
         Return
     }
-    
+
     pyPath := RegExReplace(ComObjCreate("WScript.Shell").Exec("python -c ""import sys; print(sys.executable)""").StdOut.ReadAll(), " *(\n|\r)+","")
-    
+
     if (!FileExist(pyPath)) {
         SendLog(LOG_LEVEL_WARNING, "Couldn't find Python path")
         return
     }
-    
+
     SplitPath, pyPath,, pyDir
     IniWrite, %pyDir%, %obsIni%, Python, Path64bit
     SendLog(LOG_LEVEL_INFO, Format("Automatically set OBS Python install path to {1}", pyDir))
@@ -866,7 +798,7 @@ SendOBSCmd(cmd) {
     if (obsControl != "C" || !cmd) {
         Return
     }
-    
+
     static cmdNum := 1
     static cmdDir := % "data/pycmds/" . A_TickCount
     if !FileExist("data/pycmds")
@@ -920,10 +852,10 @@ NotifyMovingController() {
             output := output . "W"
             Continue
         }
-        
+
         if (locked[inst])
             output := output . "L"
-        
+
         if (!locked[inst] && idx > focusGridInstanceCount)
             output := output . "H"
     }
@@ -958,7 +890,7 @@ OpenToLAN() {
     Sleep, 100
     Send, {Text}gamerule doImmediateRespawn true
     Send, {Enter}
-    
+
 }
 
 GoToNether() {
@@ -997,124 +929,124 @@ CheckFourQuadrants(struct) {
 ; Shoutout peej
 CheckOptionsForValue(file, optionsCheck, defaultValue) {
     static keyArray := Object("key.keyboard.f1", "F1"
-        ,"key.keyboard.f2", "F2"
-        ,"key.keyboard.f3", "F3"
-        ,"key.keyboard.f4", "F4"
-        ,"key.keyboard.f5", "F5"
-        ,"key.keyboard.f6", "F6"
-        ,"key.keyboard.f7", "F7"
-        ,"key.keyboard.f8", "F8"
-        ,"key.keyboard.f9", "F9"
-        ,"key.keyboard.f10", "F10"
-        ,"key.keyboard.f11", "F11"
-        ,"key.keyboard.f12", "F12"
-        ,"key.keyboard.f13", "F13"
-        ,"key.keyboard.f14", "F14"
-        ,"key.keyboard.f15", "F15"
-        ,"key.keyboard.f16", "F16"
-        ,"key.keyboard.f17", "F17"
-        ,"key.keyboard.f18", "F18"
-        ,"key.keyboard.f19", "F19"
-        ,"key.keyboard.f20", "F20"
-        ,"key.keyboard.f21", "F21"
-        ,"key.keyboard.f22", "F22"
-        ,"key.keyboard.f23", "F23"
-        ,"key.keyboard.f24", "F24"
-        ,"key.keyboard.q", "q"
-        ,"key.keyboard.w", "w"
-        ,"key.keyboard.e", "e"
-        ,"key.keyboard.r", "r"
-        ,"key.keyboard.t", "t"
-        ,"key.keyboard.y", "y"
-        ,"key.keyboard.u", "u"
-        ,"key.keyboard.i", "i"
-        ,"key.keyboard.o", "o"
-        ,"key.keyboard.p", "p"
-        ,"key.keyboard.a", "a"
-        ,"key.keyboard.s", "s"
-        ,"key.keyboard.d", "d"
-        ,"key.keyboard.f", "f"
-        ,"key.keyboard.g", "g"
-        ,"key.keyboard.h", "h"
-        ,"key.keyboard.j", "j"
-        ,"key.keyboard.k", "k"
-        ,"key.keyboard.l", "l"
-        ,"key.keyboard.z", "z"
-        ,"key.keyboard.x", "x"
-        ,"key.keyboard.c", "c"
-        ,"key.keyboard.v", "v"
-        ,"key.keyboard.b", "b"
-        ,"key.keyboard.n", "n"
-        ,"key.keyboard.m", "m"
-        ,"key.keyboard.1", "1"
-        ,"key.keyboard.2", "2"
-        ,"key.keyboard.3", "3"
-        ,"key.keyboard.4", "4"
-        ,"key.keyboard.5", "5"
-        ,"key.keyboard.6", "6"
-        ,"key.keyboard.7", "7"
-        ,"key.keyboard.8", "8"
-        ,"key.keyboard.9", "9"
-        ,"key.keyboard.0", "0"
-        ,"key.keyboard.tab", "Tab"
-        ,"key.keyboard.left.bracket", "["
-        ,"key.keyboard.right.bracket", "]"
-        ,"key.keyboard.backspace", "Backspace"
-        ,"key.keyboard.equal", "="
-        ,"key.keyboard.minus", "-"
-        ,"key.keyboard.grave.accent", "`"
-        ,"key.keyboard.slash", "/"
-        ,"key.keyboard.space", "Space"
-        ,"key.keyboard.left.alt", "LAlt"
-        ,"key.keyboard.right.alt", "RAlt"
-        ,"key.keyboard.print.screen", "PrintScreen"
-        ,"key.keyboard.insert", "Insert"
-        ,"key.keyboard.scroll.lock", "ScrollLock"
-        ,"key.keyboard.pause", "Pause"
-        ,"key.keyboard.right.control", "RControl"
-        ,"key.keyboard.left.control", "LControl"
-        ,"key.keyboard.right.shift", "RShift"
-        ,"key.keyboard.left.shift", "LShift"
-        ,"key.keyboard.comma", ","
-        ,"key.keyboard.period", "."
-        ,"key.keyboard.home", "Home"
-        ,"key.keyboard.end", "End"
-        ,"key.keyboard.page.up", "PgUp"
-        ,"key.keyboard.page.down", "PgDn"
-        ,"key.keyboard.delete", "Delete"
-        ,"key.keyboard.left.win", "LWin"
-        ,"key.keyboard.right.win", "RWin"
-        ,"key.keyboard.menu", "AppsKey"
-        ,"key.keyboard.backslash", "\"
-        ,"key.keyboard.caps.lock", "CapsLock"
-        ,"key.keyboard.semicolon", ";"
-        ,"key.keyboard.apostrophe", "'"
-        ,"key.keyboard.enter", "Enter"
-        ,"key.keyboard.up", "Up"
-        ,"key.keyboard.down", "Down"
-        ,"key.keyboard.left", "Left"
-        ,"key.keyboard.right", "Right"
-        ,"key.keyboard.keypad.0", "Numpad0"
-        ,"key.keyboard.keypad.1", "Numpad1"
-        ,"key.keyboard.keypad.2", "Numpad2"
-        ,"key.keyboard.keypad.3", "Numpad3"
-        ,"key.keyboard.keypad.4", "Numpad4"
-        ,"key.keyboard.keypad.5", "Numpad5"
-        ,"key.keyboard.keypad.6", "Numpad6"
-        ,"key.keyboard.keypad.7", "Numpad7"
-        ,"key.keyboard.keypad.8", "Numpad8"
-        ,"key.keyboard.keypad.9", "Numpad9"
-        ,"key.keyboard.keypad.decimal", "NumpadDot"
-        ,"key.keyboard.keypad.enter", "NumpadEnter"
-        ,"key.keyboard.keypad.add", "NumpadAdd"
-        ,"key.keyboard.keypad.subtract", "NumpadSub"
-        ,"key.keyboard.keypad.multiply", "NumpadMult"
-        ,"key.keyboard.keypad.divide", "NumpadDiv"
-        ,"key.mouse.left", "LButton"
-        ,"key.mouse.right", "RButton"
-        ,"key.mouse.middle", "MButton"
-        ,"key.mouse.4", "XButton1"
-        ,"key.mouse.5", "XButton2")
+    ,"key.keyboard.f2", "F2"
+    ,"key.keyboard.f3", "F3"
+    ,"key.keyboard.f4", "F4"
+    ,"key.keyboard.f5", "F5"
+    ,"key.keyboard.f6", "F6"
+    ,"key.keyboard.f7", "F7"
+    ,"key.keyboard.f8", "F8"
+    ,"key.keyboard.f9", "F9"
+    ,"key.keyboard.f10", "F10"
+    ,"key.keyboard.f11", "F11"
+    ,"key.keyboard.f12", "F12"
+    ,"key.keyboard.f13", "F13"
+    ,"key.keyboard.f14", "F14"
+    ,"key.keyboard.f15", "F15"
+    ,"key.keyboard.f16", "F16"
+    ,"key.keyboard.f17", "F17"
+    ,"key.keyboard.f18", "F18"
+    ,"key.keyboard.f19", "F19"
+    ,"key.keyboard.f20", "F20"
+    ,"key.keyboard.f21", "F21"
+    ,"key.keyboard.f22", "F22"
+    ,"key.keyboard.f23", "F23"
+    ,"key.keyboard.f24", "F24"
+    ,"key.keyboard.q", "q"
+    ,"key.keyboard.w", "w"
+    ,"key.keyboard.e", "e"
+    ,"key.keyboard.r", "r"
+    ,"key.keyboard.t", "t"
+    ,"key.keyboard.y", "y"
+    ,"key.keyboard.u", "u"
+    ,"key.keyboard.i", "i"
+    ,"key.keyboard.o", "o"
+    ,"key.keyboard.p", "p"
+    ,"key.keyboard.a", "a"
+    ,"key.keyboard.s", "s"
+    ,"key.keyboard.d", "d"
+    ,"key.keyboard.f", "f"
+    ,"key.keyboard.g", "g"
+    ,"key.keyboard.h", "h"
+    ,"key.keyboard.j", "j"
+    ,"key.keyboard.k", "k"
+    ,"key.keyboard.l", "l"
+    ,"key.keyboard.z", "z"
+    ,"key.keyboard.x", "x"
+    ,"key.keyboard.c", "c"
+    ,"key.keyboard.v", "v"
+    ,"key.keyboard.b", "b"
+    ,"key.keyboard.n", "n"
+    ,"key.keyboard.m", "m"
+    ,"key.keyboard.1", "1"
+    ,"key.keyboard.2", "2"
+    ,"key.keyboard.3", "3"
+    ,"key.keyboard.4", "4"
+    ,"key.keyboard.5", "5"
+    ,"key.keyboard.6", "6"
+    ,"key.keyboard.7", "7"
+    ,"key.keyboard.8", "8"
+    ,"key.keyboard.9", "9"
+    ,"key.keyboard.0", "0"
+    ,"key.keyboard.tab", "Tab"
+    ,"key.keyboard.left.bracket", "["
+    ,"key.keyboard.right.bracket", "]"
+    ,"key.keyboard.backspace", "Backspace"
+    ,"key.keyboard.equal", "="
+    ,"key.keyboard.minus", "-"
+    ,"key.keyboard.grave.accent", "`"
+    ,"key.keyboard.slash", "/"
+    ,"key.keyboard.space", "Space"
+    ,"key.keyboard.left.alt", "LAlt"
+    ,"key.keyboard.right.alt", "RAlt"
+    ,"key.keyboard.print.screen", "PrintScreen"
+    ,"key.keyboard.insert", "Insert"
+    ,"key.keyboard.scroll.lock", "ScrollLock"
+    ,"key.keyboard.pause", "Pause"
+    ,"key.keyboard.right.control", "RControl"
+    ,"key.keyboard.left.control", "LControl"
+    ,"key.keyboard.right.shift", "RShift"
+    ,"key.keyboard.left.shift", "LShift"
+    ,"key.keyboard.comma", ","
+    ,"key.keyboard.period", "."
+    ,"key.keyboard.home", "Home"
+    ,"key.keyboard.end", "End"
+    ,"key.keyboard.page.up", "PgUp"
+    ,"key.keyboard.page.down", "PgDn"
+    ,"key.keyboard.delete", "Delete"
+    ,"key.keyboard.left.win", "LWin"
+    ,"key.keyboard.right.win", "RWin"
+    ,"key.keyboard.menu", "AppsKey"
+    ,"key.keyboard.backslash", "\"
+    ,"key.keyboard.caps.lock", "CapsLock"
+    ,"key.keyboard.semicolon", ";"
+    ,"key.keyboard.apostrophe", "'"
+    ,"key.keyboard.enter", "Enter"
+    ,"key.keyboard.up", "Up"
+    ,"key.keyboard.down", "Down"
+    ,"key.keyboard.left", "Left"
+    ,"key.keyboard.right", "Right"
+    ,"key.keyboard.keypad.0", "Numpad0"
+    ,"key.keyboard.keypad.1", "Numpad1"
+    ,"key.keyboard.keypad.2", "Numpad2"
+    ,"key.keyboard.keypad.3", "Numpad3"
+    ,"key.keyboard.keypad.4", "Numpad4"
+    ,"key.keyboard.keypad.5", "Numpad5"
+    ,"key.keyboard.keypad.6", "Numpad6"
+    ,"key.keyboard.keypad.7", "Numpad7"
+    ,"key.keyboard.keypad.8", "Numpad8"
+    ,"key.keyboard.keypad.9", "Numpad9"
+    ,"key.keyboard.keypad.decimal", "NumpadDot"
+    ,"key.keyboard.keypad.enter", "NumpadEnter"
+    ,"key.keyboard.keypad.add", "NumpadAdd"
+    ,"key.keyboard.keypad.subtract", "NumpadSub"
+    ,"key.keyboard.keypad.multiply", "NumpadMult"
+    ,"key.keyboard.keypad.divide", "NumpadDiv"
+    ,"key.mouse.left", "LButton"
+    ,"key.mouse.right", "RButton"
+    ,"key.mouse.middle", "MButton"
+    ,"key.mouse.4", "XButton1"
+    ,"key.mouse.5", "XButton2")
     FileRead, fileData, %file%
     if (RegExMatch(fileData, "[A-Z]:(\/|\\).+\.txt", globalPath)) {
         file := globalPath
@@ -1125,9 +1057,9 @@ CheckOptionsForValue(file, optionsCheck, defaultValue) {
             split := StrSplit(A_LoopReadLine, ":")
             if (split.MaxIndex() == 2)
                 if keyArray[split[2]]
-                    return keyArray[split[2]]
-                else
-                    return split[2]
+                return keyArray[split[2]]
+            else
+                return split[2]
             SendLog(LOG_LEVEL_ERROR, Format("Couldn't parse options correctly, defaulting to '{1}'. Line: {2}", defaultKey, A_LoopReadLine))
             return defaultValue
         }

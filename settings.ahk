@@ -11,6 +11,7 @@ global sounds := "A" ; A = all, F = only functions, R = only resets, T = only tt
 global audioGui := False ; A simple GUI so the OBS application audio plugin can capture sounds
 global smartSwitch := False ; Find an instance to switch to if current one is unloaded
 global theme := "default" ; the name of the folder you wish to use as your macro theme in the global themes folder
+global readyTTS := "Ready" ; What the text-to-speach says to you when the macro is ready
 
 ; Delays (Defaults are probably fine)
 global spawnProtection := 300 ; Prevent a new instance from being reset for this many milliseconds after the preview is visible
