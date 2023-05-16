@@ -51,6 +51,7 @@ PostMessage, MSG_ASSIGN_RMPID, idx, rmPID,, % Format("ahk_pid {1}", mainPID)
 DetectHiddenWindows, Off
 
 OnMessage(MSG_KILL, "Kill")
+OnMessage(MSG_RESET, "ResetSound")
 
 SetTimer, CheckMain, 5000
 
@@ -58,6 +59,17 @@ Kill() {
     Critical, On
     SetAffinity(pid, GetBitMask(THREAD_COUNT))
     ExitApp
+}
+
+ResetSound() {
+    if (sounds == "A" || sounds == "F" || sounds == "R") {
+        SoundPlay, A_ScriptDir\..\media\reset.wav
+        if obsResetMediaKey {
+            send {%obsResetMediaKey% down}
+            sleep, %obsDelay%
+            send {%obsResetMediaKey% up}
+        }
+    }
 }
 
 ManageReset() {
@@ -120,7 +132,6 @@ ManageReset() {
             FileDelete, %previewFile%
             FileDelete, %idleFile%
             if (prevAffinityState != state) {
-                ResetSound()
                 ManageThisAffinity()
                 prevAffinityState := state
             }
@@ -167,17 +178,6 @@ CheckMain() {
         Kill()
     }
     DetectHiddenWindows, Off
-}
-
-ResetSound() {
-    if (sounds == "A" || sounds == "F" || sounds == "R") {
-        SoundPlay, A_ScriptDir\..\media\reset.wav
-        if obsResetMediaKey {
-            send {%obsResetMediaKey% down}
-            sleep, %obsDelay%
-            send {%obsResetMediaKey% up}
-        }
-    }
 }
 
 SetTimer, ManageReset, -%manageResetAfter%

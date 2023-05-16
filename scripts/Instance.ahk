@@ -49,6 +49,7 @@ class Instance {
             SendOBSCmd(GetCoverTypeObsCmd("Cover",true,[this]))
 
         this.Unlock(false)
+        PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
     }
 
     Switch(special:=false) {

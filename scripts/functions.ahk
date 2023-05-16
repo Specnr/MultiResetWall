@@ -15,15 +15,6 @@ Shutdown(ExitReason, ExitCode) {
         return
     }
 
-    if (ExitReason != "Reload") {
-        MsgBox, 4, Close Instances?, Would you like to close your instances?
-        IfMsgBox, Yes
-        CloseInstances(false)
-        MsgBox, 4, Delete Worlds?, Would you like to delete your old worlds?
-        IfMsgBox, Yes
-        WorldBop(false)
-    }
-
     FileDelete, data/obs.txt
     DetectHiddenWindows, On
     for i, instance in instances {
