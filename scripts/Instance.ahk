@@ -15,7 +15,6 @@ class Instance {
         this.idleFile := Format("{1}idle.tmp", mcDir)
         this.lockFile := Format("{1}lock.tmp", mcDir)
         this.lockImage := Format("{1}lock.png", mcDir)
-        this.killFile := Format("{1}kill.tmp", mcDir)
         this.holdFile := Format("{1}hold.tmp", mcDir)
         this.previewFile := Format("{1}preview.tmp", mcDir)
         this.doubleCheckUnexpectedLoads := true
@@ -153,10 +152,6 @@ class Instance {
         }
 
         this.window.SendResetInput()
-
-        DetectHiddenWindows, On
-        PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
-        DetectHiddenWindows, Off
     }
 
     CloseInstance() {
@@ -187,8 +182,6 @@ class Instance {
             FileAppend, %A_TickCount%, % this.idleFile
         if FileExist(this.holdFile)
             FileDelete, % this.holdFile
-        if FileExist(this.killFile)
-            FileDelete, % this.killFile
         if FileExist(this.previewFile)
             FileDelete, % this.previewFile
     }
