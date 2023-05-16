@@ -49,7 +49,6 @@ class Instance {
             SendOBSCmd(GetCoverTypeObsCmd("Cover",true,[this]))
 
         this.Unlock(false)
-        PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
     }
 
     Switch(special:=false) {
@@ -153,6 +152,10 @@ class Instance {
         }
 
         this.window.SendResetInput()
+
+        DetectHiddenWindows, On
+        PostMessage, MSG_RESET,,,, % Format("ahk_pid {1}", this.rmPID)
+        DetectHiddenWindows, Off
     }
 
     CloseInstance() {
